@@ -1,7 +1,7 @@
 # Repository Custom Instructions for GitHub Copilot
 
 - As a programming agent, I assist with code editing, generation, and problem-solving in this project. I provide complete code implementation rather than partial snippets.
-- This project is a web application built using Next.js and TypeScript.
+- This project is an e-commerce web application for Molini Shoes, built using Next.js and TypeScript.
 - The project uses Tailwind CSS for styling, with custom configurations defined in `tailwind.config.ts`.
 - PostgreSQL is the database, hosted on Neon.tech, and connects via SSL. The connection string is stored in the `DATABASE_URL` environment variable.
 - Prisma is used as the ORM, with the schema defined in `prisma/schema.prisma`.
@@ -14,7 +14,7 @@
   - Prefer using shadcn/ui components over creating custom ones when possible
   - Refer to the existing components for styling and implementation patterns
 - The project uses Radix UI components extensively for building accessible UI elements.
-- When generating code that interacts with database models, always include ALL fields from the database schema. Never use comments to indicate omitted fields (like `// other fields`). For example, when creating a new Program, include all fields defined in the Prisma schema.
+- When generating code that interacts with database models, always include ALL fields from the database schema. Never use comments to indicate omitted fields (like `// other fields`). For example, when creating a new Product, include all fields defined in the Prisma schema.
 - Never use incomplete code snippets or placeholders - always provide full, executable code implementations.
 - The project uses UploadThing v7 for file uploads and management:
   - File router is defined in `src/app/api/uploadthing/core.ts` with route-specific configurations
@@ -164,3 +164,25 @@
     );
   }
   ```
+
+- For e-commerce specific features:
+  - Product listings should include high-quality images, detailed descriptions, and pricing information
+  - Shopping cart functionality should be implemented using React Context or a state management solution
+  - Implement secure payment processing with proper error handling
+  - Include size guides and product measurements for shoes
+  - Implement inventory management and stock tracking
+  - Add wishlist functionality for users
+  - Include product reviews and ratings system
+  - Implement search and filtering capabilities for products
+  - Add order tracking and history for customers
+  - Include email notifications for order status updates
+  - Implement a responsive design that works well on all devices
+  - Add social media integration for sharing products
+  - Include SEO optimization for product pages
+  - Implement analytics tracking for sales and user behavior
+  - Add multi-language support for international customers
+  - Include a return and exchange policy system
+  - Implement a customer loyalty program
+  - Add related products and recommendations
+  - Include a newsletter subscription system
+  - Implement a contact form for customer support

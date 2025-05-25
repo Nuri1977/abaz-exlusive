@@ -30,7 +30,7 @@ export function Footer() {
                   className="object-contain"
                 />
               </div>
-              <h3 className="text-xl font-bold text-primary">Company Name</h3>
+              <h3 className="text-xl font-bold text-primary">Molini Shoes</h3>
             </div>
             <p className="text-muted-foreground text-sm">
               Your company description goes here. This area is perfect for a
@@ -182,8 +182,7 @@ export function Footer() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-4 sm:mt-0">
-            &copy; {new Date().getFullYear()} Your Company Name. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} Molini Shoes. All rights reserved.
           </p>
         </div>
       </div>

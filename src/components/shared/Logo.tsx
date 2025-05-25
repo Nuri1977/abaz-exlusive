@@ -7,19 +7,16 @@ interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({
-  label = "Shalom Radio",
-  className,
-}) => {
+const Logo: React.FC<LogoProps> = ({ label = "Molini Shoes", className }) => {
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`.trim()}>
       <Image
-      src="/logo/logo.png"
-      alt={label}
-      width={56}
-      height={58}
-      priority
-      className="rounded-md shadow-sm"
+        src="/logo/logo.png"
+        alt={label}
+        width={56}
+        height={58}
+        priority
+        className="rounded-md shadow-sm"
       />
       {/* <span className="font-bold text-lg text-primary hidden sm:inline">{label}</span> */}
     </div>

@@ -96,7 +96,7 @@ export function Header() {
         <Link href="/" className="cursor-pointer flex items-center gap-2">
           <Logo size={100} />
           <span className="text-xl font-bold text-primary hidden sm:inline-block">
-            Company Name
+            Molini Shoes
           </span>
         </Link>
         <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ export function Header() {
                 <div className="flex items-center justify-start p-4 border-b">
                   <Logo size={80} />
                   <span className="ml-2 text-xl font-bold text-primary">
-                    Company Name
+                    Molini Shoes
                   </span>
                 </div>
                 <nav className="flex flex-col p-4 gap-1">
