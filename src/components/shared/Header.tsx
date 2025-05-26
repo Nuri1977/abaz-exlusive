@@ -88,16 +88,11 @@ export function Header() {
   // Rest of the component remains unchanged
   return (
     <header
-      className={`w-full border-b backdrop-blur sticky top-0 z-30 shadow-sm transition-all duration-300 ${
-        scrolled ? "bg-primary-foreground/70" : "bg-primary-foreground/90"
-      }`}
+      className={`w-full border-b backdrop-blur sticky top-0 z-30 shadow-sm transition-all duration-300 bg-black text-white`}
     >
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
         <Link href="/" className="cursor-pointer flex items-center gap-2">
-          <Logo size={100} />
-          <span className="text-xl font-bold text-primary hidden sm:inline-block">
-            Molini Shoes
-          </span>
+          <Logo size={160} />
         </Link>
         <div className="flex items-center gap-3">
           {/* Desktop Navigation */}
@@ -107,7 +102,7 @@ export function Header() {
                 asChild
                 key={link.name}
                 variant="ghost"
-                className="text-primary hover:bg-primary/10"
+                className="text-white hover:text-gray-300 hover:bg-white/10"
               >
                 <Link href={link.href}>{link.name}</Link>
               </Button>
@@ -203,10 +198,7 @@ export function Header() {
             <SheetContent side="right" className="w-[80%] sm:w-[350px] p-0">
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-start p-4 border-b">
-                  <Logo size={80} />
-                  <span className="ml-2 text-xl font-bold text-primary">
-                    Molini Shoes
-                  </span>
+                  <Logo size={200} />
                 </div>
                 <nav className="flex flex-col p-4 gap-1">
                   {navLinks.map((link) => {

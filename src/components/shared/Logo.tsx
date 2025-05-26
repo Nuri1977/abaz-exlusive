@@ -7,14 +7,18 @@ interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ label = "Molini Shoes", className }) => {
+const Logo: React.FC<LogoProps> = ({
+  size = 56,
+  label = "Molini Shoes",
+  className,
+}) => {
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`.trim()}>
       <Image
         src="/logo/logo.png"
         alt={label}
-        width={56}
-        height={58}
+        width={size}
+        height={size}
         priority
         className="rounded-md shadow-sm"
       />
