@@ -19,199 +19,188 @@ import {
   Shield,
   Users,
 } from "lucide-react";
+import { placeholderShoeImages } from "@/utils/constants";
+
+const placeholderShoes = [
+  {
+    title: "Elegant Red Heels",
+    price: "€199,95",
+    image: placeholderShoeImages[0],
+  },
+  {
+    title: "Classic Black Heels",
+    price: "€209,95",
+    image: placeholderShoeImages[1],
+  },
+  {
+    title: "Stylish Brown Boots",
+    price: "€259,95",
+    image: placeholderShoeImages[2],
+  },
+  {
+    title: "Modern Black Boots",
+    price: "€279,95",
+    image: placeholderShoeImages[3],
+  },
+  {
+    title: "Chic Summer Sandals",
+    price: "€149,95",
+    image: placeholderShoeImages[4],
+  },
+  {
+    title: "Comfy Beige Flats",
+    price: "€139,95",
+    image: placeholderShoeImages[5],
+  },
+];
+
+const categories = [
+  {
+    name: "Heels",
+    image: placeholderShoeImages[0],
+  },
+  {
+    name: "Flats",
+    image: placeholderShoeImages[1],
+  },
+  {
+    name: "Boots",
+    image: placeholderShoeImages[2],
+  },
+  {
+    name: "Sandals",
+    image: placeholderShoeImages[3],
+  },
+  {
+    name: "Bags",
+    image: placeholderShoeImages[4],
+  },
+];
 
 export default function HomePage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <section className="flex flex-col items-center text-center mb-20">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          Next.js <span className="text-primary">Starter Template</span>
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mb-8">
-          A production-ready foundation for your next web application with
-          authentication, UI components, and essential tooling pre-configured.
-        </p>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link href="/dashboard">
-              Get Started
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Link>
+    <div className="font-sans">
+      {/* Hero Banner */}
+      <section className="relative w-full h-screen flex items-center justify-center bg-black text-white mb-16">
+        <img
+          src="https://images.unsplash.com/photo-1524553879936-2ff074ae5816?q=80&w=2952&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          alt="Hero Shoe"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
+        />
+        <div className="relative z-10 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+            Discover the New Collection
+          </h1>
+          <p className="text-lg md:text-2xl mb-8">
+            Premium women's shoes for every occasion
+          </p>
+          <Button asChild size="lg" variant="secondary">
+            <Link href="#new-arrivals">Shop New Arrivals</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link
-              href="https://github.com/Nuri1977/my-nextjs-template"
-              target="_blank"
-              rel="noopener noreferrer"
+        </div>
+      </section>
+
+      {/* New Arrivals */}
+      <section id="new-arrivals" className="mb-20">
+        <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {placeholderShoes.slice(0, 3).map((shoe, idx) => (
+            <div
+              key={idx}
+              className="bg-white shadow p-4 flex flex-col items-center"
             >
-              <Code className="mr-2 h-4 w-4" />
-              View on GitHub
-            </Link>
-          </Button>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="mb-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Core Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Authentication */}
-          <Card>
-            <CardHeader>
-              <Shield className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Authentication</CardTitle>
-              <CardDescription>
-                Complete authentication system with login, registration, and
-                password reset
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Uses Better Auth for secure, passwordless authentication with
-                email verification and more.
+              <img
+                src={shoe.image}
+                alt={shoe.title}
+                className="w-full h-64 object-cover mb-4 rounded"
+              />
+              <h3 className="text-lg font-semibold mb-2 text-black">
+                {shoe.title}
+              </h3>
+              <p className="text-primary text-xl font-bold mb-2">
+                {shoe.price}
               </p>
-            </CardContent>
-          </Card>
-
-          {/* UI Components */}
-          <Card>
-            <CardHeader>
-              <Paintbrush className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>UI Components</CardTitle>
-              <CardDescription>
-                Beautiful, accessible components built with Radix UI and
-                Tailwind
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Includes shadcn/ui components that are customizable and ready
-                for production use.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Database Integration */}
-          <Card>
-            <CardHeader>
-              <Settings className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Database Ready</CardTitle>
-              <CardDescription>
-                Preconfigured with Prisma ORM and PostgreSQL support
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Easily connect to your database with Prisma's type-safe client
-                and schema management.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Admin Dashboard */}
-          <Card>
-            <CardHeader>
-              <LayoutDashboard className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Admin Dashboard</CardTitle>
-              <CardDescription>
-                Ready-made admin interface with user management
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Control your application with an intuitive admin dashboard
-                that's easy to extend.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* User Management */}
-          <Card>
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Complete user profile and settings system
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Manage user accounts, roles, and permissions with ready-to-use
-                components.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Security */}
-          <Card>
-            <CardHeader>
-              <Lock className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Security First</CardTitle>
-              <CardDescription>
-                Built with security best practices from the start
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Implements security best practices for authentication, API
-                routes, and data handling.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Tech Stack */}
-      <section className="mb-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Tech Stack</h2>
-        <div className="flex flex-wrap justify-center gap-4">
-          {[
-            "Next.js 15.2",
-            "React 18.3",
-            "TypeScript",
-            "Tailwind CSS",
-            "shadcn/ui",
-            "Prisma ORM",
-            "PostgreSQL",
-            "Better Auth",
-            "UploadThing",
-            "React Hook Form",
-            "Zod",
-            "Lucide Icons",
-          ].map((tech) => (
-            <Badge key={tech} variant="outline" className="text-sm py-2 px-4">
-              {tech}
-            </Badge>
+              <Button asChild className="w-full">
+                <Link href="/">Add to Cart</Link>
+              </Button>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Getting Started */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Ready to Get Started?</CardTitle>
-            <CardDescription>
-              Start building your next project with this template
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>
-              This template provides everything you need to quickly launch a
-              production-ready web application. Clone the repository, install
-              the dependencies, and start coding.
-            </p>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button asChild size="lg">
-              <Link href="/dashboard">
-                Explore Template Features
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
+      {/* Best Sellers */}
+      <section className="mb-20">
+        <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {placeholderShoes.slice(3).map((shoe, idx) => (
+            <div
+              key={idx}
+              className="bg-white shadow p-4 flex flex-col items-center"
+            >
+              <img
+                src={shoe.image}
+                alt={shoe.title}
+                className="w-full h-64 object-cover mb-4 rounded"
+              />
+              <h3 className="text-lg font-semibold mb-2 text-black">
+                {shoe.title}
+              </h3>
+              <p className="text-primary text-xl font-bold mb-2">
+                {shoe.price}
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/">Add to Cart</Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Shop by Category */}
+      <section className="mb-20">
+        <h2 className="text-3xl font-bold text-center mb-10">
+          Shop by Category
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
+          {categories.map((cat, idx) => (
+            <Link
+              href="/"
+              key={cat.name}
+              className="flex flex-col items-center group"
+            >
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mb-3 border-4 border-tertiary group-hover:scale-105 transition-transform">
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-lg font-semibold text-black group-hover:text-primary transition-colors">
+                {cat.name}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Promo Banner */}
+      <section className="mb-20">
+        <div className="bg-primary text-primary-foreground py-12 px-4 rounded-lg max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Free Express Shipping
+          </h2>
+          <p className="mb-6">
+            Enjoy free express shipping on all orders. Shop the latest in
+            women's footwear and get your favorites delivered fast!
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="bg-white text-black font-semibold"
+          >
+            <Link href="/">Shop Now</Link>
+          </Button>
+        </div>
       </section>
     </div>
   );

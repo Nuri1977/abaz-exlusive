@@ -1,4 +1,4 @@
-# Next.js Starter Template
+# Molini Shoes
 
 A production-ready Next.js template with authentication, UI components, and essential tooling pre-configured to help you build modern web applications faster.
 

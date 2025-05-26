@@ -38,7 +38,7 @@ const PropDefaults: EmailResetPasswordProps = {
 
 // Email content constants
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Next.js Template";
+const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
 
 export const EmailResetPassword = ({
   user,
