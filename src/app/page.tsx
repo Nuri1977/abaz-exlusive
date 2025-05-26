@@ -107,7 +107,7 @@ export default function HomePage() {
           {placeholderShoes.slice(0, 3).map((shoe, idx) => (
             <div
               key={idx}
-              className="bg-white rounded shadow p-4 flex flex-col items-center"
+              className="bg-white shadow p-4 flex flex-col items-center"
             >
               <img
                 src={shoe.image}
@@ -135,7 +135,7 @@ export default function HomePage() {
           {placeholderShoes.slice(3).map((shoe, idx) => (
             <div
               key={idx}
-              className="bg-white rounded shadow p-4 flex flex-col items-center"
+              className="bg-white shadow p-4 flex flex-col items-center"
             >
               <img
                 src={shoe.image}
