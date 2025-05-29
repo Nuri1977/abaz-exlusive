@@ -15,3 +15,13 @@ export function formatDate(date: Date | string | undefined): string {
     day: "numeric",
   });
 }
+
+export function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+}

@@ -28,6 +28,9 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  cart          Cart?
+  orders        Order[]
+  likes         Like[]
 
   @@map("user")
 }
@@ -77,4 +80,201 @@ model Verification {
   @@map("verification")
 }
 
-// Other models
+// E-commerce Models
+
+model Category {
+  id          String     @id @default(uuid())
+  test        String?
+  name        String
+  slug        String     @unique
+  description String?
+  image       Json?      @default("null")
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("category")
+}
+
+model Product {
+  id          String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  description String?
+  price       Decimal          @db.Decimal(10, 2)
+  images      String[]
+  categoryId  String
+  category    Category         @relation(fields: [categoryId], references: [id])
+  options     ProductOption[]
+  variants    ProductVariant[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  likes       Like[]
+  // Shoe specific details
+  brand       String?
+  material    String?
+  gender      String? // men, women, unisex
+  style       String? // casual, formal, sports, etc.
+  features    String[] // array of features like "waterproof", "breathable", etc.
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("product")
+}
+
+model ProductOption {
+  id        String               @id @default(uuid())
+  name      String // e.g., "Size", "Color"
+  productId String
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values    ProductOptionValue[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@map("product_option")
+}
+
+model ProductOptionValue {
+  id        String                 @id @default(uuid())
+  value     String // e.g., "US 7", "Red"
+  optionId  String
+  option    ProductOption          @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  variants  ProductVariantOption[]
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@map("product_option_value")
+}
+
+model ProductVariant {
+  id         String                 @id @default(uuid())
+  productId  String
+  product    Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String                 @unique
+  price      Decimal?               @db.Decimal(10, 2) // Optional override of product price
+  stock      Int                    @default(0)
+  options    ProductVariantOption[]
+  inventory  InventoryItem?
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+
+  @@map("product_variant")
+}
+
+model ProductVariantOption {
+  variantId     String
+  optionValueId String
+  variant       ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValue   ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
+  @@map("product_variant_option")
+}
+
+model InventoryItem {
+  id        String         @id @default(uuid())
+  sku       String         @unique
+  quantity  Int            @default(0)
+  reserved  Int            @default(0)
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("inventory_item")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  total     Decimal    @db.Decimal(10, 2)
+  currency  String     @default("USD")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("cart")
+}
+
+model CartItem {
+  id        String         @id @default(uuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+  price     Decimal        @db.Decimal(10, 2)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  Product   Product?       @relation(fields: [productId], references: [id])
+  productId String?
+
+  @@unique([cartId, variantId])
+  @@map("cart_item")
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  status          OrderStatus   @default(PENDING)
+  total           Decimal       @db.Decimal(10, 2)
+  shippingAddress String
+  billingAddress  String
+  paymentStatus   PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("order")
+}
+
+model OrderItem {
+  id        String         @id @default(uuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  price     Decimal        @db.Decimal(10, 2)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  Product   Product?       @relation(fields: [productId], references: [id])
+  productId String?
+
+  @@map("order_item")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("like")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
