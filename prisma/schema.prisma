@@ -84,10 +84,11 @@ model Verification {
 
 model Category {
   id          String     @id @default(uuid())
+  test        String?
   name        String
   slug        String     @unique
   description String?
-  image       String?
+  image       Json?      @default("null")
   parentId    String?
   parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
   children    Category[] @relation("CategoryToCategory")

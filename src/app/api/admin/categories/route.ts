@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { headers } from "next/headers";
+import { FileUploadThing } from "@/types/my-types";
+import { Prisma } from "@prisma/client";
 
 export async function GET() {
   try {
@@ -34,7 +36,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description } = body;
+    const { name, description, image } = body;
 
     if (!name) {
       return new NextResponse("Name is required", { status: 400 });
@@ -45,6 +47,7 @@ export async function POST(req: Request) {
         name,
         slug: slugify(name),
         description,
+        image: image ? image : Prisma.JsonNull,
       },
     });
 

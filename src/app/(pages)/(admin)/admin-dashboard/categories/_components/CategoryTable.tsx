@@ -29,8 +29,31 @@ import { Loader2, Plus } from "lucide-react";
 import { CreateCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/CreateCategoryDialog";
 import { EditCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/EditCategoryDialog";
 import { DeleteCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/DeleteCategoryDialog";
+import Image from "next/image";
+import { FileUploadThing } from "@/types/my-types";
 
 const columns: ColumnDef<Category>[] = [
+  {
+    accessorKey: "image",
+    header: "Image",
+    cell: ({ row }) => {
+      const image = row.original.image as FileUploadThing | null;
+      return image ? (
+        <div className="relative w-16 h-16">
+          <Image
+            src={image.url}
+            alt={row.original.name}
+            fill
+            className="object-cover rounded-md"
+          />
+        </div>
+      ) : (
+        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+          <span className="text-muted-foreground text-xs">No image</span>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "name",
     header: "Name",

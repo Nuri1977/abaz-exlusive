@@ -24,11 +24,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
+import { UploadButton } from "@/utils/uploadthing";
+import Image from "next/image";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
+  image: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +46,7 @@ export function CreateCategoryDialog() {
     defaultValues: {
       name: "",
       description: "",
+      image: null,
     },
   });
 
@@ -119,6 +123,73 @@ export function CreateCategoryDialog() {
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Category description" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image</FormLabel>
+                  <FormControl>
+                    <div className="space-y-4">
+                      {field.value?.url && (
+                        <div className="relative w-40 h-40 group">
+                          <Image
+                            src={field.value.url}
+                            alt="Category image"
+                            fill
+                            className="object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={async () => {
+                              const button =
+                                document.activeElement as HTMLButtonElement;
+                              const originalContent = button.innerHTML;
+                              button.disabled = true;
+                              button.innerHTML =
+                                '<Loader2 className="h-4 w-4 animate-spin" />';
+                              try {
+                                await fetch(
+                                  `/api/admin/uploadthing/${field.value.key}`,
+                                  {
+                                    method: "DELETE",
+                                  }
+                                );
+                                field.onChange(null);
+                              } catch (error) {
+                                button.innerHTML = originalContent;
+                                button.disabled = false;
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                      <UploadButton
+                        endpoint="imageUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res?.[0]) {
+                            field.onChange(res[0]);
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          toast({
+                            title: "Error",
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                        }}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
