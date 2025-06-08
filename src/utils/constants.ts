@@ -11,6 +11,7 @@ import {
   Mail,
   Calendar,
   Tags,
+  Package,
 } from "lucide-react";
 
 export const categoryOptions = [
@@ -30,6 +31,13 @@ export const adminLinks = [
     icon: LayoutDashboard,
     value: "Overview",
     description: "View system statistics and overview",
+  },
+  {
+    name: "Products",
+    href: "/admin-dashboard/products",
+    icon: Package,
+    value: "Manage",
+    description: "Manage products and inventory",
   },
   {
     name: "Categories",
