@@ -12,6 +12,7 @@ import {
   Calendar,
   Tags,
   Package,
+  ShoppingBag,
 } from "lucide-react";
 
 export const categoryOptions = [
@@ -64,6 +65,7 @@ export const adminLinks = [
 
 export const navLinks = [
   { name: "HOME", href: "/", icon: Home },
+  { name: "SHOP", href: "/shop", icon: ShoppingBag },
   { name: "ABOUT", href: "/about", icon: Info },
   { name: "CONTACT", href: "/contact", icon: Mail },
 ];
