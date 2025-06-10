@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
+import { Category } from "@prisma/client";
+import { genderOptions } from "@/utils/constants";
 
 const materialOptions = [
   "Leather",
@@ -88,15 +90,11 @@ export function ProductFilters() {
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
     const params = new URLSearchParams(searchParams.toString());
-    let newCategories: string[];
+    const newCategories = checked
+      ? [...selectedCategories, categoryId]
+      : selectedCategories.filter((id) => id !== categoryId);
 
-    if (checked) {
-      newCategories = [...selectedCategories, categoryId];
-    } else {
-      newCategories = selectedCategories.filter((id) => id !== categoryId);
-    }
-
-    if (newCategories.length > 0) {
+    if (newCategories.length) {
       params.set("category", newCategories.join(","));
     } else {
       params.delete("category");
@@ -107,15 +105,11 @@ export function ProductFilters() {
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
     const params = new URLSearchParams(searchParams.toString());
-    let newFeatures: string[];
+    const newFeatures = checked
+      ? [...selectedFeatures, feature]
+      : selectedFeatures.filter((f) => f !== feature);
 
-    if (checked) {
-      newFeatures = [...selectedFeatures, feature];
-    } else {
-      newFeatures = selectedFeatures.filter((f) => f !== feature);
-    }
-
-    if (newFeatures.length > 0) {
+    if (newFeatures.length) {
       params.set("features", newFeatures.join(","));
     } else {
       params.delete("features");
@@ -140,7 +134,7 @@ export function ProductFilters() {
       <div className="space-y-4">
         <h3 className="font-semibold">Categories</h3>
         <div className="space-y-2">
-          {categories?.map((category: any) => (
+          {categories?.map((category: Category) => (
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 id={category.id}
@@ -184,10 +178,11 @@ export function ProductFilters() {
             <SelectValue placeholder="Select gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="men">Men</SelectItem>
-            <SelectItem value="women">Women</SelectItem>
-            <SelectItem value="unisex">Unisex</SelectItem>
+            {genderOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
