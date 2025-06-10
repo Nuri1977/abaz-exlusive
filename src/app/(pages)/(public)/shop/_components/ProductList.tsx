@@ -6,10 +6,15 @@ import { useEffect } from "react";
 import { ProductCard } from "./ProductCard";
 import { ProductSort } from "./ProductSort";
 import { Loader2 } from "lucide-react";
+import { Product, Category } from "@prisma/client";
 
 interface ProductListProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
+
+type ProductWithCategory = Product & {
+  category: Category;
+};
 
 export function ProductList({ searchParams }: ProductListProps) {
   const { ref, inView } = useInView();
@@ -79,7 +84,7 @@ export function ProductList({ searchParams }: ProductListProps) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {data?.pages.map((page) =>
-          page.products.map((product: any) => (
+          page.products.map((product: ProductWithCategory) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}

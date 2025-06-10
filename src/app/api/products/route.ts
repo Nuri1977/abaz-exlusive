@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    console.log("Search params:", searchParams);
-    console.log("Search params:", searchParams);
-    console.log("Search params:", searchParams);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
     const sortParam = searchParams.get("sort") || "createdAt:desc";
@@ -25,13 +23,16 @@ export async function GET(request: Request) {
       [sortField]: sortOrder,
     };
 
-    console.log("Category filter:", category);
+    const where: Prisma.ProductWhereInput = {};
 
-    const where: any = {};
-
+    // TODO: Refactor filtering logic
+    // Consider:
+    // 1. Creating a separate function to handle filter transformations
+    // 2. Using a more declarative approach with filter mapping
+    // 3. Potentially using a filter builder pattern
+    // 4. Adding validation for filter values
     if (category) {
       const categoryIds = category.split(",").filter(Boolean);
-      console.log("Category IDs:", categoryIds);
       if (categoryIds.length > 0) {
         where.categoryId = {
           in: categoryIds,
@@ -39,17 +40,10 @@ export async function GET(request: Request) {
       }
     }
 
-    if (minPrice) {
+    if (minPrice || maxPrice) {
       where.price = {
-        ...where.price,
-        gte: parseFloat(minPrice),
-      };
-    }
-
-    if (maxPrice) {
-      where.price = {
-        ...where.price,
-        lte: parseFloat(maxPrice),
+        ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
+        ...(maxPrice ? { lte: parseFloat(maxPrice) } : {}),
       };
     }
 
@@ -77,8 +71,6 @@ export async function GET(request: Request) {
         };
       }
     }
-
-    console.log("Where clause:", where);
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({

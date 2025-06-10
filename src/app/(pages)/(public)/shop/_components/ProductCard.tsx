@@ -4,17 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
+import { Product, Category } from "@prisma/client";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    images: string[];
-    brand: string;
-    category: {
-      name: string;
-    };
+  product: Product & {
+    category: Category;
   };
 }
 
@@ -40,7 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          <p className="font-semibold">{formatPrice(product.price)}</p>
+          <p className="font-semibold">{formatPrice(Number(product.price))}</p>
         </CardFooter>
       </Card>
     </Link>

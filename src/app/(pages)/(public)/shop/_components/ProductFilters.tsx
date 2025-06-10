@@ -15,7 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { Category } from "@prisma/client";
-import { genderOptions } from "@/utils/constants";
+import { genderOptions, brandOptions } from "@/utils/constants";
 
 const materialOptions = [
   "Leather",
@@ -197,10 +197,11 @@ export function ProductFilters() {
             <SelectValue placeholder="Select brand" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="nike">Nike</SelectItem>
-            <SelectItem value="adidas">Adidas</SelectItem>
-            <SelectItem value="puma">Puma</SelectItem>
+            {brandOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
