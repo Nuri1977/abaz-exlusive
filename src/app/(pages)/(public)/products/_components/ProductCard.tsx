@@ -14,7 +14,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Link href={`/shop/${product.id}`}>
+    <Link href={`/products/${product.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative aspect-square">
           <Image

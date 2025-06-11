@@ -85,8 +85,6 @@ export async function GET(request: Request) {
       prisma.product.count({ where }),
     ]);
 
-    console.log("Found products:", products.length);
-
     const hasMore = page * limit < total;
 
     return NextResponse.json({

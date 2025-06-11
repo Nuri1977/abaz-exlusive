@@ -65,7 +65,7 @@ export const adminLinks = [
 
 export const navLinks = [
   { name: "HOME", href: "/", icon: Home },
-  { name: "SHOP", href: "/shop", icon: ShoppingBag },
+  { name: "PRODUCTS", href: "/products", icon: ShoppingBag },
   { name: "ABOUT", href: "/about", icon: Info },
   { name: "CONTACT", href: "/contact", icon: Mail },
 ];
