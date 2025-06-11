@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { Category } from "@prisma/client";
 import { genderOptions, brandOptions } from "@/utils/constants";
 
 const materialOptions = [
@@ -53,17 +52,6 @@ export function ProductFilters() {
   const searchParams = useSearchParams();
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response.json();
-    },
-  });
-
   useEffect(() => {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
@@ -85,23 +73,7 @@ export function ProductFilters() {
     router.push(`/products?${params.toString()}`);
   };
 
-  const selectedCategories = searchParams.get("category")?.split(",") || [];
   const selectedFeatures = searchParams.get("features")?.split(",") || [];
-
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const newCategories = checked
-      ? [...selectedCategories, categoryId]
-      : selectedCategories.filter((id) => id !== categoryId);
-
-    if (newCategories.length) {
-      params.set("category", newCategories.join(","));
-    } else {
-      params.delete("category");
-    }
-
-    router.push(`/products?${params.toString()}`);
-  };
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -132,24 +104,6 @@ export function ProductFilters() {
   return (
     <Card className="p-4 space-y-6">
       <div className="space-y-4">
-        <h3 className="font-semibold">Categories</h3>
-        <div className="space-y-2">
-          {categories?.map((category: Category) => (
-            <div key={category.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={category.id}
-                checked={selectedCategories.includes(category.id)}
-                onCheckedChange={(checked) =>
-                  handleCategoryChange(category.id, checked as boolean)
-                }
-              />
-              <Label htmlFor={category.id}>{category.name}</Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
           <Slider
@@ -169,25 +123,6 @@ export function ProductFilters() {
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-semibold">Gender</h3>
-        <Select
-          value={searchParams.get("gender") || ""}
-          onValueChange={(value) => updateFilters("gender", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select gender" />
-          </SelectTrigger>
-          <SelectContent>
-            {genderOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-4">
         <h3 className="font-semibold">Brand</h3>
         <Select
           value={searchParams.get("brand") || ""}
@@ -197,9 +132,30 @@ export function ProductFilters() {
             <SelectValue placeholder="Select brand" />
           </SelectTrigger>
           <SelectContent>
-            {brandOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
+            <SelectItem value="all">All</SelectItem>
+            {brandOptions.map((brand) => (
+              <SelectItem key={brand.value} value={brand.value}>
+                {brand.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold">Gender</h3>
+        <Select
+          value={searchParams.get("gender") || ""}
+          onValueChange={(value) => updateFilters("gender", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select gender" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            {genderOptions.map((gender) => (
+              <SelectItem key={gender.value} value={gender.value}>
+                {gender.label}
               </SelectItem>
             ))}
           </SelectContent>

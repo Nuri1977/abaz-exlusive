@@ -4,7 +4,6 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
 import { ProductCard } from "./ProductCard";
-import { ProductSort } from "./ProductSort";
 import { Loader2 } from "lucide-react";
 import { Product, Category } from "@prisma/client";
 
@@ -79,9 +78,6 @@ export function ProductList({ searchParams }: ProductListProps) {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <ProductSort />
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {data?.pages.map((page) =>
           page.products.map((product: ProductWithCategory) => (
