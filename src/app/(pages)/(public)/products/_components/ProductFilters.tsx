@@ -82,7 +82,7 @@ export function ProductFilters() {
     } else {
       params.delete(key);
     }
-    router.push(`/shop?${params.toString()}`);
+    router.push(`/products?${params.toString()}`);
   };
 
   const selectedCategories = searchParams.get("category")?.split(",") || [];
@@ -100,7 +100,7 @@ export function ProductFilters() {
       params.delete("category");
     }
 
-    router.push(`/shop?${params.toString()}`);
+    router.push(`/products?${params.toString()}`);
   };
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
@@ -115,7 +115,7 @@ export function ProductFilters() {
       params.delete("features");
     }
 
-    router.push(`/shop?${params.toString()}`);
+    router.push(`/products?${params.toString()}`);
   };
 
   const handlePriceChange = (value: number[]) => {
@@ -126,7 +126,7 @@ export function ProductFilters() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("minPrice", value[0].toString());
     params.set("maxPrice", value[1].toString());
-    router.push(`/shop?${params.toString()}`);
+    router.push(`/products?${params.toString()}`);
   };
 
   return (

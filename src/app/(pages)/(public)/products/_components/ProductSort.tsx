@@ -25,7 +25,7 @@ export function ProductSort() {
   const handleSort = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", value);
-    router.push(`/shop?${params.toString()}`);
+    router.push(`/products?${params.toString()}`);
   };
 
   return (
