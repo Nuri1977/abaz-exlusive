@@ -25,3 +25,10 @@ export function slugify(text: string): string {
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 }
+
+export const formatPrice = (price: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(price);
+};
