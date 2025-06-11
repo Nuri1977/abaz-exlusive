@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/utils";
+import { isAdminServer } from "@/helpers/isAdminServer";
 import { headers } from "next/headers";
-import { FileUploadThing } from "@/types/my-types";
-import { Prisma } from "@prisma/client";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
 
-    if (!session?.user) {
+    const isAdmin = await isAdminServer();
+    if (!isAdmin) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -30,24 +32,31 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
 
-    if (!session?.user) {
+    const isAdmin = await isAdminServer();
+    if (!isAdmin) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const body = await req.json();
-    const { name, description, image } = body;
-
-    if (!name) {
-      return new NextResponse("Name is required", { status: 400 });
-    }
+    const { name, description, image, parentId } = body;
 
     const category = await prisma.category.create({
       data: {
         name,
-        slug: slugify(name),
+        slug: name.toLowerCase().replace(/\s+/g, "-"),
         description,
-        image: image ? image : Prisma.JsonNull,
+        image,
+        parent: parentId
+          ? {
+              connect: {
+                id: parentId,
+              },
+            }
+          : undefined,
       },
     });
 
