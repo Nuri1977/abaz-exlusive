@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { ProductCard } from "./ProductCard";
 import { Loader2 } from "lucide-react";
 import { Product, Category } from "@prisma/client";
+import { ProductSkeleton } from "./ProductSkeleton";
 
 interface ProductListProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -18,55 +19,62 @@ type ProductWithCategory = Product & {
 export function ProductList({ searchParams }: ProductListProps) {
   const { ref, inView } = useInView();
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useInfiniteQuery({
-      queryKey: ["products", searchParams],
-      initialPageParam: 1,
-      queryFn: async ({ pageParam = 1 }) => {
-        const params = new URLSearchParams();
-        params.set("page", pageParam.toString());
-        params.set("limit", "12");
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["products", searchParams],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      const params = new URLSearchParams();
+      params.set("page", pageParam.toString());
+      params.set("limit", "12");
 
-        // Handle all search params
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (
-            value &&
-            key !== "status" &&
-            key !== "value" &&
-            key !== "_response" &&
-            key !== "_debugInfo"
-          ) {
-            if (Array.isArray(value)) {
-              params.set(key, value[0]);
-            } else {
-              params.set(key, value);
-            }
+      // Handle all search params
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (
+          value &&
+          key !== "status" &&
+          key !== "value" &&
+          key !== "_response" &&
+          key !== "_debugInfo"
+        ) {
+          if (Array.isArray(value)) {
+            params.set(key, value[0]);
+          } else {
+            params.set(key, value);
           }
-        });
-
-        console.log("Fetching products with params:", params.toString());
-
-        const response = await fetch(`/api/products?${params}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
         }
-        const data = await response.json();
-        console.log("Received products:", data.products.length);
-        return data;
-      },
-      getNextPageParam: (lastPage) => {
-        if (lastPage.pagination.hasMore) {
-          return lastPage.pagination.nextPage;
-        }
-        return undefined;
-      },
-    });
+      });
+
+      const response = await fetch(`/api/products?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      const data = await response.json();
+      return data;
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.hasMore) {
+        return lastPage.pagination.nextPage;
+      }
+      return undefined;
+    },
+  });
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  if (isLoading) {
+    return <ProductSkeleton />;
+  }
 
   if (status === "error") {
     return (
@@ -76,10 +84,18 @@ export function ProductList({ searchParams }: ProductListProps) {
     );
   }
 
+  if (!data?.pages[0]?.products.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No products found</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {data?.pages.map((page) =>
+        {data.pages.map((page) =>
           page.products.map((product: ProductWithCategory) => (
             <ProductCard key={product.id} product={product} />
           ))

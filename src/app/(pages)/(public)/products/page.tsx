@@ -32,7 +32,7 @@ export default async function ProductsPage({
           <ProductFilters />
         </div>
         <div className="md:col-span-3">
-          <Suspense key={JSON.stringify(params)} fallback={<ProductSkeleton />}>
+          <Suspense fallback={<ProductSkeleton />}>
             <ProductList searchParams={params} />
           </Suspense>
         </div>
