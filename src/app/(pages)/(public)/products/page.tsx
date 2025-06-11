@@ -19,11 +19,11 @@ export default async function ProductsPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
         <div className="flex-1">
           <CategoryNav />
         </div>
-        <div className="ml-4">
+        <div className="md:ml-4">
           <ProductSort />
         </div>
       </div>
