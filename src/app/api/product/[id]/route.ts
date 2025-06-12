@@ -13,6 +13,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       where: { id },
       include: {
         category: true,
+        options: {
+          include: {
+            values: true,
+          },
+        },
       },
     });
 
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return new NextResponse("Product not found", { status: 404 });
     }
 
-    return NextResponse.json(product, { status: 200 });
+    return NextResponse.json({ data: product }, { status: 200 });
   } catch (error) {
     return new NextResponse("Internal error", { status: 500 });
   }

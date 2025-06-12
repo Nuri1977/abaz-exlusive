@@ -1,76 +1,57 @@
 "use client";
 
-import api, { ApiResponse } from "@/lib/axios";
-import { Product } from "@prisma/client";
+import clsx from "clsx";
+import api from "@/lib/axios";
+import { useState } from "react";
+import { notFound } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/config/constants";
-import { useQuery } from "@tanstack/react-query";
-import ProductImageGallery from "./ProductImageGallery";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import ProductWithOptions from "@/types/product";
+import ProductPageSkeleton from "./ProductPageSkeleton";
+import ProductImageGallery from "./ProductImageGallery";
 
 export default function ProductPageClient({ id }: { id: string }) {
+  const { toast } = useToast();
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
   const {
     data: product,
     isLoading,
     isError,
-    error,
   } = useQuery({
     queryKey: [queryKeys.products, id],
     queryFn: async () => {
-      const res = await api.get<Product>(`/product/${id}`);
-      return res ?? null;
+      const res = await api.get<ProductWithOptions>(`/product/${id}`);
+      return res.data ?? null;
     },
     enabled: !!id,
     retry: false,
   });
 
+  const sizeOption = product?.options.find((opt) => opt.name.toLowerCase() === "size");
+  const colorOption = product?.options.find((opt) => opt.name.toLowerCase() === "color");
+
+  const availableSizes = sizeOption?.values.map((v) => v.value) || [];
+  const availableColors = colorOption?.values.map((v) => v.value) || [];
+
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-lg">Loading...</div>
-        </div>
-      </div>
-    );
+    return <ProductPageSkeleton />;
   }
 
   if (isError) {
-    const isNotFound = (error as any)?.response?.status === 404;
-    if (isNotFound) {
-      return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-              <p className="text-gray-600">The product you're looking for doesn't exist.</p>
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-              <p className="text-gray-600">Please try again later.</p>
-            </div>
-          </div>
-        </div>
-      );
-    }
+    toast({
+      title: "Error",
+      description: "Failed to load product",
+      variant: "destructive",
+    });
   }
 
   if (!product) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-            <p className="text-gray-600">The product data is missing.</p>
-          </div>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   return (
@@ -89,6 +70,42 @@ export default function ProductPageClient({ id }: { id: string }) {
 
           <div className="prose max-w-none">
             <p>{product.description}</p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Color</h3>
+            <div className="flex gap-3">
+              {availableColors.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  className={clsx(
+                    "w-8 h-8 rounded-full border-2 transition-all duration-150",
+                    selectedColor === color ? "border-gray-900 scale-110" : "border-none"
+                  )}
+                  style={{ backgroundColor: color }}
+                  aria-label={`Select color ${color}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Size</h3>
+            <div className="flex gap-2">
+              {availableSizes.map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={clsx(
+                    "w-10 h-10 rounded-md border text-sm font-medium flex items-center justify-center transition-all duration-150",
+                    selectedSize === size ? "border-gray-900 bg-gray-100" : "border-gray-300"
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="pt-4">
