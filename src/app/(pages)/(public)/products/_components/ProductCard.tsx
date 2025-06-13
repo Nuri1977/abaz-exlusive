@@ -14,7 +14,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Link href={`/products/${product.id}`}>
+    <Link href={`/product/${product.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative aspect-square">
           <Image
@@ -40,9 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{product.brand}</p>
             <h3 className="font-semibold line-clamp-2">{product.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              {product.category.name}
-            </p>
+            <p className="text-sm text-muted-foreground">{product.category.name}</p>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
