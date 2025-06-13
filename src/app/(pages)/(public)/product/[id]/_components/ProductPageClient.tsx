@@ -3,8 +3,7 @@
 import clsx from "clsx";
 import api from "@/lib/axios";
 import { useState } from "react";
-import { notFound } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 import { queryKeys } from "@/config/constants";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +12,7 @@ import ProductPageSkeleton from "./ProductPageSkeleton";
 import ProductImageGallery from "./ProductImageGallery";
 
 export default function ProductPageClient({ id }: { id: string }) {
-  const { toast } = useToast();
+  const router = useRouter();
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -42,16 +41,9 @@ export default function ProductPageClient({ id }: { id: string }) {
     return <ProductPageSkeleton />;
   }
 
-  if (isError) {
-    toast({
-      title: "Error",
-      description: "Failed to load product",
-      variant: "destructive",
-    });
-  }
-
-  if (!product) {
-    notFound();
+  if (!product || isError) {
+    router.replace("/not-found");
+    return null;
   }
 
   return (
