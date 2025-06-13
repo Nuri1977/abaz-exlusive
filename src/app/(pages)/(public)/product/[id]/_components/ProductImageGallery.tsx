@@ -29,7 +29,7 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
               key={index}
               onClick={() => setSelectedImage(index)}
               className={`aspect-square relative rounded-md overflow-hidden border-2 ${
-                selectedImage === index ? "border-blue-500" : "border-transparent"
+                selectedImage === index ? "border-black" : "border-transparent"
               }`}
             >
               <Image
