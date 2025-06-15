@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlignLeft } from "lucide-react";
+import { AlignLeft, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -17,7 +17,7 @@ const AdminNavLinks = ({ onClick }: { onClick?: () => void }) => {
   return (
     <div className="space-y-1 p-2">
       {adminLinks.map((link) => {
-        const Icon = link.icon;
+        const Icon = link.icon as LucideIcon;
         const isActive = pathname === link.href;
 
         return (

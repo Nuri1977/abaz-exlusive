@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminSidebar from "./_components/AdminSidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Shalom Radio - Admin Dashboard",
@@ -17,6 +18,7 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto p-6 md:pt-6 pt-4">
         {children}
       </main>
+      <Toaster />
     </div>
   );
 }
