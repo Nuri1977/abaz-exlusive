@@ -9,9 +9,9 @@ import { toastPresets } from "@/app/constants/toasts";
 type UserAccountContextType = {
   likedProducts: Product[];
   isLiked: (productId: string) => boolean;
-  like: (productId: string) => Promise<void>;
-  unlike: (productId: string) => Promise<void>;
-  toggleLike: (productId: string) => Promise<void>;
+  like: (product: Product) => void;
+  unlike: (product: Product) => void;
+  toggleLike: (product: Product) => void;
   areLikedProductsLoading: boolean;
 };
 
@@ -32,45 +32,60 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   console.log("liked products", likedProducts);
 
   const likeMutation = useMutation({
-    mutationFn: likeProduct,
-    onMutate: async (productId: string) => {
+    mutationFn: (product: Product) => likeProduct(product.id),
+    onMutate: async (product: Product) => {
       await queryClient.cancelQueries({ queryKey: ["likedProducts"] });
       await queryClient.cancelQueries({ queryKey: ["likedProductDetails"] });
 
-      const prev = queryClient.getQueryData<string[]>(["likedProducts"]) || [];
-      queryClient.setQueryData(["likedProducts"], [...prev, productId]);
+      const prevLikedIds = queryClient.getQueryData<string[]>(["likedProducts"]) || [];
+      const prevLikedProducts = queryClient.getQueryData<Product[]>(["likedProductDetails"]) || [];
 
-      return { prev };
+      queryClient.setQueryData<Product[]>(["likedProductDetails"], [...prevLikedProducts, product]);
+      queryClient.setQueryData<string[]>(["likedProducts"], [...prevLikedIds, product.id]);
+
+      return { prevLikedIds, prevLikedProducts };
+    },
+    onError: (_err, _product, context) => {
+      if (context) {
+        queryClient.setQueryData(["likedProducts"], context.prevLikedIds);
+        queryClient.setQueryData(["likedProductDetails"], context.prevLikedProducts);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
       queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
-    },
-    onError: (_err, _productId, context) => {
-      if (context?.prev) queryClient.setQueryData(["likedProducts"], context.prev);
     },
   });
 
   const unlikeMutation = useMutation({
-    mutationFn: unlikeProduct,
-    onMutate: async (productId: string) => {
+    mutationFn: (product: Product) => unlikeProduct(product.id),
+    onMutate: async (product: Product) => {
       await queryClient.cancelQueries({ queryKey: ["likedProducts"] });
       await queryClient.cancelQueries({ queryKey: ["likedProductDetails"] });
 
-      const prev = queryClient.getQueryData<string[]>(["likedProducts"]) || [];
-      queryClient.setQueryData(
+      const prevLikedIds = queryClient.getQueryData<string[]>(["likedProducts"]) || [];
+      const prevLikedProducts = queryClient.getQueryData<Product[]>(["likedProductDetails"]) || [];
+
+      queryClient.setQueryData<string[]>(
         ["likedProducts"],
-        prev.filter((id) => id !== productId)
+        prevLikedIds.filter((id) => id !== product.id)
+      );
+      queryClient.setQueryData<Product[]>(
+        ["likedProductDetails"],
+        prevLikedProducts.filter((p) => p.id !== product.id)
       );
 
-      return { prev };
+      return { prevLikedIds, prevLikedProducts };
+    },
+    onError: (_err, _product, context) => {
+      if (context) {
+        queryClient.setQueryData(["likedProducts"], context.prevLikedIds);
+        queryClient.setQueryData(["likedProductDetails"], context.prevLikedProducts);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
       queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
-    },
-    onError: (_err, _productId, context) => {
-      if (context?.prev) queryClient.setQueryData(["likedProducts"], context.prev);
     },
   });
 
@@ -80,39 +95,33 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   );
 
   const like = useCallback(
-    async (productId: string) => {
+    (product: Product) => {
       if (!session?.user) {
         toast(toastPresets.mustBeLoggedInForLike);
         return;
       }
-      await likeMutation.mutateAsync(productId).then(() => {
-        toast(toastPresets.likeSuccess);
-        queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
-      });
+      likeMutation.mutate(product);
     },
     [session?.user, likeMutation, toast]
   );
 
   const unlike = useCallback(
-    async (productId: string) => {
+    (product: Product) => {
       if (!session?.user) {
         toast(toastPresets.mustBeLoggedInForLike);
         return;
       }
-      await unlikeMutation.mutateAsync(productId).then(() => {
-        toast(toastPresets.unlikeSuccess);
-        queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
-      });
+      unlikeMutation.mutate(product);
     },
     [session?.user, unlikeMutation, toast]
   );
 
   const toggleLike = useCallback(
-    async (productId: string) => {
-      if (isLiked(productId)) {
-        await unlike(productId);
+    (product: Product) => {
+      if (isLiked(product.id)) {
+        unlike(product);
       } else {
-        await like(productId);
+        like(product);
       }
     },
     [isLiked, like, unlike]

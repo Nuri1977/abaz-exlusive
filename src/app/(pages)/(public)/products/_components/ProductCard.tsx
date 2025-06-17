@@ -53,7 +53,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardFooter className="p-4 pt-0 flex-col items-start gap-4">
         <p className="font-semibold">{formatPrice(Number(product.price))}</p>
         <button
-          onClick={() => toggleLike(product.id)}
+          onClick={() => toggleLike(product)}
           className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
         >
           <Heart className={liked ? "fill-current" : ""} />
