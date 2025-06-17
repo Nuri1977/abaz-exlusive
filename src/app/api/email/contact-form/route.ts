@@ -1,7 +1,8 @@
-import EmailContactTemplate from "@/components/emails/EmailContactTemplate";
-import { emailService } from "@/services/shared/email-service";
-import { render } from "@react-email/render";
 import { NextRequest, NextResponse } from "next/server";
+import { render } from "@react-email/render";
+
+import EmailContactTemplate from "@/components/emails/EmailContactTemplate";
+import { emailService } from "@/services/shared/emailService";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

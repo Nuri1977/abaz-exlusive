@@ -21,7 +21,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Product Details</h1>
+      <h1 className="mb-4 text-2xl font-bold">Product Details</h1>
       <p className="text-gray-600">Product ID: {id}</p>
     </div>
   );

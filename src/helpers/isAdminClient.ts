@@ -1,7 +1,8 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import type { User } from "better-auth";
+
+import { authClient } from "@/lib/auth-client";
 
 /**
  * Hook to check if the current user is an admin (client-side)

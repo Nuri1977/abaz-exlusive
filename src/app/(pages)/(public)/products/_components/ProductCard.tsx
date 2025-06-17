@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
-import { Product, Category, Like } from "@prisma/client";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import Link from "next/link";
 import { useUserAccountContext } from "@/context/UserAccountContext";
+import { Category, Product } from "@prisma/client";
+import { Heart } from "lucide-react";
+
+import { formatPrice } from "@/lib/utils";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 interface ProductCardProps {
   product: Product & {
@@ -20,7 +21,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const liked = isLiked(product.id);
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative aspect-square">
         <Image
           src={product.images[0] || "/placeholder.png"}
@@ -29,11 +30,11 @@ export function ProductCard({ product }: ProductCardProps) {
           className="object-cover"
         />
         {product.features?.length > 0 && (
-          <div className="absolute top-2 right-2 flex gap-1">
+          <div className="absolute right-2 top-2 flex gap-1">
             {product.features.slice(0, 2).map((feature) => (
               <span
                 key={feature}
-                className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full"
+                className="rounded-full bg-black/40 px-2 py-1 text-xs text-white backdrop-blur-sm"
               >
                 {feature}
               </span>
@@ -44,13 +45,18 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{product.brand}</p>
-          <Link href={`/product/${product.id}`} className="font-semibold line-clamp-2 hover:underline">
+          <Link
+            href={`/product/${product.id}`}
+            className="line-clamp-2 font-semibold hover:underline"
+          >
             {product.name}
           </Link>
-          <p className="text-sm text-muted-foreground">{product.category.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {product.category.name}
+          </p>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex-col items-start gap-4">
+      <CardFooter className="flex-col items-start gap-4 p-4 pt-0">
         <p className="font-semibold">{formatPrice(Number(product.price))}</p>
         <button
           onClick={() => toggleLike(product)}

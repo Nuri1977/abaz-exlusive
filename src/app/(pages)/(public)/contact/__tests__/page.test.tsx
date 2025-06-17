@@ -1,11 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ContactPage from "../page";
+
 import ContactForm from "../_components/ContactForm";
+import ContactPage from "../page";
 
 // Mock the toast hook
 const mockToast = jest.fn();
-jest.mock("@/hooks/use-toast", () => ({
+jest.mock("@/hooks/useToast", () => ({
   useToast: () => ({
     toast: mockToast,
   }),

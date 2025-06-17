@@ -1,8 +1,9 @@
 import "@testing-library/jest-dom";
-import React from "react";
 
 // Polyfill TextEncoder and TextDecoder for Node.js
-import { TextEncoder, TextDecoder } from "util";
+import { TextDecoder, TextEncoder } from "util";
+import React from "react";
+
 if (typeof global.TextEncoder === "undefined") {
   global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder;
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import AdminSidebar from "./_components/AdminSidebar";
 
 export const metadata: Metadata = {
@@ -12,9 +13,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       <AdminSidebar />
-      <main className="flex-1 overflow-y-auto p-6 md:pt-6 pt-4">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6 pt-4 md:pt-6">
+        {children}
+      </main>
     </div>
   );
 }

@@ -1,8 +1,10 @@
 import React from "react";
-import { isAdminServer } from "@/helpers/isAdminServer";
-import { Metadata } from "next";
-import { UserTable } from "./_components/UserTable";
+import type { Metadata } from "next";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAdminServer } from "@/helpers/isAdminServer";
+
+import { UserTable } from "./_components/UserTable";
 
 export const metadata: Metadata = {
   title: "User Management | Shalom Radio Admin",

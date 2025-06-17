@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="container mx-auto py-12 max-w-2xl prose">
+    <div className="prose container mx-auto max-w-2xl py-12">
       <h1>Terms & Conditions</h1>
       <p>
         Welcome to Shalom Radio. By accessing or using our website, you agree to

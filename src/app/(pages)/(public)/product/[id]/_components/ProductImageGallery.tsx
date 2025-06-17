@@ -7,12 +7,14 @@ interface ProductImageGalleryProps {
   images: string[];
 }
 
-export default function ProductImageGallery({ images }: ProductImageGalleryProps) {
+export default function ProductImageGallery({
+  images,
+}: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   return (
     <div className="space-y-4">
-      <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
         <Image
           src={images[selectedImage]}
           alt="Product image"
@@ -28,7 +30,7 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
-              className={`aspect-square relative rounded-md overflow-hidden border-2 ${
+              className={`relative aspect-square overflow-hidden rounded-md border-2 ${
                 selectedImage === index ? "border-black" : "border-transparent"
               }`}
             >
