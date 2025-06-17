@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlignLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { AlignLeft } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { userLinks } from "@/utils/constants";
+import { userLinks } from "@/app/constants/routes";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // Navigation links component
 const UserNavLinks = ({ onClick }: { onClick?: () => void }) => {

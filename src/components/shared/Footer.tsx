@@ -1,18 +1,8 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { navLinks } from "@/utils/constants";
 import Logo from "./Logo";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone } from "lucide-react";
+import { navLinks } from "@/app/constants/routes";
 
 export function Footer() {
   return (
@@ -25,24 +15,16 @@ export function Footer() {
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="relative h-16 w-16">
-                  <Link
-                    href="/"
-                    className="cursor-pointer flex items-center gap-2"
-                  >
+                  <Link href="/" className="cursor-pointer flex items-center gap-2">
                     <Logo size={180} />
                   </Link>
                 </div>
               </div>
               <p className="text-white hover:text-white/90 text-sm">
-                Discover premium women's shoes designed for style, comfort, and
-                confidence. Shop the latest collections and timeless classics at
-                Molini Shoes.
+                Discover premium women's shoes designed for style, comfort, and confidence. Shop the latest
+                collections and timeless classics at Molini Shoes.
               </p>
-              <Button
-                asChild
-                variant="link"
-                className="p-0 h-auto text-primary"
-              >
+              <Button asChild variant="link" className="p-0 h-auto text-primary">
                 <Link href="/about" rel="noopener noreferrer">
                   Learn more about us →
                 </Link>
@@ -51,9 +33,7 @@ export function Footer() {
 
             {/* Column 2: Quick Links */}
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground mb-4">
-                Quick Links
-              </h3>
+              <h3 className="text-base font-bold text-foreground mb-4">Quick Links</h3>
               <nav className="grid grid-cols-2 gap-2">
                 {navLinks.map((link) => (
                   <Link
@@ -66,20 +46,12 @@ export function Footer() {
                 ))}
               </nav>
 
-              <h3 className="text-base font-bold text-foreground mt-6 mb-2">
-                Legal
-              </h3>
+              <h3 className="text-base font-bold text-foreground mt-6 mb-2">Legal</h3>
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/terms"
-                  className="text-white hover:text-white/90 transition-colors"
-                >
+                <Link href="/terms" className="text-white hover:text-white/90 transition-colors">
                   Terms & Conditions
                 </Link>
-                <Link
-                  href="/privacy"
-                  className="text-white hover:text-white/90 transition-colors"
-                >
+                <Link href="/privacy" className="text-white hover:text-white/90 transition-colors">
                   Privacy Policy
                 </Link>
               </div>
@@ -87,48 +59,27 @@ export function Footer() {
 
             {/* Column 3: Contact & Social */}
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground mb-4">
-                Get in Touch
-              </h3>
+              <h3 className="text-base font-bold text-foreground mb-4">Get in Touch</h3>
               <div className="space-y-3">
                 <div className="flex items-start">
-                  <MapPin
-                    size={16}
-                    className="mr-2 mt-0.5 text-white hover:text-white/90 shrink-0"
-                  />
-                  <span className="text-white hover:text-white/90">
-                    Your Address, City, Country
-                  </span>
+                  <MapPin size={16} className="mr-2 mt-0.5 text-white hover:text-white/90 shrink-0" />
+                  <span className="text-white hover:text-white/90">Your Address, City, Country</span>
                 </div>
                 <div className="flex items-center">
-                  <Phone
-                    size={16}
-                    className="mr-2 text-white hover:text-white/90 shrink-0"
-                  />
-                  <Link
-                    href="tel:+0000000000"
-                    className="text-sm text-white hover:text-white/90"
-                  >
+                  <Phone size={16} className="mr-2 text-white hover:text-white/90 shrink-0" />
+                  <Link href="tel:+0000000000" className="text-sm text-white hover:text-white/90">
                     +00 000 000 0000
                   </Link>
                 </div>
                 <div className="flex items-center">
-                  <Mail
-                    size={16}
-                    className="mr-2 text-white hover:text-white/90 shrink-0"
-                  />
-                  <Link
-                    href="mailto:info@example.com"
-                    className="text-sm text-white hover:text-white/90"
-                  >
+                  <Mail size={16} className="mr-2 text-white hover:text-white/90 shrink-0" />
+                  <Link href="mailto:info@example.com" className="text-sm text-white hover:text-white/90">
                     info@example.com
                   </Link>
                 </div>
               </div>
 
-              <h3 className="text-base font-bold text-foreground mt-6 mb-3">
-                Follow Us
-              </h3>
+              <h3 className="text-base font-bold text-foreground mt-6 mb-3">Follow Us</h3>
               <div className="flex space-x-4">
                 <Link
                   href="#"
@@ -188,20 +139,14 @@ export function Footer() {
           {/* Footer Bottom */}
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <div className="flex items-center">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-xs text-tertiary-foreground"
-              >
+              <Button asChild variant="ghost" size="sm" className="text-xs text-tertiary-foreground">
                 <Link href="#" target="_blank" rel="noopener noreferrer">
                   Resources
                 </Link>
               </Button>
             </div>
             <p className="text-xs text-tertiary-foreground mt-4 sm:mt-0">
-              &copy; {new Date().getFullYear()} Molini Shoes. All rights
-              reserved.
+              &copy; {new Date().getFullYear()} Molini Shoes. All rights reserved.
             </p>
           </div>
         </div>

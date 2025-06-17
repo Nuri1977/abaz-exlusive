@@ -4,7 +4,7 @@ import clsx from "clsx";
 import api from "@/lib/axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { queryKeys } from "@/config/constants";
+import { queryKeys } from "@/config/tanstackConfig";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import ProductWithOptions from "@/types/product";

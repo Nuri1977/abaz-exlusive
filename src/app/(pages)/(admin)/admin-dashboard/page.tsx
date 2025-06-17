@@ -1,8 +1,7 @@
+import Link from "next/link";
 import { isAdminServer } from "@/helpers/isAdminServer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, Radio, Newspaper, Users, Settings } from "lucide-react";
-import Link from "next/link";
-import { adminLinks } from "@/utils/constants";
+import { adminLinks } from "@/app/constants/routes";
 
 const AdminDashboardPage = async () => {
   const isAdmin = await isAdminServer();

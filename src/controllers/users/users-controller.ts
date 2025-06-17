@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/config/constants";
+import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
 import { User } from "@prisma/client";
 
@@ -25,8 +25,7 @@ export const useCreateUser = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userData: Partial<User>) =>
-      api.post<User>("/admin/users", userData),
+    mutationFn: (userData: Partial<User>) => api.post<User>("/admin/users", userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.users] });
     },

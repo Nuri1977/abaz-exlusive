@@ -1,7 +1,7 @@
 // Static site generation SSG with untable cache and revalidation
 // Server side rendering SSR
 
-import { queryKeys } from "@/config/constants";
+import { queryKeys } from "@/config/tanstackConfig";
 import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
 
