@@ -19,14 +19,7 @@ type ProductWithCategory = Product & {
 export function ProductList({ searchParams }: ProductListProps) {
   const { ref, inView } = useInView();
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-    isLoading,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, isLoading } = useInfiniteQuery({
     queryKey: ["products", searchParams],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
@@ -36,13 +29,7 @@ export function ProductList({ searchParams }: ProductListProps) {
 
       // Handle all search params
       Object.entries(searchParams).forEach(([key, value]) => {
-        if (
-          value &&
-          key !== "status" &&
-          key !== "value" &&
-          key !== "_response" &&
-          key !== "_debugInfo"
-        ) {
+        if (value && key !== "status" && key !== "value" && key !== "_response" && key !== "_debugInfo") {
           if (Array.isArray(value)) {
             params.set(key, value[0]);
           } else {

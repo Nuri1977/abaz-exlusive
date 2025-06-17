@@ -8,14 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -65,8 +58,7 @@ const RegisterForm = () => {
       }, 2000);
     } catch (err: any) {
       // Enhanced error handling for unexpected errors
-      const errorMessage =
-        err?.message || "An unexpected error occurred. Please try again.";
+      const errorMessage = err?.message || "An unexpected error occurred. Please try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -77,17 +69,12 @@ const RegisterForm = () => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>
-          Enter your details to create a new account
-        </CardDescription>
+        <CardDescription>Enter your details to create a new account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <Alert
-              variant="destructive"
-              className="flex items-center justify-start text-center"
-            >
+            <Alert variant="destructive" className="flex items-center justify-start text-center">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <AlertDescription>{error}</AlertDescription>
@@ -97,9 +84,7 @@ const RegisterForm = () => {
           {success && (
             <Alert className="bg-green-50 border-green-200 flex items-center justify-center text-center">
               <div className="flex items-center gap-2">
-                <AlertDescription className="text-green-800">
-                  {success}
-                </AlertDescription>
+                <AlertDescription className="text-green-800">{success}</AlertDescription>
               </div>
             </Alert>
           )}
@@ -147,9 +132,7 @@ const RegisterForm = () => {
                 ) : (
                   <Eye className="h-4 w-4 text-muted-foreground" />
                 )}
-                <span className="sr-only">
-                  {showPassword ? "Hide password" : "Show password"}
-                </span>
+                <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
               </Button>
             </div>
           </div>

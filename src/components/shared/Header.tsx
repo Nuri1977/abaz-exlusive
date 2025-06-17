@@ -1,22 +1,6 @@
 "use client";
 
-import Logo from "@/components/shared/Logo";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Menu,
-  User,
-  LogOut,
-  LayoutDashboard,
-  Settings,
-  Heart,
-  ShoppingCart,
-} from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,17 +8,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Logo from "@/components/shared/Logo";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useIsAdmin } from "@/helpers/isAdminClient";
 import { navLinks } from "@/utils/constants";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsAdmin } from "@/helpers/isAdminClient";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useUserAccountContext } from "@/context/UserAccountContext";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, User, LogOut, LayoutDashboard, Settings, Heart } from "lucide-react";
 
 export function Header() {
+  const router = useRouter();
+  const isAdmin = useIsAdmin();
+  const { toast } = useToast();
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-  const isAdmin = useIsAdmin();
+  const { likedProducts } = useUserAccountContext();
+  const likedCount = likedProducts.length;
 
   // Use Better Auth's useSession hook for proper session management
   const { data: session, isPending } = authClient.useSession();
@@ -118,30 +114,36 @@ export function Header() {
               </Button>
             ))}
           </nav>
+
           {/* Likes and Cart Icons */}
-          <Link
-            href="/likes"
-            className="p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
-          >
-            <Heart size={24} />
-            <span className="sr-only">Likes</span>
-          </Link>
-          <Link
-            href="/cart"
-            className="p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
-          >
-            <ShoppingCart size={24} />
-            <span className="sr-only">Cart</span>
-          </Link>
+          {session ? (
+            <Link
+              href="/dashboard/likes"
+              className="relative p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+              {likedCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full h-5 min-w-[1.25rem] px-1 flex items-center justify-center">
+                  {likedCount > 99 ? "99+" : likedCount}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+            </Link>
+          )}
+
           {/* Auth Dropdown - Hidden on mobile */}
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full border h-9 w-9 p-0"
-                >
+                <Button variant="ghost" size="icon" className="rounded-full border h-9 w-9 p-0">
                   {isPending ? (
                     <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
                   ) : session ? (
@@ -157,38 +159,27 @@ export function Header() {
                 {!isPending && session ? (
                   <>
                     <div className="p-2 text-center">
-                      <p className="font-medium">
-                        {session?.user?.name || "User"}
-                      </p>
+                      <p className="font-medium">{session?.user?.name || "User"}</p>
                       <p className="text-xs text-muted-foreground truncate">
                         {session?.user?.email || "No email"}
                       </p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link
-                        href="/dashboard"
-                        className="w-full cursor-pointer flex items-center"
-                      >
+                      <Link href="/dashboard" className="w-full cursor-pointer flex items-center">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem asChild>
-                        <Link
-                          href="/admin-dashboard"
-                          className="w-full cursor-pointer flex items-center"
-                        >
+                        <Link href="/admin-dashboard" className="w-full cursor-pointer flex items-center">
                           <Settings className="mr-2 h-4 w-4" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer"
-                    >
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </DropdownMenuItem>
@@ -264,10 +255,7 @@ export function Header() {
                           className="justify-start text-primary hover:bg-primary/10 py-6"
                           onClick={() => setOpen(false)}
                         >
-                          <Link
-                            href="/admin-dashboard"
-                            className="flex items-center"
-                          >
+                          <Link href="/admin-dashboard" className="flex items-center">
                             <Settings className="mr-2 h-4 w-4" />
                             Admin Dashboard
                           </Link>

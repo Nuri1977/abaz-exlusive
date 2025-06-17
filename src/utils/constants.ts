@@ -1,18 +1,14 @@
 import {
   LayoutDashboard,
-  Newspaper,
-  Radio,
   Settings,
   Users,
-  PlaySquare,
   Home,
-  Headphones,
   Info,
   Mail,
-  Calendar,
   Tags,
   Package,
   ShoppingBag,
+  Heart,
 } from "lucide-react";
 
 export const categoryOptions = [
@@ -61,6 +57,11 @@ export const adminLinks = [
     value: "System",
     description: "Configure system settings and preferences",
   },
+];
+
+export const userLinks = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Likes", href: "/dashboard/likes", icon: Heart },
 ];
 
 export const navLinks = [
