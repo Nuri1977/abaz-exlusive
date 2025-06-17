@@ -10,9 +10,12 @@ import { useQuery } from "@tanstack/react-query";
 import ProductWithOptions from "@/types/product";
 import ProductPageSkeleton from "./ProductPageSkeleton";
 import ProductImageGallery from "./ProductImageGallery";
+import { Heart } from "lucide-react";
+import { useUserAccountContext } from "@/context/UserAccountContext";
 
 export default function ProductPageClient({ id }: { id: string }) {
   const router = useRouter();
+  const { toggleLike, isLiked } = useUserAccountContext();
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -30,6 +33,7 @@ export default function ProductPageClient({ id }: { id: string }) {
     enabled: !!id,
     retry: false,
   });
+  const liked = isLiked(product?.id || "");
 
   const sizeOption = product?.options.find((opt) => opt.name.toLowerCase() === "size");
   const colorOption = product?.options.find((opt) => opt.name.toLowerCase() === "color");
@@ -100,8 +104,14 @@ export default function ProductPageClient({ id }: { id: string }) {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex gap-8">
             <Button>Add to Cart</Button>
+            <button
+              onClick={() => toggleLike(product)}
+              className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
+            >
+              <Heart size={30} className={liked ? "fill-current" : ""} />
+            </button>
           </div>
 
           <div className="pt-6 border-t border-gray-200">
