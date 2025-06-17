@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Product } from "@prisma/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,11 +27,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Product } from "@prisma/client";
-import { Pencil, X, Loader2 } from "lucide-react";
-import { UploadButton } from "@/utils/uploadthing";
-import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -35,7 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { Textarea } from "@/components/ui/textarea";
+import { UploadButton } from "@/utils/uploadthing";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -132,7 +132,7 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
+          <Pencil className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
@@ -309,26 +309,26 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
                         {field.value?.map((image, index) => (
                           <div
                             key={index}
-                            className="relative w-full aspect-square group"
+                            className="group relative aspect-square w-full"
                           >
                             <Image
                               src={image}
                               alt={`Product image ${index + 1}`}
                               fill
-                              className="object-cover rounded-md"
+                              className="rounded-md object-cover"
                             />
                             <Button
                               type="button"
                               variant="destructive"
                               size="icon"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
                               onClick={() => {
                                 const newImages = [...field.value];
                                 newImages.splice(index, 1);
                                 field.onChange(newImages);
                               }}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="size-4" />
                             </Button>
                           </div>
                         ))}

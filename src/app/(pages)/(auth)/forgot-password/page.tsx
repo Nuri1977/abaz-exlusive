@@ -1,9 +1,10 @@
 import React from "react";
+
 import ForgotPassword from "./_components/ForgotPassword";
 
 const ForgotPasswordPage = () => {
   return (
-    <div className="container max-w-screen-md mx-auto py-8 md:py-12">
+    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
       <ForgotPassword />
     </div>
   );

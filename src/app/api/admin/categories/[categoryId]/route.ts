@@ -1,11 +1,12 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
+
+import { FileUploadThing } from "@/types/my-types";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
-import { headers } from "next/headers";
-import { FileUploadThing } from "@/types/my-types";
 import { utapi } from "@/utils/utapi";
-import { Prisma } from "@prisma/client";
 
 interface CategoryIdParams {
   params: {

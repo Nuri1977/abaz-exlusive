@@ -1,18 +1,13 @@
 import {
-  LayoutDashboard,
-  Newspaper,
-  Radio,
-  Settings,
-  Users,
-  PlaySquare,
   Home,
-  Headphones,
   Info,
+  LayoutDashboard,
   Mail,
-  Calendar,
-  Tags,
   Package,
+  Settings,
   ShoppingBag,
+  Tags,
+  Users,
 } from "lucide-react";
 
 export const categoryOptions = [

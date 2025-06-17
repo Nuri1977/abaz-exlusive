@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import type { User } from "@prisma/client";
+
+import { useToast } from "@/hooks/useToast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,9 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { User } from "@prisma/client";
-import { useDeleteUser } from "@/controllers/users/users-controller";
+import { useDeleteUser } from "@/controllers/users/usersController";
 
 interface ConfirmDeleteDialogProps {
   user: User | null;
@@ -57,7 +58,7 @@ export function ConfirmDeleteDialog({
     if (!user?.id) return;
 
     try {
-      await onDeleteUser(user.id);
+      onDeleteUser(user.id);
       toast({
         title: "User Deleted",
         description: "The user has been successfully deleted.",

@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { User } from "@prisma/client";
+
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,16 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { User } from "@prisma/client";
 import {
   useCreateUser,
   useUpdateUser,
-} from "@/controllers/users/users-controller";
+} from "@/controllers/users/usersController";
 
 interface UserDialogProps {
   user: User | null;
@@ -153,9 +154,9 @@ export function UserDialog({
       }
 
       if (isNewUser) {
-        await onCreateUser(payload);
+        onCreateUser(payload);
       } else if (user?.id) {
-        await onUpdateUser({ id: user.id, data: payload });
+        onUpdateUser({ id: user.id, data: payload });
       }
 
       toast({

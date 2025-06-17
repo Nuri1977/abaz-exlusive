@@ -1,4 +1,5 @@
 import { isAdminServer } from "@/helpers/isAdminServer";
+
 import { ProductTable } from "./_components/ProductTable";
 
 export default async function ProductsPage() {

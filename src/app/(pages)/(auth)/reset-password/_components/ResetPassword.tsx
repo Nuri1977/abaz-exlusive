@@ -1,23 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
+
 import { authClient } from "@/lib/auth-client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ResetPassword = () => {
   const router = useRouter();
@@ -113,7 +114,7 @@ const ResetPassword = () => {
   // If no token is provided, show an error message
   if (!token) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="mx-auto w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
             Invalid Reset Link
@@ -124,7 +125,7 @@ const ResetPassword = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="size-4" />
             <AlertDescription>
               The password reset link is missing a required token. Please
               request a new password reset link.
@@ -139,7 +140,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
         <CardDescription>
@@ -151,13 +152,13 @@ const ResetPassword = () => {
         <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {success && (
-            <Alert className="bg-green-50 border-green-200">
+            <Alert className="border-green-200 bg-green-50">
               <AlertDescription className="text-green-800">
                 {success}
               </AlertDescription>
@@ -184,9 +185,9 @@ const ResetPassword = () => {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
                 <span className="sr-only">
                   {showPassword ? "Hide password" : "Show password"}
@@ -215,9 +216,9 @@ const ResetPassword = () => {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
                 <span className="sr-only">
                   {showConfirmPassword ? "Hide password" : "Show password"}

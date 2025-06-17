@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   Body,
   Column,
@@ -9,12 +10,11 @@ import {
   Img,
   Link,
   Preview,
+  Row,
   Section,
   Text,
-  Row,
 } from "@react-email/components";
 import { User } from "better-auth/types";
-import * as React from "react";
 
 interface EmailResetPasswordProps {
   user: User;

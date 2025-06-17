@@ -1,10 +1,12 @@
 "use client";
+
 import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 
 const ContactForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -61,13 +63,13 @@ const ContactForm = () => {
       </CardHeader>
       <CardContent>
         {submitted ? (
-          <div className="text-green-600 font-medium py-4">
+          <div className="py-4 font-medium text-green-600">
             Thank you for reaching out! We will get back to you soon.
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Name
               </label>
               <Input
@@ -79,7 +81,7 @@ const ContactForm = () => {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium">
                 Email
               </label>
               <Input
@@ -93,7 +95,7 @@ const ContactForm = () => {
             <div>
               <label
                 htmlFor="message"
-                className="block text-sm font-medium mb-1"
+                className="mb-1 block text-sm font-medium"
               >
                 Message
               </label>

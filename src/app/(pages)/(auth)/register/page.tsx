@@ -1,8 +1,10 @@
 import React from "react";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import RegisterForm from "./_components/RegisterForm";
+import { redirect } from "next/navigation";
+
 import { auth } from "@/lib/auth";
+
+import RegisterForm from "./_components/RegisterForm";
 
 export const metadata = {
   title: "Register | Shalom Radio",
@@ -21,7 +23,7 @@ const RegisterPage = async () => {
   }
 
   return (
-    <div className="container max-w-screen-md mx-auto py-8 md:py-12">
+    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
       <RegisterForm />
     </div>
   );

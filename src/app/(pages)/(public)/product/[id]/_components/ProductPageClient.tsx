@@ -1,15 +1,17 @@
 "use client";
 
-import clsx from "clsx";
-import api from "@/lib/axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { queryKeys } from "@/config/constants";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import ProductWithOptions from "@/types/product";
-import ProductPageSkeleton from "./ProductPageSkeleton";
+import clsx from "clsx";
+
+import type ProductWithOptions from "@/types/Product";
+import { queryKeys } from "@/config/constants";
+import api from "@/lib/axios";
+import { Button } from "@/components/ui/button";
+
 import ProductImageGallery from "./ProductImageGallery";
+import ProductPageSkeleton from "./ProductPageSkeleton";
 
 export default function ProductPageClient({ id }: { id: string }) {
   const router = useRouter();
@@ -31,8 +33,12 @@ export default function ProductPageClient({ id }: { id: string }) {
     retry: false,
   });
 
-  const sizeOption = product?.options.find((opt) => opt.name.toLowerCase() === "size");
-  const colorOption = product?.options.find((opt) => opt.name.toLowerCase() === "color");
+  const sizeOption = product?.options.find(
+    (opt) => opt.name.toLowerCase() === "size"
+  );
+  const colorOption = product?.options.find(
+    (opt) => opt.name.toLowerCase() === "color"
+  );
 
   const availableSizes = sizeOption?.values.map((v) => v.value) || [];
   const availableColors = colorOption?.values.map((v) => v.value) || [];
@@ -48,7 +54,7 @@ export default function ProductPageClient({ id }: { id: string }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="md:sticky md:top-4">
           <ProductImageGallery images={product.images} />
         </div>
@@ -72,8 +78,10 @@ export default function ProductPageClient({ id }: { id: string }) {
                   key={color}
                   onClick={() => setSelectedColor(color)}
                   className={clsx(
-                    "w-8 h-8 rounded-full border-2 transition-all duration-150",
-                    selectedColor === color ? "border-gray-900 scale-110" : "border-none"
+                    "size-8 rounded-full border-2 transition-all duration-150",
+                    selectedColor === color
+                      ? "scale-110 border-gray-900"
+                      : "border-none"
                   )}
                   style={{ backgroundColor: color }}
                   aria-label={`Select color ${color}`}
@@ -90,8 +98,10 @@ export default function ProductPageClient({ id }: { id: string }) {
                   key={size}
                   onClick={() => setSelectedSize(size)}
                   className={clsx(
-                    "w-10 h-10 rounded-md border text-sm font-medium flex items-center justify-center transition-all duration-150",
-                    selectedSize === size ? "border-gray-900 bg-gray-100" : "border-gray-300"
+                    "flex size-10 items-center justify-center rounded-md border text-sm font-medium transition-all duration-150",
+                    selectedSize === size
+                      ? "border-gray-900 bg-gray-100"
+                      : "border-gray-300"
                   )}
                 >
                   {size}
@@ -104,30 +114,30 @@ export default function ProductPageClient({ id }: { id: string }) {
             <Button>Add to Cart</Button>
           </div>
 
-          <div className="pt-6 border-t border-gray-200">
+          <div className="border-t border-gray-200 pt-6">
             <div className="grid grid-cols-2 gap-4 text-sm">
               {product.brand && (
                 <div>
                   <h3 className="font-medium">Brand</h3>
-                  <p className="text-gray-600 capitalize">{product.brand}</p>
+                  <p className="capitalize text-gray-600">{product.brand}</p>
                 </div>
               )}
               {product.gender && (
                 <div>
                   <h3 className="font-medium">Gender</h3>
-                  <p className="text-gray-600 capitalize">{product.gender}</p>
+                  <p className="capitalize text-gray-600">{product.gender}</p>
                 </div>
               )}
               {product.style && (
                 <div>
                   <h3 className="font-medium">Style</h3>
-                  <p className="text-gray-600 capitalize">{product.style}</p>
+                  <p className="capitalize text-gray-600">{product.style}</p>
                 </div>
               )}
               {product.material && (
                 <div>
                   <h3 className="font-medium">Material</h3>
-                  <p className="text-gray-600 capitalize">{product.material}</p>
+                  <p className="capitalize text-gray-600">{product.material}</p>
                 </div>
               )}
             </div>

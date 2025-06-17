@@ -1,26 +1,3 @@
-export type FileUploadThing = {
-  name: string;
-  size: number;
-  key: string;
-  lastModified: number;
-  serverData: {
-    uploadedBy: string;
-  };
-  url: string;
-  appUrl: string;
-  ufsUrl: string;
-  customId: string | null;
-  type: string;
-  fileHash: string;
-};
-
-export type FileDeleteResponse = {
-  success: boolean;
-  deletedCount: number;
-};
-
-// Email service types
-
 export interface EmailConfig {
   smtpConfig: {
     host: string;
@@ -47,5 +24,3 @@ export interface EmailData {
     name?: string;
   };
 }
-
-// Add other types below this line...

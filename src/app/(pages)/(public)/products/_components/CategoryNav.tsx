@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Category } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function CategoryNav() {
@@ -44,22 +45,22 @@ export function CategoryNav() {
   };
 
   const CategorySkeleton = () => (
-    <div className="flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
       {Array.from({ length: 6 }).map((_, i) => (
         <Skeleton
           key={i}
-          className="h-9 w-24 shrink-0 bg-muted/50 rounded-md border border-border"
+          className="h-9 w-24 shrink-0 rounded-md border border-border bg-muted/50"
         />
       ))}
     </div>
   );
 
   const CategoryButtons = () => (
-    <div className="flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
       <button
         onClick={() => handleCategoryClick("all")}
         className={cn(
-          "px-4 py-2 text-sm font-medium transition-colors shrink-0",
+          "shrink-0 px-4 py-2 text-sm font-medium transition-colors",
           selectedCategories.length === 0
             ? "bg-primary text-primary-foreground"
             : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -72,7 +73,7 @@ export function CategoryNav() {
           key={category.id}
           onClick={() => handleCategoryClick(category.id)}
           className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap shrink-0",
+            "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
             selectedCategories.includes(category.id)
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -87,12 +88,12 @@ export function CategoryNav() {
   return (
     <div className="space-y-4">
       {/* Desktop Layout */}
-      <div className="hidden md:flex items-center gap-4">
+      <div className="hidden items-center gap-4 md:flex">
         {isLoading ? <CategorySkeleton /> : <CategoryButtons />}
       </div>
 
       {/* Mobile Layout */}
-      <div className="md:hidden space-y-4">
+      <div className="space-y-4 md:hidden">
         {isLoading ? <CategorySkeleton /> : <CategoryButtons />}
       </div>
     </div>

@@ -11,7 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="container max-w-screen-md mx-auto py-8 md:py-12">
+    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
       <div className="space-y-6">{children}</div>
     </div>
   );

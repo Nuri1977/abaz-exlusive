@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,10 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Loader2 } from "lucide-react";
-import { UploadButton } from "@/utils/uploadthing";
-import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -34,8 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -258,11 +256,11 @@ export function CreateProductDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           Add Product
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Product</DialogTitle>
         </DialogHeader>
@@ -392,27 +390,27 @@ export function CreateProductDialog() {
                       }}
                     />
                   </FormControl>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {field.value.map((image, index) => (
                       <div
                         key={index}
-                        className="relative w-20 h-20 border rounded-md"
+                        className="relative size-20 rounded-md border"
                       >
                         <img
                           src={image}
                           alt={`Product image ${index + 1}`}
-                          className="w-full h-full object-cover rounded-md"
+                          className="size-full rounded-md object-cover"
                         />
                         <button
                           type="button"
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                          className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
                           onClick={() => {
                             const newImages = [...field.value];
                             newImages.splice(index, 1);
                             field.onChange(newImages);
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="size-4" />
                         </button>
                       </div>
                     ))}
@@ -431,7 +429,7 @@ export function CreateProductDialog() {
               </CardHeader>
               <CardContent>
                 {form.watch("options").map((option, optionIndex) => (
-                  <div key={optionIndex} className="space-y-4 mb-4">
+                  <div key={optionIndex} className="mb-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <FormField
                         control={form.control}
@@ -451,7 +449,7 @@ export function CreateProductDialog() {
                         variant="destructive"
                         onClick={() => removeOption(optionIndex)}
                       >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                       </Button>
                     </div>
                     <div className="space-y-2">
@@ -479,7 +477,7 @@ export function CreateProductDialog() {
                               removeOptionValue(optionIndex, valueIndex)
                             }
                           >
-                            <X className="h-4 w-4" />
+                            <X className="size-4" />
                           </Button>
                         </div>
                       ))}
@@ -505,7 +503,7 @@ export function CreateProductDialog() {
               </CardHeader>
               <CardContent>
                 {form.watch("variants").map((variant, variantIndex) => (
-                  <div key={variantIndex} className="space-y-4 mb-4">
+                  <div key={variantIndex} className="mb-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <FormField
                         control={form.control}

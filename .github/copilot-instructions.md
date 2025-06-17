@@ -129,7 +129,7 @@
 
   ```tsx
   // Import the hook
-  import { useToast } from "@/hooks/use-toast";
+  import { useToast } from "@/hooks/useToast";
 
   // Using the toast
   const { toast } = useToast();

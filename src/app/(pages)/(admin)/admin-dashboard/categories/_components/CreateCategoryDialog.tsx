@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { Plus, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,9 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Loader2 } from "lucide-react";
 import { UploadButton } from "@/utils/uploadthing";
-import Image from "next/image";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -92,7 +93,7 @@ export function CreateCategoryDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           Add Category
         </Button>
       </DialogTrigger>
@@ -137,25 +138,25 @@ export function CreateCategoryDialog() {
                   <FormControl>
                     <div className="space-y-4">
                       {field.value?.url && (
-                        <div className="relative w-40 h-40 group">
+                        <div className="group relative size-40">
                           <Image
                             src={field.value.url}
                             alt="Category image"
                             fill
-                            className="object-cover rounded-md"
+                            className="rounded-md object-cover"
                           />
                           <Button
                             type="button"
                             variant="destructive"
                             size="icon"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
                             onClick={async () => {
                               const button =
                                 document.activeElement as HTMLButtonElement;
                               const originalContent = button.innerHTML;
                               button.disabled = true;
                               button.innerHTML =
-                                '<Loader2 className="h-4 w-4 animate-spin" />';
+                                '<Loader2 className="size-4 animate-spin" />';
                               try {
                                 await fetch(
                                   `/api/admin/uploadthing/${field.value.key}`,
@@ -164,13 +165,13 @@ export function CreateCategoryDialog() {
                                   }
                                 );
                                 field.onChange(null);
-                              } catch (error) {
+                              } catch (_error) {
                                 button.innerHTML = originalContent;
                                 button.disabled = false;
                               }
                             }}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="size-4" />
                           </Button>
                         </div>
                       )}

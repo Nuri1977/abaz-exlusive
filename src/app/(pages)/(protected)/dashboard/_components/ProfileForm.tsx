@@ -1,20 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { User } from "@prisma/client";
+import { Eye, EyeOff, Loader2, Save, Trash2 } from "lucide-react";
+
+import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/hooks/useToast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,8 +18,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Eye, EyeOff, Save, Trash2 } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ProfileFormProps {
   user: User;
@@ -173,9 +174,9 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="size-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="size-4" />
                 )}
                 <span className="sr-only">
                   {showPassword ? "Hide password" : "Show password"}
@@ -191,9 +192,9 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
             className="flex items-center"
           >
             {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
             ) : (
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-2 size-4" />
             )}
             Save Changes
           </Button>
@@ -206,9 +207,9 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
                 className="flex items-center"
               >
                 {isDeleting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : (
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-2 size-4" />
                 )}
                 Delete Account
               </Button>
@@ -228,16 +229,16 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
                 <AlertDialogAction
                   onClick={handleAccountDeletion}
                   disabled={isDeleting}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 flex items-center"
+                  className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   {isDeleting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      <Loader2 className="mr-2 size-4 animate-spin" />{" "}
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="mr-2 h-4 w-4" /> Yes, delete my account
+                      <Trash2 className="mr-2 size-4" /> Yes, delete my account
                     </>
                   )}
                 </AlertDialogAction>
