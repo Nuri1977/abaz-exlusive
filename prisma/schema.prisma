@@ -105,7 +105,7 @@ model Product {
   slug        String           @unique
   description String?
   price       Decimal          @db.Decimal(10, 2)
-  images      String[]
+  images      Json[]
   categoryId  String
   category    Category         @relation(fields: [categoryId], references: [id])
   options     ProductOption[]

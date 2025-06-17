@@ -1,3 +1,5 @@
+import { Category, Product } from "@prisma/client";
+
 export type FileUploadThing = {
   name: string;
   size: number;
@@ -48,4 +50,10 @@ export interface EmailData {
   };
 }
 
-// Add other types below this line...
+export interface ProductExt extends Omit<Product, "images"> {
+  images: FileUploadThing[];
+}
+
+export interface CategoryExt extends Omit<Category, "image"> {
+  image: FileUploadThing;
+}
