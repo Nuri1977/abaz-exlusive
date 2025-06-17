@@ -36,7 +36,7 @@ export default function LikeTable() {
               <TableRow key={product.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <p className="font-bold hover:underline">{product.name}</p>
+                  <p className="font-bold text-md">{product.name}</p>
                 </TableCell>
                 <TableCell>
                   <Image src={product.images[0]} alt="Product Image" width={100} height={100} />
