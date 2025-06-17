@@ -2,9 +2,19 @@ import { Product } from "@prisma/client";
 import { useToast } from "@/hooks/use-toast";
 import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchLikedProducts, likeProduct, unlikeProduct } from "@/lib/query/likes";
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from "react";
-import { toastPresets } from "@/app/constants/toasts";
+import {
+  fetchLikedProducts,
+  likeProduct,
+  unlikeProduct,
+} from "@/lib/query/likes";
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+} from "react";
+import { toastPresets } from "@/constants/toasts";
 
 type UserAccountContextType = {
   likedProducts: Product[];
@@ -15,19 +25,22 @@ type UserAccountContextType = {
   areLikedProductsLoading: boolean;
 };
 
-const UserAccountContext = createContext<UserAccountContextType | undefined>(undefined);
+const UserAccountContext = createContext<UserAccountContextType | undefined>(
+  undefined
+);
 
 export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
 
-  const { data: likedProducts = [], isLoading: areLikedProductsLoading } = useQuery({
-    queryKey: ["likedProductDetails"],
-    queryFn: fetchLikedProducts,
-    enabled: !!session?.user,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data: likedProducts = [], isLoading: areLikedProductsLoading } =
+    useQuery({
+      queryKey: ["likedProductDetails"],
+      queryFn: fetchLikedProducts,
+      enabled: !!session?.user,
+      staleTime: 1000 * 60 * 5,
+    });
 
   console.log("liked products", likedProducts);
 
@@ -47,7 +60,8 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
       queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
     },
     onError: (_err, _productId, context) => {
-      if (context?.prev) queryClient.setQueryData(["likedProducts"], context.prev);
+      if (context?.prev)
+        queryClient.setQueryData(["likedProducts"], context.prev);
     },
   });
 
@@ -70,12 +84,14 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
       queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
     },
     onError: (_err, _productId, context) => {
-      if (context?.prev) queryClient.setQueryData(["likedProducts"], context.prev);
+      if (context?.prev)
+        queryClient.setQueryData(["likedProducts"], context.prev);
     },
   });
 
   const isLiked = useCallback(
-    (productId: string) => likedProducts.some((product) => product.id === productId),
+    (productId: string) =>
+      likedProducts.some((product) => product.id === productId),
     [likedProducts]
   );
 
@@ -130,13 +146,19 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
     [likedProducts, isLiked, like, unlike, toggleLike, areLikedProductsLoading]
   );
 
-  return <UserAccountContext.Provider value={value}>{children}</UserAccountContext.Provider>;
+  return (
+    <UserAccountContext.Provider value={value}>
+      {children}
+    </UserAccountContext.Provider>
+  );
 };
 
 export const useUserAccountContext = () => {
   const context = useContext(UserAccountContext);
   if (!context) {
-    throw new Error("useUserAccountContext must be used within a UserAccountProvider");
+    throw new Error(
+      "useUserAccountContext must be used within a UserAccountProvider"
+    );
   }
   return context;
 };

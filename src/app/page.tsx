@@ -19,7 +19,7 @@ import {
   Shield,
   Users,
 } from "lucide-react";
-import { placeholderShoeImages } from "@/utils/constants";
+import { placeholderShoeImages } from "@/constants/images";
 
 const placeholderShoes = [
   {

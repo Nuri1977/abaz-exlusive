@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { adminLinks } from "@/utils/constants";
+import { adminLinks } from "@/constants/routes";
 
 // Navigation links component
 const AdminNavLinks = ({ onClick }: { onClick?: () => void }) => {

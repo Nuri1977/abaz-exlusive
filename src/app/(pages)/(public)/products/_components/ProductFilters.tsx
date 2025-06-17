@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { genderOptions, brandOptions } from "@/utils/constants";
+import { genderOptions, brandOptions } from "@/constants/options";
 
 const materialOptions = [
   "Leather",
