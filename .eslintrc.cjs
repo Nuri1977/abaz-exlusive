@@ -27,15 +27,6 @@ const config = {
         "varsIgnorePattern": "^_"
       }
     ],
-    "unused-imports/no-unused-vars": [
-      "error",
-      {
-        vars: "all",
-        varsIgnorePattern: "^_",
-        args: "after-used",
-        argsIgnorePattern: "^_"
-      }
-    ],
 
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
