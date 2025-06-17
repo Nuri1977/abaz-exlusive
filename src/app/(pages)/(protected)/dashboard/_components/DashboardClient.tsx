@@ -54,7 +54,7 @@ const DashboardClient = ({ user }: DashboardClientProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
         <Button
           variant="outline"
           onClick={handleSignOut}
