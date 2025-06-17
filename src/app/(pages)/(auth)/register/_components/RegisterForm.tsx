@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 
+import { authClient } from "@/lib/auth-client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -16,8 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const RegisterForm = () => {
   const router = useRouter();
@@ -74,7 +74,7 @@ const RegisterForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
         <CardDescription>
@@ -89,13 +89,13 @@ const RegisterForm = () => {
               className="flex items-center justify-start text-center"
             >
               <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <AlertCircle className="size-4 flex-shrink-0" />
                 <AlertDescription>{error}</AlertDescription>
               </div>
             </Alert>
           )}
           {success && (
-            <Alert className="bg-green-50 border-green-200 flex items-center justify-center text-center">
+            <Alert className="flex items-center justify-center border-green-200 bg-green-50 text-center">
               <div className="flex items-center gap-2">
                 <AlertDescription className="text-green-800">
                   {success}
@@ -143,9 +143,9 @@ const RegisterForm = () => {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
                 <span className="sr-only">
                   {showPassword ? "Hide password" : "Show password"}

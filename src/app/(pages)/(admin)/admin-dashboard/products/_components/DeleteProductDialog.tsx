@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { Product } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { Trash2 } from "lucide-react";
+
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Product } from "@prisma/client";
-import { Trash2 } from "lucide-react";
 
 interface DeleteProductDialogProps {
   product: Product;
@@ -58,7 +59,7 @@ export function DeleteProductDialog({ product }: DeleteProductDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>

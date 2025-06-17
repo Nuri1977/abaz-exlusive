@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAdminServer } from "@/helpers/isAdminServer";
+
 import { prisma } from "@/lib/prisma";
+import { isAdminServer } from "@/helpers/isAdminServer";
 
 export async function GET(
   request: Request,

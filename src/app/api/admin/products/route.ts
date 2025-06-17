@@ -1,8 +1,9 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminServer } from "@/helpers/isAdminServer";
-import { headers } from "next/headers";
 
 export async function GET(req: Request) {
   try {

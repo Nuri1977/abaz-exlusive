@@ -1,4 +1,5 @@
 import { isAdminServer } from "@/helpers/isAdminServer";
+
 import { CategoryTable } from "./_components/CategoryTable";
 
 export default async function CategoriesPage() {

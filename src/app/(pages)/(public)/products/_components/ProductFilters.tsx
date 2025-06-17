@@ -1,10 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -12,9 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useState } from "react";
-import { genderOptions, brandOptions } from "@/utils/constants";
+import { Slider } from "@/components/ui/slider";
+import { brandOptions, genderOptions } from "@/utils/constants";
 
 const materialOptions = [
   "Leather",
@@ -102,7 +103,7 @@ export function ProductFilters() {
   };
 
   return (
-    <Card className="p-4 space-y-6">
+    <Card className="space-y-6 p-4">
       <div className="space-y-4">
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
@@ -113,7 +114,7 @@ export function ProductFilters() {
             value={priceRange}
             onValueChange={handlePriceChange}
             onValueCommit={handlePriceChangeEnd}
-            className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-2 [&_[role=slider]]:rounded-full [&_[role=slider]]:bg-white"
+            className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:border-2 [&_[role=slider]]:bg-white"
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>${priceRange[0]}</span>

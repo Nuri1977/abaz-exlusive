@@ -1,6 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { User } from "@prisma/client";
+import { format } from "date-fns";
+import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+
+import { useToast } from "@/hooks/useToast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,30 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { UserDialog } from "./UserDialog";
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
-import {
-  useUsers,
   useCreateUser,
-  useUpdateUser,
   useDeleteUser,
-} from "@/controllers/users/users-controller";
-import { User } from "@prisma/client";
+  useUpdateUser,
+  useUsers,
+} from "@/controllers/users/usersController";
+
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
+import { UserDialog } from "./UserDialog";
 
 export function UserTable() {
-  const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -109,13 +110,13 @@ export function UserTable() {
         <CardHeader className="bg-muted/40">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Users</CardTitle>
-            <div className="flex items-center mt-2 sm:mt-0 gap-2">
+            <div className="mt-2 flex items-center gap-2 sm:mt-0">
               <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="mr-2 size-4" />
                 Refresh
               </Button>
               <Button size="sm" onClick={handleCreateUser}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 size-4" />
                 Add User
               </Button>
             </div>
@@ -126,7 +127,7 @@ export function UserTable() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex justify-center items-center p-8">
+            <div className="flex items-center justify-center p-8">
               <p className="text-muted-foreground">Loading users...</p>
             </div>
           ) : (
@@ -147,7 +148,7 @@ export function UserTable() {
                     <TableRow>
                       <TableCell
                         colSpan={6}
-                        className="text-center text-muted-foreground p-4"
+                        className="p-4 text-center text-muted-foreground"
                       >
                         No users found
                       </TableCell>
@@ -157,7 +158,7 @@ export function UserTable() {
                       <TableRow key={user.id}>
                         <TableCell>
                           {user.name || (
-                            <span className="text-muted-foreground italic">
+                            <span className="italic text-muted-foreground">
                               No name
                             </span>
                           )}
@@ -189,7 +190,7 @@ export function UserTable() {
                               variant="ghost"
                               onClick={() => handleEditUser(user)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="size-4" />
                               <span className="sr-only">Edit</span>
                             </Button>
                             <Button
@@ -198,7 +199,7 @@ export function UserTable() {
                               className="text-destructive"
                               onClick={() => handleDeleteUser(user)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="size-4" />
                               <span className="sr-only">Delete</span>
                             </Button>
                           </div>
@@ -211,7 +212,7 @@ export function UserTable() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="bg-muted/40 border-t p-3 text-sm flex justify-between">
+        <CardFooter className="flex justify-between border-t bg-muted/40 p-3 text-sm">
           <div>Total users: {Array.isArray(users) ? users.length : 0}</div>
         </CardFooter>
       </Card>

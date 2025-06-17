@@ -1,16 +1,39 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
+import type { Product } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
   getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
+import { ChevronDown, Loader2 } from "lucide-react";
+
+import { formatPrice } from "@/lib/utils";
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,32 +42,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Product } from "@prisma/client";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Filter } from "lucide-react";
+
 import { CreateProductDialog } from "./CreateProductDialog";
-import { EditProductDialog } from "./EditProductDialog";
 import { DeleteProductDialog } from "./DeleteProductDialog";
-import Image from "next/image";
-import { formatPrice } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronDown } from "lucide-react";
+import { EditProductDialog } from "./EditProductDialog";
 
 type ProductWithVariants = Product & {
   variants: Array<{
@@ -72,17 +73,17 @@ const columns: ColumnDef<ProductWithVariants>[] = [
     cell: ({ row }) => {
       const images = row.original.images;
       return images && images.length > 0 ? (
-        <div className="relative w-16 h-16">
+        <div className="relative size-16">
           <Image
             src={images[0]}
             alt={row.original.name}
             fill
-            className="object-cover rounded-md"
+            className="rounded-md object-cover"
           />
         </div>
       ) : (
-        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
-          <span className="text-muted-foreground text-xs">No image</span>
+        <div className="flex size-16 items-center justify-center rounded-md bg-muted">
+          <span className="text-xs text-muted-foreground">No image</span>
         </div>
       );
     },
@@ -132,7 +133,7 @@ const columns: ColumnDef<ProductWithVariants>[] = [
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               {variants.length} variants
-              <ChevronDown className="ml-2 h-4 w-4" />
+              <ChevronDown className="ml-2 size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">
@@ -220,15 +221,15 @@ export function ProductTable() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Input
             placeholder="Filter by name..."

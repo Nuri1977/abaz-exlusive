@@ -1,5 +1,6 @@
-import { getSessionServer } from "./getSessionServer";
 import type { User } from "better-auth";
+
+import { getSessionServer } from "./getSessionServer";
 
 /**
  * Check if the current user is an admin (server-side)

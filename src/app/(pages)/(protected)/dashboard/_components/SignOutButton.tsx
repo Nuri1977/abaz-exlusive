@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { Button, ButtonProps } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import type { ButtonProps } from "@/components/ui/button";
 
 interface SignOutButtonProps extends Omit<ButtonProps, "onClick"> {
   redirectTo?: string;
@@ -67,7 +69,7 @@ const SignOutButton = ({
     >
       {isLoading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="mr-2 size-4 animate-spin" />
           <span>Signing out...</span>
         </>
       ) : (

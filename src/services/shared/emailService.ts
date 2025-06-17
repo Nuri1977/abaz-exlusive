@@ -1,5 +1,6 @@
-import { EmailConfig, EmailData } from "@/types/my-types";
-import * as nodemailer from 'nodemailer';
+import * as nodemailer from "nodemailer";
+
+import { EmailConfig, EmailData } from "@/types/Email";
 
 /**
  * Email Service using Nodemailer with SMTP
@@ -23,7 +24,10 @@ export class EmailService {
       console.error("Failed to send email:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error sending email",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error sending email",
       };
     }
   }
@@ -66,7 +70,9 @@ export class EmailService {
         subject,
         html: htmlContent,
         ...(replyTo?.email && {
-          replyTo: replyTo.name ? `"${replyTo.name}" <${replyTo.email}>` : replyTo.email,
+          replyTo: replyTo.name
+            ? `"${replyTo.name}" <${replyTo.email}>`
+            : replyTo.email,
         }),
       };
 

@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+
 import ResetPassword from "./_components/ResetPassword";
 
 export const metadata = {
@@ -8,7 +9,7 @@ export const metadata = {
 
 const ResetPasswordPage = () => {
   return (
-    <div className="container max-w-screen-md mx-auto py-8 md:py-12">
+    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
       <Suspense fallback={<div className="text-center">Loading...</div>}>
         <ResetPassword />
       </Suspense>
