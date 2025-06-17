@@ -8,6 +8,7 @@ import {
   Settings,
   ShoppingBag,
   Tags,
+  UserRoundPen,
   Users,
 } from "lucide-react";
 
@@ -50,7 +51,7 @@ export const adminLinks = [
 ];
 
 export const userLinks = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Profile", href: "/dashboard", icon: UserRoundPen },
   { name: "Likes", href: "/dashboard/likes", icon: Heart },
 ];
 
