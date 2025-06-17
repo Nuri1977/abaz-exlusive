@@ -4,7 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchLikedProducts, likeProduct, unlikeProduct } from "@/lib/query/likes";
 import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from "react";
-import { toastPresets } from "@/app/constants/toasts";
+import { toastPresets } from "@/constants/toasts";
 
 type UserAccountContextType = {
   likedProducts: Product[];

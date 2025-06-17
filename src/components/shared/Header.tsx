@@ -14,13 +14,20 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { navLinks } from "@/app/constants/routes";
+import { navLinks } from "@/constants/routes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsAdmin } from "@/helpers/isAdminClient";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User, LogOut, LayoutDashboard, Settings, Heart } from "lucide-react";
+import {
+  Menu,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Settings,
+  Heart,
+} from "lucide-react";
 
 export function Header() {
   const router = useRouter();
@@ -143,7 +150,11 @@ export function Header() {
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full border h-9 w-9 p-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full border h-9 w-9 p-0"
+                >
                   {isPending ? (
                     <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
                   ) : session ? (
@@ -159,27 +170,38 @@ export function Header() {
                 {!isPending && session ? (
                   <>
                     <div className="p-2 text-center">
-                      <p className="font-medium">{session?.user?.name || "User"}</p>
+                      <p className="font-medium">
+                        {session?.user?.name || "User"}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {session?.user?.email || "No email"}
                       </p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="w-full cursor-pointer flex items-center">
+                      <Link
+                        href="/dashboard"
+                        className="w-full cursor-pointer flex items-center"
+                      >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem asChild>
-                        <Link href="/admin-dashboard" className="w-full cursor-pointer flex items-center">
+                        <Link
+                          href="/admin-dashboard"
+                          className="w-full cursor-pointer flex items-center"
+                        >
                           <Settings className="mr-2 h-4 w-4" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </DropdownMenuItem>
@@ -255,7 +277,10 @@ export function Header() {
                           className="justify-start text-primary hover:bg-primary/10 py-6"
                           onClick={() => setOpen(false)}
                         >
-                          <Link href="/admin-dashboard" className="flex items-center">
+                          <Link
+                            href="/admin-dashboard"
+                            className="flex items-center"
+                          >
                             <Settings className="mr-2 h-4 w-4" />
                             Admin Dashboard
                           </Link>

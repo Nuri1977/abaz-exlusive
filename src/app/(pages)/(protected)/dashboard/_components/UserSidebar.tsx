@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { AlignLeft } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { userLinks } from "@/app/constants/routes";
+import { userLinks } from "@/constants/routes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -48,7 +48,9 @@ const UserSidebar = () => {
       <div className="min-h-screen border-r bg-background w-64 hidden md:block">
         <div className="py-4">
           <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xl font-semibold tracking-tight">User Dashboard</h2>
+            <h2 className="mb-2 px-4 text-xl font-semibold tracking-tight">
+              User Dashboard
+            </h2>
             <ScrollArea className="h-[calc(100vh-100px)]">
               <UserNavLinks />
             </ScrollArea>
