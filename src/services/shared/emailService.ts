@@ -1,6 +1,6 @@
 import * as nodemailer from "nodemailer";
 
-import { EmailConfig, EmailData } from "@/types/my-types";
+import { EmailConfig, EmailData } from "@/types/Email";
 
 /**
  * Email Service using Nodemailer with SMTP

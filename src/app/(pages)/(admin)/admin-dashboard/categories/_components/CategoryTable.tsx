@@ -19,7 +19,7 @@ import {
 } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 
-import type { FileUploadThing } from "@/types/my-types";
+import { FileUploadThing } from "@/types/UploadThing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

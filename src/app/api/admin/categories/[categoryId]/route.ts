@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import { FileUploadThing } from "@/types/my-types";
+import { FileUploadThing } from "@/types/UploadThing";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
