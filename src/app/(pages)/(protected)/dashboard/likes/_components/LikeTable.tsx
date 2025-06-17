@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import LikeSkeleton from "./LikeSkeleton";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUserAccountContext } from "@/context/UserAccountContext";
@@ -10,13 +11,11 @@ export default function LikeTable() {
   const router = useRouter();
   const { likedProducts, unlike, areLikedProductsLoading } = useUserAccountContext();
 
-  if (areLikedProductsLoading) return <p>Loading liked products...</p>;
+  if (areLikedProductsLoading) return <LikeSkeleton />;
 
   if (!likedProducts || likedProducts.length === 0) {
     return <p>No likes yet. Start liking products to see them here!</p>;
   }
-
-  console.log("Liked Products:", likedProducts);
 
   return (
     <div className="space-y-6">
@@ -40,7 +39,7 @@ export default function LikeTable() {
                   <p className="font-bold hover:underline">{product.name}</p>
                 </TableCell>
                 <TableCell>
-                  <Image src={product.images[0]} alt="Product Image" width={100} height={100}></Image>
+                  <Image src={product.images[0]} alt="Product Image" width={100} height={100} />
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
