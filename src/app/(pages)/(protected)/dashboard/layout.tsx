@@ -14,8 +14,11 @@ export default function DashboardLayout({
   children: ReactNode;
 }>) {
   return (
-    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
-      <div className="space-y-6">{children}</div>
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <UserSidebar />
+      <main className="flex-1 overflow-y-auto p-6 pt-4 md:pt-6">
+        {children}
+      </main>
     </div>
   );
 }
