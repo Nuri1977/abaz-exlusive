@@ -43,8 +43,6 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
       staleTime: 1000 * 60 * 5,
     });
 
-  console.log("liked products", likedProducts);
-
   const likeMutation = useMutation({
     mutationFn: (product: Product) => likeProduct(product.id),
     onMutate: async (product: Product) => {
