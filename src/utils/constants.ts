@@ -1,16 +1,3 @@
-import {
-  LayoutDashboard,
-  Settings,
-  Users,
-  Home,
-  Info,
-  Mail,
-  Tags,
-  Package,
-  ShoppingBag,
-  Heart,
-} from "lucide-react";
-
 export const categoryOptions = [
   "Talk Show",
   "Music",
