@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 
+import { brandOptions, genderOptions } from "@/constants/options";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { brandOptions, genderOptions } from "@/utils/constants";
 
 const materialOptions = [
   "Leather",
@@ -92,13 +91,15 @@ export function ProductFilters() {
   };
 
   const handlePriceChange = (value: number[]) => {
-    setPriceRange([value[0], value[1]]);
+    if (value[0] && value[1]) {
+      setPriceRange([value[0], value[1]]);
+    }
   };
 
   const handlePriceChangeEnd = (value: number[]) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("minPrice", value[0].toString());
-    params.set("maxPrice", value[1].toString());
+    params.set("minPrice", value?.[0]?.toString() ?? "0");
+    params.set("maxPrice", value?.[1]?.toString() ?? "1000");
     router.push(`/products?${params.toString()}`);
   };
 

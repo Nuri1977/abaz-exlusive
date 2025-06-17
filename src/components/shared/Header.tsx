@@ -3,16 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUserAccountContext } from "@/context/UserAccountContext";
 import {
   Heart,
   LayoutDashboard,
   LogOut,
   Menu,
   Settings,
-  ShoppingCart,
   User,
 } from "lucide-react";
 
+import { navLinks } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
 import { useToast } from "@/hooks/useToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,14 +29,16 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
-import { navLinks } from "@/utils/constants";
 
 export function Header() {
+  const router = useRouter();
+  const isAdmin = useIsAdmin();
+  const { toast } = useToast();
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-  const isAdmin = useIsAdmin();
+  const { likedProducts } = useUserAccountContext();
+  const likedCount = likedProducts.length;
 
   // Use Better Auth's useSession hook for proper session management
   const { data: session, isPending } = authClient.useSession();
@@ -89,9 +92,9 @@ export function Header() {
 
     const nameParts = session.user.name.split(" ");
     if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      return `${nameParts?.[0]?.[0] ?? ""}${nameParts?.[1]?.[0] ?? ""}`.toUpperCase();
     }
-    return nameParts[0].substring(0, 2).toUpperCase();
+    return nameParts?.[0]?.substring(0, 2)?.toUpperCase() ?? "U";
   };
 
   // Rest of the component remains unchanged
@@ -119,21 +122,31 @@ export function Header() {
               </Button>
             ))}
           </nav>
+
           {/* Likes and Cart Icons */}
-          <Link
-            href="/likes"
-            className="p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
-          >
-            <Heart size={24} />
-            <span className="sr-only">Likes</span>
-          </Link>
-          <Link
-            href="/cart"
-            className="p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
-          >
-            <ShoppingCart size={24} />
-            <span className="sr-only">Cart</span>
-          </Link>
+          {session ? (
+            <Link
+              href="/dashboard/likes"
+              className="relative p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+              {likedCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+                  {likedCount > 99 ? "99+" : likedCount}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+            </Link>
+          )}
+
           {/* Auth Dropdown - Hidden on mobile */}
           <div className="hidden md:block">
             <DropdownMenu>
@@ -141,16 +154,16 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-9 rounded-full border p-0"
+                  className="h-9 w-9 rounded-full border p-0"
                 >
                   {isPending ? (
-                    <Skeleton className="size-8 rounded-full bg-muted-foreground/20" />
+                    <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
                   ) : session ? (
-                    <Avatar className="size-8">
+                    <Avatar className="h-8 w-8">
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   ) : (
-                    <User className="size-5" />
+                    <User className="h-5 w-5" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -171,7 +184,7 @@ export function Header() {
                         href="/dashboard"
                         className="flex w-full cursor-pointer items-center"
                       >
-                        <LayoutDashboard className="mr-2 size-4" />
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
@@ -181,7 +194,7 @@ export function Header() {
                           href="/admin-dashboard"
                           className="flex w-full cursor-pointer items-center"
                         >
-                          <Settings className="mr-2 size-4" />
+                          <Settings className="mr-2 h-4 w-4" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
@@ -190,7 +203,7 @@ export function Header() {
                       onClick={handleSignOut}
                       className="cursor-pointer"
                     >
-                      <LogOut className="mr-2 size-4" />
+                      <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </DropdownMenuItem>
                   </>
@@ -216,7 +229,7 @@ export function Header() {
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" className="h-auto p-3 md:hidden">
-                <Menu className="size-10" />
+                <Menu className="h-10 w-10" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
@@ -237,7 +250,7 @@ export function Header() {
                         onClick={() => setOpen(false)}
                       >
                         <Link href={link.href} className="flex items-center">
-                          <Icon className="mr-2 size-4" />
+                          <Icon className="mr-2 h-4 w-4" />
                           {link.name}
                         </Link>
                       </Button>
@@ -254,7 +267,7 @@ export function Header() {
                         onClick={() => setOpen(false)}
                       >
                         <Link href="/dashboard" className="flex items-center">
-                          <LayoutDashboard className="mr-2 size-4" />
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
                           Dashboard
                         </Link>
                       </Button>
@@ -269,7 +282,7 @@ export function Header() {
                             href="/admin-dashboard"
                             className="flex items-center"
                           >
-                            <Settings className="mr-2 size-4" />
+                            <Settings className="mr-2 h-4 w-4" />
                             Admin Dashboard
                           </Link>
                         </Button>
@@ -282,7 +295,7 @@ export function Header() {
                           setOpen(false);
                         }}
                       >
-                        <LogOut className="mr-2 size-4" />
+                        <LogOut className="mr-2 h-4 w-4" />
                         Sign out
                       </Button>
                     </>

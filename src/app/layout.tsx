@@ -32,7 +32,6 @@ export const metadata: Metadata = {
     "Template",
   ],
   authors: [{ name: "Your Name" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
 };
 

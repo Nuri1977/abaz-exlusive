@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { placeholderShoeImages } from "@/constants/images";
 import { Button } from "@/components/ui/button";
-import { placeholderShoeImages } from "@/utils/constants";
 
 const placeholderShoes = [
   {

@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import AdminSidebar from "./_components/AdminSidebar";
 
 export const metadata: Metadata = {
-  title: "Shalom Radio - Admin Dashboard",
-  description: "Administrative dashboard for Shalom Radio",
+  title: "Admin Dashboard",
+  description: "Administrative dashboard of the Shopping App",
 };
 
 export default function AdminLayout({

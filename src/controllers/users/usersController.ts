@@ -1,7 +1,7 @@
 import type { User } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { queryKeys } from "@/config/constants";
+import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
 
 // Query hook for fetching all users

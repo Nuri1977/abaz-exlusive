@@ -9,8 +9,8 @@ import {
   Youtube,
 } from "lucide-react";
 
+import { navLinks } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
-import { navLinks } from "@/utils/constants";
 
 import Logo from "./Logo";
 

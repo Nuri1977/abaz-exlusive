@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { adminLinks } from "@/constants/routes";
 import {
   Card,
   CardContent,
@@ -8,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { isAdminServer } from "@/helpers/isAdminServer";
-import { adminLinks } from "@/utils/constants";
 
 const AdminDashboardPage = async () => {
   const isAdmin = await isAdminServer();
@@ -35,7 +35,7 @@ const AdminDashboardPage = async () => {
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome to the Shalom Radio admin panel.
+          Welcome to the Shop admin panel.
         </p>
       </div>
 

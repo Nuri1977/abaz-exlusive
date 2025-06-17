@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUserAccountContext } from "@/context/UserAccountContext";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
+import { Heart } from "lucide-react";
 
-import type ProductWithOptions from "@/types/Product";
-import { queryKeys } from "@/config/constants";
+import type ProductWithOptions from "@/types/product";
+import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +17,7 @@ import ProductPageSkeleton from "./ProductPageSkeleton";
 
 export default function ProductPageClient({ id }: { id: string }) {
   const router = useRouter();
+  const { toggleLike, isLiked } = useUserAccountContext();
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -32,6 +35,7 @@ export default function ProductPageClient({ id }: { id: string }) {
     enabled: !!id,
     retry: false,
   });
+  const liked = isLiked(product?.id || "");
 
   const sizeOption = product?.options.find(
     (opt) => opt.name.toLowerCase() === "size"
@@ -110,8 +114,14 @@ export default function ProductPageClient({ id }: { id: string }) {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="flex gap-8 pt-4">
             <Button>Add to Cart</Button>
+            <button
+              onClick={() => toggleLike(product)}
+              className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
+            >
+              <Heart size={30} className={liked ? "fill-current" : ""} />
+            </button>
           </div>
 
           <div className="border-t border-gray-200 pt-6">

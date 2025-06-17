@@ -3,7 +3,7 @@
 
 import { unstable_cache } from "next/cache";
 
-import { queryKeys } from "@/config/constants";
+import { queryKeys } from "@/config/tanstackConfig";
 import { prisma } from "@/lib/prisma";
 
 export const getUsersSSG = unstable_cache(async () => {
