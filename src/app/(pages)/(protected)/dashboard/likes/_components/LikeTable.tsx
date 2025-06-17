@@ -1,15 +1,25 @@
 "use client";
 
 import Image from "next/image";
-import LikeSkeleton from "./LikeSkeleton";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useUserAccountContext } from "@/context/UserAccountContext";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import LikeSkeleton from "./LikeSkeleton";
 
 export default function LikeTable() {
   const router = useRouter();
-  const { likedProducts, unlike, areLikedProductsLoading } = useUserAccountContext();
+  const { likedProducts, unlike, areLikedProductsLoading } =
+    useUserAccountContext();
 
   if (areLikedProductsLoading) return <LikeSkeleton />;
 
@@ -36,20 +46,29 @@ export default function LikeTable() {
               <TableRow key={product.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <p className="font-bold text-md">{product.name}</p>
+                  <p className="text-md font-bold">{product.name}</p>
                 </TableCell>
                 <TableCell>
-                  <Image src={product.images[0]} alt="Product Image" width={100} height={100} />
+                  <Image
+                    src={product?.images?.[0]}
+                    alt="Product Image"
+                    width={100}
+                    height={100}
+                  />
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
-                    className="w-16 mr-4"
+                    className="mr-4 w-16"
                     variant="outline"
                     onClick={() => router.push(`/product/${product.id}`)}
                   >
                     View
                   </Button>
-                  <Button className="w-16" variant="destructive" onClick={() => unlike(product.id)}>
+                  <Button
+                    className="w-16"
+                    variant="destructive"
+                    onClick={() => unlike(product)}
+                  >
                     Unlike
                   </Button>
                 </TableCell>
