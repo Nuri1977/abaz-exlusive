@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Heart } from "lucide-react";
 
-import type ProductWithOptions from "@/types/Product";
+import type ProductWithOptions from "@/types/product";
 import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
 import { Button } from "@/components/ui/button";
