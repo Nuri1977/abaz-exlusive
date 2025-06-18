@@ -51,7 +51,7 @@ export function Footer() {
 
             {/* Column 2: Quick Links */}
             <div className="space-y-4">
-              <h3 className="mb-4 text-base font-bold text-foreground">
+              <h3 className="mb-4 text-base font-bold text-red-500">
                 Quick Links
               </h3>
               <nav className="grid grid-cols-2 gap-2">
@@ -66,7 +66,7 @@ export function Footer() {
                 ))}
               </nav>
 
-              <h3 className="mb-2 mt-6 text-base font-bold text-foreground">
+              <h3 className="mb-2 mt-6 text-base font-bold text-red-500">
                 Legal
               </h3>
               <div className="flex flex-col gap-2">
@@ -87,7 +87,7 @@ export function Footer() {
 
             {/* Column 3: Contact & Social */}
             <div className="space-y-4">
-              <h3 className="mb-4 text-base font-bold text-foreground">
+              <h3 className="mb-4 text-base font-bold text-red-500">
                 Get in Touch
               </h3>
               <div className="space-y-3">
