@@ -1,25 +1,7 @@
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  ChevronRight,
-  Code,
-  LayoutDashboard,
-  Lock,
-  Paintbrush,
-  Settings,
-  Shield,
-  Users,
-} from "lucide-react";
-import { placeholderShoeImages } from "@/utils/constants";
+
+import { placeholderShoeImages } from "@/constants/images";
+import { Button } from "@/components/ui/button";
 
 const placeholderShoes = [
   {
@@ -81,17 +63,17 @@ export default function HomePage() {
   return (
     <div className="font-sans">
       {/* Hero Banner */}
-      <section className="relative w-full h-screen flex items-center justify-center bg-black text-white mb-16">
+      <section className="relative mb-16 flex h-screen w-full items-center justify-center bg-black text-white">
         <img
           src="https://images.unsplash.com/photo-1524553879936-2ff074ae5816?q=80&w=2952&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Hero Shoe"
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          className="absolute inset-0 size-full object-cover opacity-60"
         />
         <div className="relative z-10 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-6xl">
             Discover the New Collection
           </h1>
-          <p className="text-lg md:text-2xl mb-8">
+          <p className="mb-8 text-lg md:text-2xl">
             Premium women's shoes for every occasion
           </p>
           <Button asChild size="lg" variant="secondary">
@@ -102,22 +84,22 @@ export default function HomePage() {
 
       {/* New Arrivals */}
       <section id="new-arrivals" className="mb-20">
-        <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <h2 className="mb-10 text-center text-3xl font-bold">New Arrivals</h2>
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
           {placeholderShoes.slice(0, 3).map((shoe, idx) => (
             <div
               key={idx}
-              className="bg-white shadow p-4 flex flex-col items-center"
+              className="flex flex-col items-center bg-white p-4 shadow"
             >
               <img
                 src={shoe.image}
                 alt={shoe.title}
-                className="w-full h-64 object-cover mb-4 rounded"
+                className="mb-4 h-64 w-full rounded object-cover"
               />
-              <h3 className="text-lg font-semibold mb-2 text-black">
+              <h3 className="mb-2 text-lg font-semibold text-black">
                 {shoe.title}
               </h3>
-              <p className="text-primary text-xl font-bold mb-2">
+              <p className="mb-2 text-xl font-bold text-primary">
                 {shoe.price}
               </p>
               <Button asChild className="w-full">
@@ -130,22 +112,22 @@ export default function HomePage() {
 
       {/* Best Sellers */}
       <section className="mb-20">
-        <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <h2 className="mb-10 text-center text-3xl font-bold">Best Sellers</h2>
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
           {placeholderShoes.slice(3).map((shoe, idx) => (
             <div
               key={idx}
-              className="bg-white shadow p-4 flex flex-col items-center"
+              className="flex flex-col items-center bg-white p-4 shadow"
             >
               <img
                 src={shoe.image}
                 alt={shoe.title}
-                className="w-full h-64 object-cover mb-4 rounded"
+                className="mb-4 h-64 w-full rounded object-cover"
               />
-              <h3 className="text-lg font-semibold mb-2 text-black">
+              <h3 className="mb-2 text-lg font-semibold text-black">
                 {shoe.title}
               </h3>
-              <p className="text-primary text-xl font-bold mb-2">
+              <p className="mb-2 text-xl font-bold text-primary">
                 {shoe.price}
               </p>
               <Button asChild className="w-full">
@@ -158,24 +140,24 @@ export default function HomePage() {
 
       {/* Shop by Category */}
       <section className="mb-20">
-        <h2 className="text-3xl font-bold text-center mb-10">
+        <h2 className="mb-10 text-center text-3xl font-bold">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 md:grid-cols-5">
           {categories.map((cat, idx) => (
             <Link
               href="/"
               key={cat.name}
-              className="flex flex-col items-center group"
+              className="group flex flex-col items-center"
             >
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mb-3 border-4 border-tertiary group-hover:scale-105 transition-transform">
+              <div className="mb-3 size-32 overflow-hidden rounded-full border-4 border-tertiary transition-transform group-hover:scale-105 md:h-40 md:w-40">
                 <img
                   src={cat.image}
                   alt={cat.name}
-                  className="w-full h-full object-cover"
+                  className="size-full object-cover"
                 />
               </div>
-              <span className="text-lg font-semibold text-black group-hover:text-primary transition-colors">
+              <span className="text-lg font-semibold text-black transition-colors group-hover:text-primary">
                 {cat.name}
               </span>
             </Link>
@@ -185,8 +167,8 @@ export default function HomePage() {
 
       {/* Promo Banner */}
       <section className="mb-20">
-        <div className="bg-primary text-primary-foreground py-12 px-4 rounded-lg max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+        <div className="mx-auto max-w-4xl rounded-lg bg-primary px-4 py-12 text-center text-primary-foreground">
+          <h2 className="mb-4 text-2xl font-bold md:text-3xl">
             Free Express Shipping
           </h2>
           <p className="mb-6">
@@ -196,7 +178,7 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            className="bg-white text-black font-semibold"
+            className="bg-white font-semibold text-black"
           >
             <Link href="/">Shop Now</Link>
           </Button>

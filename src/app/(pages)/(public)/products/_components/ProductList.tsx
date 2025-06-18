@@ -1,11 +1,12 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
-import { ProductCard } from "./ProductCard";
+import { Category, Product } from "@prisma/client";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { Product, Category } from "@prisma/client";
+import { useInView } from "react-intersection-observer";
+
+import { ProductCard } from "./ProductCard";
 import { ProductSkeleton } from "./ProductSkeleton";
 
 interface ProductListProps {
@@ -19,14 +20,7 @@ type ProductWithCategory = Product & {
 export function ProductList({ searchParams }: ProductListProps) {
   const { ref, inView } = useInView();
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-    isLoading,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, isLoading } = useInfiniteQuery({
     queryKey: ["products", searchParams],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
@@ -36,13 +30,7 @@ export function ProductList({ searchParams }: ProductListProps) {
 
       // Handle all search params
       Object.entries(searchParams).forEach(([key, value]) => {
-        if (
-          value &&
-          key !== "status" &&
-          key !== "value" &&
-          key !== "_response" &&
-          key !== "_debugInfo"
-        ) {
+        if (value && key !== "status" && key !== "value" && key !== "_response" && key !== "_debugInfo") {
           if (Array.isArray(value)) {
             params.set(key, value[0]);
           } else {
@@ -78,7 +66,7 @@ export function ProductList({ searchParams }: ProductListProps) {
 
   if (status === "error") {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-red-500">Failed to load products</p>
       </div>
     );
@@ -86,7 +74,7 @@ export function ProductList({ searchParams }: ProductListProps) {
 
   if (!data?.pages[0]?.products.length) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-muted-foreground">No products found</p>
       </div>
     );
@@ -94,15 +82,15 @@ export function ProductList({ searchParams }: ProductListProps) {
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {data.pages.map((page) =>
           page.products.map((product: ProductWithCategory) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
       </div>
-      <div ref={ref} className="flex justify-center items-center py-8">
-        {isFetchingNextPage && <Loader2 className="h-8 w-8 animate-spin" />}
+      <div ref={ref} className="flex items-center justify-center py-8">
+        {isFetchingNextPage && <Loader2 className="size-8 animate-spin" />}
       </div>
     </div>
   );

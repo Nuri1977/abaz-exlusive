@@ -1,8 +1,9 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
-import { headers } from "next/headers";
 
 interface ProductIdParams {
   params: {

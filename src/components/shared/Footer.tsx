@@ -1,39 +1,39 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import {
   Facebook,
-  Twitter,
   Instagram,
-  Youtube,
   Mail,
   MapPin,
   Phone,
+  Twitter,
+  Youtube,
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { navLinks } from "@/utils/constants";
+
+import { navLinks } from "@/constants/routes";
+import { Button } from "@/components/ui/button";
+
 import Logo from "./Logo";
 
 export function Footer() {
   return (
     <footer className="w-full backdrop-blur-sm">
-      <div className="bg-primary text-primary-foreground py-8">
+      <div className="bg-primary py-8 text-primary-foreground">
         <div className="container mx-auto px-4">
           {/* Main Footer Content */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {/* Column 1: About */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="relative h-16 w-16">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="relative size-16">
                   <Link
                     href="/"
-                    className="cursor-pointer flex items-center gap-2"
+                    className="flex cursor-pointer items-center gap-2"
                   >
                     <Logo size={180} />
                   </Link>
                 </div>
               </div>
-              <p className="text-white hover:text-white/90 text-sm">
+              <p className="text-sm text-white hover:text-white/90">
                 Discover premium women's shoes designed for style, comfort, and
                 confidence. Shop the latest collections and timeless classics at
                 Molini Shoes.
@@ -41,7 +41,7 @@ export function Footer() {
               <Button
                 asChild
                 variant="link"
-                className="p-0 h-auto text-primary"
+                className="h-auto p-0 text-primary"
               >
                 <Link href="/about" rel="noopener noreferrer">
                   Learn more about us →
@@ -51,7 +51,7 @@ export function Footer() {
 
             {/* Column 2: Quick Links */}
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground mb-4">
+              <h3 className="mb-4 text-base font-bold text-foreground">
                 Quick Links
               </h3>
               <nav className="grid grid-cols-2 gap-2">
@@ -59,26 +59,26 @@ export function Footer() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className="text-white hover:text-white/90 transition-colors"
+                    className="text-white transition-colors hover:text-white/90"
                   >
                     {link.name}
                   </Link>
                 ))}
               </nav>
 
-              <h3 className="text-base font-bold text-foreground mt-6 mb-2">
+              <h3 className="mb-2 mt-6 text-base font-bold text-foreground">
                 Legal
               </h3>
               <div className="flex flex-col gap-2">
                 <Link
                   href="/terms"
-                  className="text-white hover:text-white/90 transition-colors"
+                  className="text-white transition-colors hover:text-white/90"
                 >
                   Terms & Conditions
                 </Link>
                 <Link
                   href="/privacy"
-                  className="text-white hover:text-white/90 transition-colors"
+                  className="text-white transition-colors hover:text-white/90"
                 >
                   Privacy Policy
                 </Link>
@@ -87,14 +87,14 @@ export function Footer() {
 
             {/* Column 3: Contact & Social */}
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground mb-4">
+              <h3 className="mb-4 text-base font-bold text-foreground">
                 Get in Touch
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start">
                   <MapPin
                     size={16}
-                    className="mr-2 mt-0.5 text-white hover:text-white/90 shrink-0"
+                    className="mr-2 mt-0.5 shrink-0 text-white hover:text-white/90"
                   />
                   <span className="text-white hover:text-white/90">
                     Your Address, City, Country
@@ -103,7 +103,7 @@ export function Footer() {
                 <div className="flex items-center">
                   <Phone
                     size={16}
-                    className="mr-2 text-white hover:text-white/90 shrink-0"
+                    className="mr-2 shrink-0 text-white hover:text-white/90"
                   />
                   <Link
                     href="tel:+0000000000"
@@ -115,7 +115,7 @@ export function Footer() {
                 <div className="flex items-center">
                   <Mail
                     size={16}
-                    className="mr-2 text-white hover:text-white/90 shrink-0"
+                    className="mr-2 shrink-0 text-white hover:text-white/90"
                   />
                   <Link
                     href="mailto:info@example.com"
@@ -126,41 +126,41 @@ export function Footer() {
                 </div>
               </div>
 
-              <h3 className="text-base font-bold text-foreground mt-6 mb-3">
+              <h3 className="mb-3 mt-6 text-base font-bold text-foreground">
                 Follow Us
               </h3>
               <div className="flex space-x-4">
                 <Link
                   href="#"
-                  className="bg-transparent text-white hover:text-white/80 rounded-full p-2 transition-colors"
+                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
                   aria-label="Facebook"
                 >
                   <Facebook size={18} />
                 </Link>
                 <Link
                   href="#"
-                  className="bg-transparent text-white hover:text-white/80 rounded-full p-2 transition-colors"
+                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
                   aria-label="Twitter"
                 >
                   <Twitter size={18} />
                 </Link>
                 <Link
                   href="#"
-                  className="bg-transparent text-white hover:text-white/80 rounded-full p-2 transition-colors"
+                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
                   aria-label="Instagram"
                 >
                   <Instagram size={18} />
                 </Link>
                 <Link
                   href="#"
-                  className="bg-transparent text-white hover:text-white/80 rounded-full p-2 transition-colors"
+                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
                   aria-label="YouTube"
                 >
                   <Youtube size={18} />
                 </Link>
                 <Link
                   href="#"
-                  className="bg-transparent text-white hover:text-white/80 rounded-full p-2 transition-colors"
+                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
                   aria-label="WhatsApp"
                 >
                   <svg
@@ -183,10 +183,10 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="bg-tertiary text-tertiary-foreground py-4">
+      <div className="bg-tertiary py-4 text-tertiary-foreground">
         <div className="container mx-auto px-4">
           {/* Footer Bottom */}
-          <div className="flex flex-col sm:flex-row justify-between items-center">
+          <div className="flex flex-col items-center justify-between sm:flex-row">
             <div className="flex items-center">
               <Button
                 asChild
@@ -199,7 +199,7 @@ export function Footer() {
                 </Link>
               </Button>
             </div>
-            <p className="text-xs text-tertiary-foreground mt-4 sm:mt-0">
+            <p className="mt-4 text-xs text-tertiary-foreground sm:mt-0">
               &copy; {new Date().getFullYear()} Molini Shoes. All rights
               reserved.
             </p>

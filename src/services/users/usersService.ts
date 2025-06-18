@@ -1,9 +1,10 @@
 // Static site generation SSG with untable cache and revalidation
 // Server side rendering SSR
 
-import { queryKeys } from "@/config/constants";
-import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+
+import { queryKeys } from "@/config/tanstackConfig";
+import { prisma } from "@/lib/prisma";
 
 export const getUsersSSG = unstable_cache(async () => {
   const response = await prisma.user.findMany({

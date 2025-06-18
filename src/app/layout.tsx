@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Montserrat, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Montserrat } from "next/font/google";
+
 import "./globals.css";
-import { Header } from "@/components/shared/Header";
-import { Footer } from "@/components/shared/Footer";
+
 import { Toaster } from "@/components/ui/toaster";
+import { Footer } from "@/components/shared/Footer";
+import { Header } from "@/components/shared/Header";
 import Providers from "@/providers/providers";
 
 const montserrat = Montserrat({
@@ -30,7 +32,6 @@ export const metadata: Metadata = {
     "Template",
   ],
   authors: [{ name: "Your Name" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
 };
 

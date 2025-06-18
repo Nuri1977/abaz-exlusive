@@ -1,0 +1,11 @@
+dist
+node_modules
+.next
+build
+package-lock.json
+.cursor
+.env.example
+.eslintrc.cjs
+.github
+.gitignore
+.idx

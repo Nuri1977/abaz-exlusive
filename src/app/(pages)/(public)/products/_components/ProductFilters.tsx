@@ -1,10 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+import { brandOptions, genderOptions } from "@/constants/options";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -12,9 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useState } from "react";
-import { genderOptions, brandOptions } from "@/utils/constants";
+import { Slider } from "@/components/ui/slider";
 
 const materialOptions = [
   "Leather",
@@ -91,18 +91,20 @@ export function ProductFilters() {
   };
 
   const handlePriceChange = (value: number[]) => {
-    setPriceRange([value[0], value[1]]);
+    if (value[0] && value[1]) {
+      setPriceRange([value[0], value[1]]);
+    }
   };
 
   const handlePriceChangeEnd = (value: number[]) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("minPrice", value[0].toString());
-    params.set("maxPrice", value[1].toString());
+    params.set("minPrice", value?.[0]?.toString() ?? "0");
+    params.set("maxPrice", value?.[1]?.toString() ?? "1000");
     router.push(`/products?${params.toString()}`);
   };
 
   return (
-    <Card className="p-4 space-y-6">
+    <Card className="space-y-6 p-4">
       <div className="space-y-4">
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
@@ -113,7 +115,7 @@ export function ProductFilters() {
             value={priceRange}
             onValueChange={handlePriceChange}
             onValueCommit={handlePriceChangeEnd}
-            className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-2 [&_[role=slider]]:rounded-full [&_[role=slider]]:bg-white"
+            className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:border-2 [&_[role=slider]]:bg-white"
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>${priceRange[0]}</span>

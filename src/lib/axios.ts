@@ -1,4 +1,10 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
+import axios from "axios";
+import type {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
+
 import { ApiError, NetworkError } from "./errors";
 
 // Define response types
@@ -80,13 +86,19 @@ export const api = {
     axiosInstance.get<ApiResponse<T>>(url, config).then((res) => res.data),
 
   post: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance.post<ApiResponse<T>>(url, data, config).then((res) => res.data),
+    axiosInstance
+      .post<ApiResponse<T>>(url, data, config)
+      .then((res) => res.data),
 
   put: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance.put<ApiResponse<T>>(url, data, config).then((res) => res.data),
+    axiosInstance
+      .put<ApiResponse<T>>(url, data, config)
+      .then((res) => res.data),
 
   patch: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance.patch<ApiResponse<T>>(url, data, config).then((res) => res.data),
+    axiosInstance
+      .patch<ApiResponse<T>>(url, data, config)
+      .then((res) => res.data),
 
   delete: <T>(url: string, config?: InternalAxiosRequestConfig) =>
     axiosInstance.delete<ApiResponse<T>>(url, config).then((res) => res.data),

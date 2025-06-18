@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto py-12 max-w-2xl prose">
+    <div className="prose container mx-auto max-w-2xl py-12">
       <h1>Privacy Policy</h1>
       <p>
         Your privacy is important to us. This policy explains how Shalom Radio

@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import * as bcrypt from "bcryptjs";
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function PUT(request: NextRequest) {
   try {
     // Get current user session with correct headers handling
-    const headersList = headers();
     const session = await auth.api.getSession({
       headers: await headers(), // you need to pass the headers object.
     });
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     // Get current user session with correct headers handling
     const session = await auth.api.getSession({

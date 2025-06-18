@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import ContactForm from "./_components/ContactForm";
 
 export const metadata: Metadata = {
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="container mx-auto py-12 max-w-xl">
+    <div className="container mx-auto max-w-xl py-12">
       <ContactForm />
     </div>
   );

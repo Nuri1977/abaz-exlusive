@@ -1,8 +1,10 @@
 import React from "react";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import LoginForm from "./_components/LoginForm";
+import { redirect } from "next/navigation";
+
 import { auth } from "@/lib/auth";
+
+import LoginForm from "./_components/LoginForm";
 
 export const metadata = {
   title: "Login | Shalom Radio",
@@ -21,7 +23,7 @@ const LoginPage = async () => {
   }
 
   return (
-    <div className="container max-w-screen-md mx-auto py-8 md:py-12">
+    <div className="container mx-auto max-w-screen-md py-8 md:py-12">
       <LoginForm />
     </div>
   );

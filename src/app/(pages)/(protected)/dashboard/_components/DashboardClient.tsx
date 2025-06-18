@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { User } from "@prisma/client";
+import { LogOut } from "lucide-react";
+
+import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+
 import AccountInfo from "./AccountInfo";
 import ProfileForm from "./ProfileForm";
-import { Button } from "@/components/ui/button";
-import { User } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { useToast } from "@/hooks/use-toast";
-import { LogOut } from "lucide-react";
 
 interface DashboardClientProps {
   user: User;
@@ -53,22 +55,22 @@ const DashboardClient = ({ user }: DashboardClientProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
         <Button
           variant="outline"
           onClick={handleSignOut}
           disabled={isSigningOut}
           className="flex items-center gap-1"
         >
-          <LogOut className="h-4 w-4 mr-1" />
+          <LogOut className="mr-1 size-4" />
           {isSigningOut ? "Signing out..." : "Sign out"}
         </Button>
       </div>
 
       {isEditing ? (
         <>
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Edit Profile</h2>
             <Button variant="outline" onClick={() => setIsEditing(false)}>
               Cancel

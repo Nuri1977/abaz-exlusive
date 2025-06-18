@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { ProductList } from "./_components/ProductList";
-import { ProductFilters } from "./_components/ProductFilters";
-import { ProductSkeleton } from "./_components/ProductSkeleton";
+
 import { CategoryNav } from "./_components/CategoryNav";
+import { ProductFilters } from "./_components/ProductFilters";
+import { ProductList } from "./_components/ProductList";
+import { ProductSkeleton } from "./_components/ProductSkeleton";
 import { ProductSort } from "./_components/ProductSort";
 
 export const metadata = {
@@ -19,7 +20,7 @@ export default async function ProductsPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
+      <div className="mb-8 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
         <div className="flex-1">
           <CategoryNav />
         </div>
@@ -27,7 +28,7 @@ export default async function ProductsPage({
           <ProductSort />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-1">
           <ProductFilters />
         </div>

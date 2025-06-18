@@ -1,6 +1,7 @@
+import { NextResponse } from "next/server";
+
 import { isAdminServer } from "@/helpers/isAdminServer";
 import { utapi } from "@/utils/utapi";
-import { NextResponse } from "next/server";
 
 export async function DELETE(
   request: Request,

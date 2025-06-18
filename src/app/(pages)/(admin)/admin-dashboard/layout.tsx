@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+
 import AdminSidebar from "./_components/AdminSidebar";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Shalom Radio - Admin Dashboard",
-  description: "Administrative dashboard for Shalom Radio",
+  title: "Admin Dashboard",
+  description: "Administrative dashboard of the Shopping App",
 };
 
 export default function AdminLayout({
@@ -13,9 +14,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       <AdminSidebar />
-      <main className="flex-1 overflow-y-auto p-6 md:pt-6 pt-4">
+      <main className="flex-1 overflow-y-auto p-6 pt-4 md:pt-6">
         {children}
       </main>
       <Toaster />

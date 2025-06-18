@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAdminServer } from "@/helpers/isAdminServer";
+
 import { prisma } from "@/lib/prisma";
+import { isAdminServer } from "@/helpers/isAdminServer";
 
 export async function GET() {
   try {
@@ -56,10 +57,7 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!body.email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Check if user already exists

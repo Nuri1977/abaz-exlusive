@@ -1,22 +1,23 @@
 "use client";
 
-import Logo from "@/components/shared/Logo";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import {
-  Menu,
-  User,
-  LogOut,
-  LayoutDashboard,
-  Settings,
-  Heart,
-  ShoppingCart,
-} from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUserAccountContext } from "@/context/UserAccountContext";
+import {
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings,
+  User,
+} from "lucide-react";
+
+import { navLinks } from "@/constants/routes";
+import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/hooks/useToast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,17 +25,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { useIsAdmin } from "@/helpers/isAdminClient";
-import { navLinks } from "@/utils/constants";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import Logo from "@/components/shared/Logo";
+import { useIsAdmin } from "@/helpers/isAdminClient";
 
 export function Header() {
+  const router = useRouter();
+  const isAdmin = useIsAdmin();
+  const { toast } = useToast();
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-  const isAdmin = useIsAdmin();
+  const { likedProducts } = useUserAccountContext();
+  const likedCount = likedProducts.length;
 
   // Use Better Auth's useSession hook for proper session management
   const { data: session, isPending } = authClient.useSession();
@@ -88,51 +92,61 @@ export function Header() {
 
     const nameParts = session.user.name.split(" ");
     if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      return `${nameParts?.[0]?.[0] ?? ""}${nameParts?.[1]?.[0] ?? ""}`.toUpperCase();
     }
-    return nameParts[0].substring(0, 2).toUpperCase();
+    return nameParts?.[0]?.substring(0, 2)?.toUpperCase() ?? "U";
   };
 
   // Rest of the component remains unchanged
   return (
     <header
-      className={`w-full backdrop-blur sticky top-0 z-50 shadow-sm transition-all duration-300 ${
+      className={`sticky top-0 z-50 w-full shadow-sm backdrop-blur transition-all duration-300 ${
         scrolled ? "bg-black/80" : "bg-black"
       } text-white`}
     >
-      <div className="container mx-auto flex items-center justify-between py-3 px-4">
-        <Link href="/" className="cursor-pointer flex items-center gap-2">
+      <div className="container mx-auto flex items-center justify-between px-4 py-3">
+        <Link href="/" className="flex cursor-pointer items-center gap-2">
           <Logo size={160} />
         </Link>
         <div className="flex items-center gap-3">
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex gap-2">
+          <nav className="hidden gap-2 md:flex">
             {navLinks.map((link) => (
               <Button
                 asChild
                 key={link.name}
                 variant="ghost"
-                className="text-primary-foreground hover:text-primary-foreground/90 hover:bg-[#6c7280]/10"
+                className="text-primary-foreground hover:bg-[#6c7280]/10 hover:text-primary-foreground/90"
               >
                 <Link href={link.href}>{link.name}</Link>
               </Button>
             ))}
           </nav>
+
           {/* Likes and Cart Icons */}
-          <Link
-            href="/likes"
-            className="p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
-          >
-            <Heart size={24} />
-            <span className="sr-only">Likes</span>
-          </Link>
-          <Link
-            href="/cart"
-            className="p-2 text-primary-foreground hover:text-primary-foreground/90 transition-colors"
-          >
-            <ShoppingCart size={24} />
-            <span className="sr-only">Cart</span>
-          </Link>
+          {session ? (
+            <Link
+              href="/dashboard/likes"
+              className="relative p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+              {likedCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+                  {likedCount > 99 ? "99+" : likedCount}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+            >
+              <Heart size={24} />
+              <span className="sr-only">Likes</span>
+            </Link>
+          )}
+
           {/* Auth Dropdown - Hidden on mobile */}
           <div className="hidden md:block">
             <DropdownMenu>
@@ -140,7 +154,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-full border h-9 w-9 p-0"
+                  className="h-9 w-9 rounded-full border p-0"
                 >
                   {isPending ? (
                     <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
@@ -160,7 +174,7 @@ export function Header() {
                       <p className="font-medium">
                         {session?.user?.name || "User"}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="truncate text-xs text-muted-foreground">
                         {session?.user?.email || "No email"}
                       </p>
                     </div>
@@ -168,7 +182,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link
                         href="/dashboard"
-                        className="w-full cursor-pointer flex items-center"
+                        className="flex w-full cursor-pointer items-center"
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
@@ -178,7 +192,7 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link
                           href="/admin-dashboard"
-                          className="w-full cursor-pointer flex items-center"
+                          className="flex w-full cursor-pointer items-center"
                         >
                           <Settings className="mr-2 h-4 w-4" />
                           Admin Dashboard
@@ -214,17 +228,17 @@ export function Header() {
           {/* Mobile Menu Trigger */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="md:hidden p-3 h-auto">
+              <Button variant="ghost" className="h-auto p-3 md:hidden">
                 <Menu className="h-10 w-10" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[80%] sm:w-[350px] p-0">
-              <div className="flex flex-col h-full">
-                <div className="flex items-center justify-start p-4 border-b">
+            <SheetContent side="right" className="w-[80%] p-0 sm:w-[350px]">
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-start border-b p-4">
                   <Logo size={200} />
                 </div>
-                <nav className="flex flex-col p-4 gap-1">
+                <nav className="flex flex-col gap-1 p-4">
                   {navLinks.map((link) => {
                     const Icon = link.icon;
                     return (
@@ -232,7 +246,7 @@ export function Header() {
                         asChild
                         key={link.name}
                         variant="ghost"
-                        className="justify-start text-primary hover:bg-primary/10 py-6"
+                        className="justify-start py-6 text-primary hover:bg-primary/10"
                         onClick={() => setOpen(false)}
                       >
                         <Link href={link.href} className="flex items-center">
@@ -249,7 +263,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="ghost"
-                        className="justify-start text-primary hover:bg-primary/10 py-6"
+                        className="justify-start py-6 text-primary hover:bg-primary/10"
                         onClick={() => setOpen(false)}
                       >
                         <Link href="/dashboard" className="flex items-center">
@@ -261,7 +275,7 @@ export function Header() {
                         <Button
                           asChild
                           variant="ghost"
-                          className="justify-start text-primary hover:bg-primary/10 py-6"
+                          className="justify-start py-6 text-primary hover:bg-primary/10"
                           onClick={() => setOpen(false)}
                         >
                           <Link
@@ -275,7 +289,7 @@ export function Header() {
                       )}
                       <Button
                         variant="ghost"
-                        className="justify-start text-primary hover:bg-primary/10 py-6"
+                        className="justify-start py-6 text-primary hover:bg-primary/10"
                         onClick={() => {
                           handleSignOut();
                           setOpen(false);
@@ -290,7 +304,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="ghost"
-                        className="justify-start text-primary hover:bg-primary/10 py-6"
+                        className="justify-start py-6 text-primary hover:bg-primary/10"
                         onClick={() => setOpen(false)}
                       >
                         <Link href="/login">Sign in</Link>
@@ -298,7 +312,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="ghost"
-                        className="justify-start text-primary hover:bg-primary/10 py-6"
+                        className="justify-start py-6 text-primary hover:bg-primary/10"
                         onClick={() => setOpen(false)}
                       >
                         <Link href="/register">Create account</Link>

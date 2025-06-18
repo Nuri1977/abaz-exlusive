@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   Body,
   Column,
@@ -9,11 +10,10 @@ import {
   Img,
   Link,
   Preview,
+  Row,
   Section,
   Text,
-  Row,
 } from "@react-email/components";
-import * as React from "react";
 
 interface EmailContactTemplateProps {
   name: string;

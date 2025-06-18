@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+
 import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -56,7 +57,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl">Forgot Password</CardTitle>
         <CardDescription>
@@ -83,13 +84,13 @@ const ForgotPassword = () => {
           </div>
 
           {error && (
-            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-100 text-green-700 text-sm p-3 rounded-md">
+            <div className="rounded-md bg-green-100 p-3 text-sm text-green-700">
               {success}
             </div>
           )}
