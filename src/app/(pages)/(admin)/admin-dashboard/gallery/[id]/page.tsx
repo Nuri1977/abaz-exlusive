@@ -10,9 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
-import { deleteImage } from "@/services/shared/imageService";
-
 import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,6 +40,7 @@ export default function ImageDetailPage({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { mutate: deleteGalleryItem, isPending: isDeleting } = useDeleteGalleryMutation();
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -65,24 +65,24 @@ export default function ImageDetailPage({
   }, [params.id, toast]);
 
   const handleDelete = async () => {
-    try {
-      const result = await deleteImage(image?.key || "");
-      if (result.success) {
+    if (!image?.id) return;
+    
+    deleteGalleryItem(image.id, {
+      onSuccess: () => {
         toast({
           title: "Success",
           description: "Image deleted successfully",
         });
         router.push("/admin-dashboard/gallery");
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete image",
-        variant: "destructive",
-      });
-    }
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to delete image",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   const handleCopyUrl = async () => {
@@ -207,8 +207,12 @@ export default function ImageDetailPage({
                     >
                       Cancel
                     </Button>
-                    <Button variant="destructive" onClick={handleDelete}>
-                      Delete
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

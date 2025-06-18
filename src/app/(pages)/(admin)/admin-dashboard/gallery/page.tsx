@@ -12,73 +12,26 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/useToast";
+import { useGalleryQuery } from "@/hooks/useGallery";
 import { UploadButton } from "@/utils/uploadthing";
 import { Eye, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-
-interface GalleryItem {
-  id: string;
-  name: string;
-  size: number;
-  url: string;
-  key: string;
-  type: string;
-  createdAt: string;
-  lastModified: number;
-  metadata: any;
-}
-
-interface PaginationInfo {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import { useState } from "react";
+import type { GalleryImage } from "@/lib/query/gallery";
 
 export default function GalleryPage() {
-  const [images, setImages] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    total: 0,
-    page: 1,
-    limit: 12,
-    totalPages: 0,
-  });
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [syncing, setSyncing] = useState(false);
+  const currentPage = parseInt(searchParams?.get("page") || "1");
+  const limit = 12;
 
-  const fetchImages = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/admin/gallery?page=${page}&limit=${pagination.limit}`
-      );
-      const data = await response.json();
-
-      if (data.items && Array.isArray(data.items)) {
-        setImages(data.items);
-        setPagination(data.pagination);
-      } else {
-        console.error("Invalid response format:", data);
-        setImages([]);
-      }
-    } catch (error) {
-      console.error("Error fetching images:", error);
-      setImages([]);
-      toast({
-        title: "Error",
-        description: "Failed to fetch images",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading, error, refetch, isPending } = useGalleryQuery(currentPage, limit);
+  const images = data?.items ?? [];
+  const pagination = data?.pagination;
 
   const handleSync = async () => {
     try {
@@ -93,7 +46,7 @@ export default function GalleryPage() {
           title: "Success",
           description: `Synced ${data.synced} items, deleted ${data.deleted} items`,
         });
-        fetchImages(pagination.page);
+        refetch();
       } else {
         throw new Error(data.error || "Failed to sync gallery");
       }
@@ -110,17 +63,20 @@ export default function GalleryPage() {
   };
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > pagination.totalPages) return;
+    if (!pagination || newPage < 1 || newPage > pagination.totalPages) return;
     router.push(`/admin-dashboard/gallery?page=${newPage}`);
-    fetchImages(newPage);
   };
 
-  useEffect(() => {
-    const page = parseInt(searchParams.get("page") || "1");
-    fetchImages(page);
-  }, [searchParams]);
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to fetch images",
+      variant: "destructive",
+    });
+  }
 
   const renderPaginationItems = () => {
+    if (!pagination) return null;
     const items = [];
     const maxVisiblePages = 5;
     const halfVisible = Math.floor(maxVisiblePages / 2);
@@ -145,7 +101,7 @@ export default function GalleryPage() {
             handlePageChange(pagination.page - 1);
           }}
           className={
-            pagination.page === 1 ? "pointer-events-none opacity-50" : ""
+            pagination.page === 1 || isPending ? "pointer-events-none opacity-50" : ""
           }
         />
       </PaginationItem>
@@ -227,7 +183,7 @@ export default function GalleryPage() {
             handlePageChange(pagination.page + 1);
           }}
           className={
-            pagination.page === pagination.totalPages
+            (pagination.page === pagination.totalPages || isPending)
               ? "pointer-events-none opacity-50"
               : ""
           }
@@ -259,7 +215,7 @@ export default function GalleryPage() {
                 title: "Success",
                 description: "Image uploaded successfully",
               });
-              fetchImages(pagination.page);
+              refetch();
             }}
             onUploadError={(error: Error) => {
               toast({
@@ -272,14 +228,14 @@ export default function GalleryPage() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="text-center">Loading...</div>
       ) : images.length === 0 ? (
         <div className="text-center text-gray-500">No images found</div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {images.map((image) => (
+            {images.map((image: GalleryImage) => (
               <Card key={image.id} className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative aspect-square">
@@ -314,12 +270,13 @@ export default function GalleryPage() {
             ))}
           </div>
 
-          {/* Pagination */}
-          <div className="mt-8">
-            <Pagination>
-              <PaginationContent>{renderPaginationItems()}</PaginationContent>
-            </Pagination>
-          </div>
+          {pagination && (
+            <div className="mt-8">
+              <Pagination>
+                <PaginationContent>{renderPaginationItems()}</PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </>
       )}
     </div>
