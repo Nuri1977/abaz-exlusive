@@ -54,8 +54,12 @@ export async function DELETE(
     }
 
     const image = await prisma.gallery.delete({
-      where: { id: params.id },
+      where: { key: params.id },
     });
+
+    if (!image) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
 
     return NextResponse.json(image);
   } catch (error) {
