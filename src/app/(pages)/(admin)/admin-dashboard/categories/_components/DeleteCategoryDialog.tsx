@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 
 import { useToast } from "@/hooks/useToast";
+import { useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,18 +17,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { FileUploadThing } from "@/types/UploadThing";
 
 interface DeleteCategoryDialogProps {
-  category: Category;
+  category: Category & {
+    image: FileUploadThing | null;
+  };
 }
 
 export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
   const { mutate: deleteCategory, isPending } = useMutation({
     mutationFn: async () => {
+      // Delete the gallery item first if it exists
+      if (category?.image?.key) {
+        deleteGalleryItem(category.image.key);
+      }
+
       const response = await fetch(`/api/admin/categories/${category.id}`, {
         method: "DELETE",
       });

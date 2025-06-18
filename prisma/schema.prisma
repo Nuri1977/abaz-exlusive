@@ -105,7 +105,7 @@ model Product {
   slug        String           @unique
   description String?
   price       Decimal          @db.Decimal(10, 2)
-  images      String[]
+  images      Json[]
   categoryId  String
   category    Category         @relation(fields: [categoryId], references: [id])
   options     ProductOption[]
@@ -262,6 +262,45 @@ model Like {
 
   @@unique([userId, productId])
   @@map("like")
+}
+
+model Gallery {
+  id           String   @id @default(cuid())
+  name         String
+  size         Int
+  key          String   @unique
+  lastModified Int
+  serverData   Json
+  url          String
+  appUrl       String
+  ufsUrl       String
+  customId     String?
+  type         String
+  fileHash     String
+  reference    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  metadata     Json
+  width        Int?
+  height       Int?
+  tags         String[]
+  uploadedBy   String?
+  usedIn       Json[]
+  isDeleted    Boolean  @default(false)
+
+  @@map("gallery")
+}
+
+model MediaUsage {
+  id         String   @id @default(cuid())
+  mediaId    String
+  entityId   String
+  entityType String // e.g., "product", "banner", "blog"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([mediaId, entityId, entityType])
+  @@map("media_usage")
 }
 
 enum OrderStatus {

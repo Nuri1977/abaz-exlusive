@@ -46,8 +46,9 @@ import {
 import { CreateProductDialog } from "./CreateProductDialog";
 import { DeleteProductDialog } from "./DeleteProductDialog";
 import { EditProductDialog } from "./EditProductDialog";
+import { FileUploadThing } from "@/types/UploadThing";
 
-type ProductWithVariants = Product & {
+export type ProductWithVariants = Product & {
   variants: Array<{
     id: string;
     sku: string;
@@ -64,29 +65,23 @@ type ProductWithVariants = Product & {
     id: string;
     name: string;
   } | null;
+  images: FileUploadThing[] | null;
 };
 
 const columns: ColumnDef<ProductWithVariants>[] = [
   {
     accessorKey: "images",
     header: "Image",
-    cell: ({ row }) => {
-      const images = row.original.images;
-      return images && images.length > 0 ? (
-        <div className="relative size-16">
+    cell: ({ row }) => 
+        (<div className="relative size-16">
+          <div>Data: J</div>
           <Image
-            src={images[0]}
+            src={row.original.images?.[0]?.url || "/placeholder.png"} 
             alt={row.original.name}
             fill
             className="rounded-md object-cover"
           />
-        </div>
-      ) : (
-        <div className="flex size-16 items-center justify-center rounded-md bg-muted">
-          <span className="text-xs text-muted-foreground">No image</span>
-        </div>
-      );
-    },
+        </div>)
   },
   {
     accessorKey: "name",

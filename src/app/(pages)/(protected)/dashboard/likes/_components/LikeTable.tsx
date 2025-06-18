@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/context/UserAccountContext";
+import type { FileUploadThing } from "@/types/UploadThing";
+import type ProductWithOptions from "@/types/product";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +17,10 @@ import {
 } from "@/components/ui/table";
 
 import LikeSkeleton from "./LikeSkeleton";
+
+interface LikedProduct extends Omit<ProductWithOptions, "images"> {
+  images: FileUploadThing[];
+}
 
 export default function LikeTable() {
   const router = useRouter();
@@ -39,19 +45,19 @@ export default function LikeTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {likedProducts.map((product, index) => {
+          {(likedProducts as LikedProduct[]).map((product, index) => {
             if (!product) return null;
 
             return (
               <TableRow key={product.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <p className="text-md font-bold">{product.name}</p>
+                  <p className="text-md font-bold">{product?.name}</p>
                 </TableCell>
                 <TableCell>
                   <Image
-                    src={product?.images?.[0]}
-                    alt="Product Image"
+                    src={product?.images?.[0]?.url || "/placeholder.png"}
+                    alt={`${product?.name || "Product"} Image`}
                     width={100}
                     height={100}
                   />
@@ -60,7 +66,7 @@ export default function LikeTable() {
                   <Button
                     className="mr-4 w-16"
                     variant="outline"
-                    onClick={() => router.push(`/product/${product.id}`)}
+                    onClick={() => router.push(`/product/${product?.id}`)}
                   >
                     View
                   </Button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
@@ -26,15 +27,28 @@ export default function ProductPageClient({ id }: { id: string }) {
     data: product,
     isLoading,
     isError,
+    error,
   } = useQuery({
     queryKey: [queryKeys.products, id],
     queryFn: async () => {
       const res = await api.get<ProductWithOptions>(`/product/${id}`);
+      if (res.status === 404) {
+        notFound();
+      }
       return res.data ?? null;
     },
     enabled: !!id,
     retry: false,
   });
+
+  if (isLoading) {
+    return <ProductPageSkeleton />;
+  }
+
+  if (isError || !product) {
+    notFound();
+  }
+
   const liked = isLiked(product?.id || "");
 
   const sizeOption = product?.options.find(
@@ -47,20 +61,11 @@ export default function ProductPageClient({ id }: { id: string }) {
   const availableSizes = sizeOption?.values.map((v) => v.value) || [];
   const availableColors = colorOption?.values.map((v) => v.value) || [];
 
-  if (isLoading) {
-    return <ProductPageSkeleton />;
-  }
-
-  if (!product || isError) {
-    router.replace("/not-found");
-    return null;
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="md:sticky md:top-4">
-          <ProductImageGallery images={product.images} />
+          <ProductImageGallery images={product.images ?? []} />
         </div>
 
         <div className="space-y-6">
@@ -117,7 +122,7 @@ export default function ProductPageClient({ id }: { id: string }) {
           <div className="flex gap-8 pt-4">
             <Button>Add to Cart</Button>
             <button
-              onClick={() => toggleLike(product)}
+              onClick={() => toggleLike({ ...product, images: product.images ?? [] })}
               className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
             >
               <Heart size={30} className={liked ? "fill-current" : ""} />

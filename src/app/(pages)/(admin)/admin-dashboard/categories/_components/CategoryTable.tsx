@@ -19,7 +19,7 @@ import {
 } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 
-import { FileUploadThing } from "@/types/UploadThing";
+import type { FileUploadThing } from "@/types/UploadThing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,17 +30,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreateCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/CreateCategoryDialog";
-import { DeleteCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/DeleteCategoryDialog";
-import { EditCategoryDialog } from "@/app/(pages)/(admin)/admin-dashboard/categories/_components/EditCategoryDialog";
 
-const columns: ColumnDef<Category>[] = [
+import { CreateCategoryDialog } from "./CreateCategoryDialog";
+import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
+import { EditCategoryDialog } from "./EditCategoryDialog";
+
+type CategoryWithImage = Category & {
+  image: FileUploadThing | null;
+};
+
+const columns: ColumnDef<CategoryWithImage>[] = [
   {
     accessorKey: "image",
     header: "Image",
     cell: ({ row }) => {
-      const image = row.original.image as FileUploadThing | null;
-      return image ? (
+      const image = row.original.image;
+      return image?.url ? (
         <div className="relative size-16">
           <Image
             src={image.url}

@@ -10,15 +10,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: [
-      "plus.unsplash.com",
-      "images.unsplash.com",
-      "randomuser.me",
-      "media.istockphoto.com",
-      "utfs.io", // For UploadThing file storage
-      "uploadthing.com", // Alternative UploadThing domain
-      "files.uploadthing.com", // Another UploadThing domain pattern
-    ],
     remotePatterns: [
       {
         protocol: "https",
@@ -32,7 +23,43 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
-    ],
+      {
+        protocol: "https",
+        hostname: "plus.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "randomuser.me",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "media.istockphoto.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "uploadthing.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "files.uploadthing.com",
+        port: "",
+        pathname: "/**",
+      }
+    ]
   },
   allowedDevOrigins: [
     "9004-idx-studio-1744504031934.cluster-blu4edcrfnajktuztkjzgyxzek.cloudworkstations.dev",

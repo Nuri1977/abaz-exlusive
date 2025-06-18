@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { useToast } from "@/hooks/useToast";
+import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,11 +29,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
+import type { FileUploadThing } from "@/types/UploadThing";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
-  image: z.any().optional(),
+  image: z.custom<FileUploadThing>().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,6 +43,8 @@ export function CreateCategoryDialog() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { mutate: createGalleryItem } = useGalleryMutation();
+  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,14 +62,53 @@ export function CreateCategoryDialog() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          name: values.name,
+          description: values.description,
+          image: values.image,
+        }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to create category");
       }
 
-      return response.json();
+      const category = await response.json();
+      
+      // Create gallery item if there's an image
+      if (values.image?.key) {
+        createGalleryItem({
+          name: values.image.name,
+          size: values.image.size,
+          key: values.image.key,
+          lastModified: Math.floor((values.image.lastModified || Date.now()) / 1000),
+          serverData: values.image.serverData,
+          url: values.image.url,
+          appUrl: values.image.url,
+          ufsUrl: values.image.url,
+          customId: null,
+          type: values.image.type,
+          fileHash: values.image.key,
+          reference: category.id,
+          metadata: {
+            entityType: 'category',
+            categoryName: values.name,
+            uploadedBy: 'admin'
+          },
+          width: null,
+          height: null,
+          tags: ['category', values.name.toLowerCase()],
+          uploadedBy: null,
+          usedIn: [{
+            type: 'category',
+            id: category.id,
+            name: values.name
+          }],
+          isDeleted: false
+        });
+      }
+
+      return category;
     },
     onSuccess: () => {
       toast({
@@ -137,7 +180,7 @@ export function CreateCategoryDialog() {
                   <FormLabel>Image</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
-                      {field.value?.url && (
+                      {field.value?.url ? (
                         <div className="group relative size-40">
                           <Image
                             src={field.value.url}
@@ -150,46 +193,33 @@ export function CreateCategoryDialog() {
                             variant="destructive"
                             size="icon"
                             className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
-                            onClick={async () => {
-                              const button =
-                                document.activeElement as HTMLButtonElement;
-                              const originalContent = button.innerHTML;
-                              button.disabled = true;
-                              button.innerHTML =
-                                '<Loader2 className="size-4 animate-spin" />';
-                              try {
-                                await fetch(
-                                  `/api/admin/uploadthing/${field.value.key}`,
-                                  {
-                                    method: "DELETE",
-                                  }
-                                );
+                            onClick={() => {
+                              if (field.value?.key) {
+                                deleteGalleryItem(field.value.key);
                                 field.onChange(null);
-                              } catch (_error) {
-                                button.innerHTML = originalContent;
-                                button.disabled = false;
                               }
                             }}
                           >
                             <X className="size-4" />
                           </Button>
                         </div>
+                      ) : (
+                        <UploadButton
+                          endpoint="imageUploader"
+                          onClientUploadComplete={(res) => {
+                            if (res?.[0]) {
+                              field.onChange(res[0]);
+                            }
+                          }}
+                          onUploadError={(error: Error) => {
+                            toast({
+                              title: "Error",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }}
+                        />
                       )}
-                      <UploadButton
-                        endpoint="imageUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]) {
-                            field.onChange(res[0]);
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          toast({
-                            title: "Error",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        }}
-                      />
                     </div>
                   </FormControl>
                   <FormMessage />

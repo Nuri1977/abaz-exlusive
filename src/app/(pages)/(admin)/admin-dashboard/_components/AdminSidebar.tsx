@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlignLeft } from "lucide-react";
+import { AlignLeft, LucideIcon } from "lucide-react";
 
 import { adminLinks } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ const AdminNavLinks = ({ onClick }: { onClick?: () => void }) => {
   return (
     <div className="space-y-1 p-2">
       {adminLinks.map((link) => {
-        const Icon = link.icon;
+        const Icon = link.icon as LucideIcon;
         const isActive = pathname === link.href;
 
         return (

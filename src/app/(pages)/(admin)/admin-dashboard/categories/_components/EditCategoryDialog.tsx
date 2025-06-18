@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { useToast } from "@/hooks/useToast";
+import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
+import type { FileUploadThing } from "@/types/UploadThing";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -39,20 +41,24 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
-  category: Category;
+  category: Category & {
+    image: FileUploadThing | null;
+  };
 }
 
 export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { mutate: createGalleryItem } = useGalleryMutation();
+  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: category.name,
       description: category.description || "",
-      image: category.image || null,
+      image: category.image,
     },
   });
 
@@ -70,7 +76,40 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         throw new Error("Failed to update category");
       }
 
-      return response.json();
+      const updatedCategory = await response.json();
+
+      // Handle gallery item if there's an image change
+      if (values.image?.key && values.image?.key !== category.image?.key) {
+        // Delete old image if it exists
+        if (category.image?.key) {
+          deleteGalleryItem(category.image.key);
+        }
+
+        // Create new gallery item with reference
+        createGalleryItem({
+          name: values.image.name,
+          size: values.image.size,
+          key: values.image.key,
+          lastModified: Math.floor((values.image.lastModified || Date.now()) / 1000),
+          serverData: values.image.serverData,
+          url: values.image.url,
+          appUrl: values.image.url,
+          ufsUrl: values.image.url,
+          customId: null,
+          type: values.image.type,
+          fileHash: values.image.key,
+          reference: category.id,
+          metadata: {},
+          width: null,
+          height: null,
+          tags: ["category"],
+          uploadedBy: values.image.serverData?.uploadedBy || null,
+          usedIn: [],
+          isDeleted: false
+        });
+      }
+
+      return updatedCategory;
     },
     onSuccess: () => {
       toast({
@@ -98,6 +137,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
           <Pencil className="size-4" />
+          <span className="sr-only">Edit category</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -140,7 +180,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                   <FormLabel>Image</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
-                      {field.value?.url && (
+                      {field.value?.url ? (
                         <div className="group relative size-40">
                           <Image
                             src={field.value.url}
@@ -153,46 +193,33 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                             variant="destructive"
                             size="icon"
                             className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
-                            onClick={async () => {
-                              const button =
-                                document.activeElement as HTMLButtonElement;
-                              const originalContent = button.innerHTML;
-                              button.disabled = true;
-                              button.innerHTML =
-                                '<Loader2 className="size-4 animate-spin" />';
-                              try {
-                                await fetch(
-                                  `/api/admin/uploadthing/${field.value.key}`,
-                                  {
-                                    method: "DELETE",
-                                  }
-                                );
+                            onClick={() => {
+                              if (field.value?.key) {
+                                deleteGalleryItem(field.value.key);
                                 field.onChange(null);
-                              } catch (error) {
-                                button.innerHTML = originalContent;
-                                button.disabled = false;
                               }
                             }}
                           >
                             <X className="size-4" />
                           </Button>
                         </div>
+                      ) : (
+                        <UploadButton
+                          endpoint="imageUploader"
+                          onClientUploadComplete={(res) => {
+                            if (res?.[0]) {
+                              field.onChange(res[0]);
+                            }
+                          }}
+                          onUploadError={(error: Error) => {
+                            toast({
+                              title: "Error",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }}
+                        />
                       )}
-                      <UploadButton
-                        endpoint="imageUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]) {
-                            field.onChange(res[0]);
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          toast({
-                            title: "Error",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        }}
-                      />
                     </div>
                   </FormControl>
                   <FormMessage />
