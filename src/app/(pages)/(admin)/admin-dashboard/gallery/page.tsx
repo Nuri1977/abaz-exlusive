@@ -12,7 +12,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/useToast";
-import { useGalleryQuery } from "@/hooks/useGallery";
+import { useGalleryQuery, useGalleryMutation } from "@/hooks/useGallery";
 import { UploadButton } from "@/utils/uploadthing";
 import { Eye, RefreshCw } from "lucide-react";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { GalleryImage } from "@/lib/query/gallery";
+import type { FileUploadThing } from "@/types/UploadThing";
 
 export default function GalleryPage() {
   const { toast } = useToast();
@@ -30,6 +31,7 @@ export default function GalleryPage() {
   const limit = 12;
 
   const { data, isLoading, error, refetch, isPending } = useGalleryQuery(currentPage, limit);
+  const { mutate: createGalleryItem } = useGalleryMutation();
   const images = data?.items ?? [];
   const pagination = data?.pagination;
 
@@ -211,11 +213,42 @@ export default function GalleryPage() {
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
-              toast({
-                title: "Success",
-                description: "Image uploaded successfully",
+              if (!res?.[0]) return;
+              
+              const uploadedFile = res[0];
+              createGalleryItem({
+                name: uploadedFile.name,
+                size: uploadedFile.size,
+                key: uploadedFile.key,
+                lastModified: Math.floor((uploadedFile.lastModified || Date.now()) / 1000), // Convert to seconds
+                serverData: uploadedFile.serverData,
+                url: uploadedFile.url,
+                appUrl: uploadedFile.url,
+                ufsUrl: uploadedFile.url,
+                customId: null,
+                type: uploadedFile.type,
+                fileHash: uploadedFile.key,
+                reference: null,
+                metadata: {},
+                width: null,
+                height: null,
+                tags: [],
+                uploadedBy: uploadedFile.serverData?.uploadedBy || null,
+                usedIn: [],
+                isDeleted: false
+              },
+              {
+                  onSuccess: () => {
+                    refetch();
+                  },
+                  onError: (error) => {
+                    toast({
+                      title: "Upload Error",
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  },
               });
-              refetch();
             }}
             onUploadError={(error: Error) => {
               toast({
