@@ -8,12 +8,13 @@ import { useInView } from "react-intersection-observer";
 
 import { ProductCard } from "./ProductCard";
 import { ProductSkeleton } from "./ProductSkeleton";
+import { ProductExt } from "@/types/product";
 
 interface ProductListProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-type ProductWithCategory = Product & {
+type ProductWithCategory = ProductExt & {
   category: Category;
 };
 
@@ -32,7 +33,7 @@ export function ProductList({ searchParams }: ProductListProps) {
       Object.entries(searchParams).forEach(([key, value]) => {
         if (value && key !== "status" && key !== "value" && key !== "_response" && key !== "_debugInfo") {
           if (Array.isArray(value)) {
-            params.set(key, value[0]);
+            params.set(key, value[0] ?? "");
           } else {
             params.set(key, value);
           }
