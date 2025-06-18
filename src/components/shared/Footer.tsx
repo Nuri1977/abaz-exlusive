@@ -43,7 +43,11 @@ export function Footer() {
                 variant="link"
                 className="h-auto p-0 text-primary"
               >
-                <Link href="/about" rel="noopener noreferrer">
+                <Link
+                  href="/about"
+                  rel="noopener noreferrer"
+                  className="text-red-500"
+                >
                   Learn more about us →
                 </Link>
               </Button>
