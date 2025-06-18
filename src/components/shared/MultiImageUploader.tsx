@@ -1,6 +1,5 @@
 "use client";
-import { useToast } from "@/hooks/use-toast";
-import { FileUploadThing } from "@/types/my-types";
+
 import Image from "next/image";
 import React from "react";
 import { authClient } from "@/lib/auth-client";
@@ -8,10 +7,12 @@ import { Button } from "../ui/button";
 import { Trash } from "lucide-react";
 import { UploadDropzone } from "@uploadthing/react";
 import { OurFileRouter } from "@/app/api/uploadthing/core";
+import { useToast } from "@/hooks/useToast";
+import { FileUploadThing } from "@/types/UploadThing";
 
 interface MultiImageUploaderProps {
-  onChange?: (value: FileUploadThing[]) => void;
-  onRemove: (value: FileUploadThing[]) => void;
+  onChange?: (value: FileUploadThing[], newItem?: FileUploadThing) => void;
+  onRemove: (value: FileUploadThing[], key?: string) => void;
   value: FileUploadThing[];
   maxLimit?: number;
 }
@@ -60,11 +61,11 @@ const MultiImageUploader = ({
     const files = value;
     const fileToDelete = files.find((item) => item.key === key);
     let filteredFiles = files.filter((item) => item.key !== key);
-    onRemove(filteredFiles);
+    onRemove(filteredFiles, key);
     const result = await deleteUploadThingFile(key, userId);
   };
   const onUpdateFile = (newFiles: FileUploadThing[]) => {
-    onChange?.([...value, ...newFiles]);
+    onChange?.([...value, ...newFiles], newFiles[0]);
   };
   return (
     <div>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Product } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -36,6 +35,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
+import type { FileUploadThing } from "@/types/UploadThing";
+import { ProductWithVariants } from "./ProductTable";
+import MultiImageUploader from "@/components/shared/MultiImageUploader";
+import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -47,17 +50,34 @@ const formSchema = z.object({
   style: z.string().min(1, "Style is required"),
   features: z.array(z.string()).optional(),
   categoryId: z.string().min(1, "Category is required"),
-  images: z.array(z.string()).min(1, "At least one image is required"),
+  images: z.array(z.custom<FileUploadThing>()).min(1, "At least one image is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditProductDialogProps {
-  product: Product;
+  product: ProductWithVariants
 }
 
 export function EditProductDialog({ product }: EditProductDialogProps) {
   const [open, setOpen] = useState(false);
+
+  const initialImages =
+    (product?.images as any[])?.map((image: any, index: number) => ({
+      url: typeof image === "string" ? image : image?.url || "",
+      key: `existing-${product?.id}-${index}`,
+      name: `Product Image ${index + 1}`,
+      type: "image/jpeg",
+      size: 0,
+      lastModified: Date.now(),
+      serverData: { uploadedBy: "existing" },
+      appUrl: typeof image === "string" ? image : image?.url || "",
+      ufsUrl: typeof image === "string" ? image : image?.url || "",
+      customId: null,
+      fileHash: `existing-${product?.id}-${index}`,
+    })) || [];
+
+  const [productImages, setProductImages] = useState<FileUploadThing[]>(initialImages);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,22 +95,22 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: product.name,
-      description: product.description || "",
-      price: product.price.toString(),
-      brand: product.brand || "",
-      material: product.material || "",
-      gender: product.gender || "",
-      style: product.style || "",
-      features: product.features || [],
-      categoryId: product.categoryId,
-      images: product.images,
+      name: product?.name || "",
+      description: product?.description || "",
+      price: product?.price?.toString() || "",
+      brand: product?.brand || "",
+      material: product?.material || "",
+      gender: product?.gender || "",
+      style: product?.style || "",
+      features: product?.features || [],
+      categoryId: product?.categoryId || "",
+      images: initialImages,
     },
   });
 
   const { mutate: updateProduct, isPending } = useMutation({
     mutationFn: async (values: FormValues) => {
-      const response = await fetch(`/api/admin/products/${product.id}`, {
+      const response = await fetch(`/api/admin/products/${product?.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -123,6 +143,49 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
       });
     },
   });
+
+  const { mutate: createGalleryItem } = useGalleryMutation();
+  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
+
+  const handleImageChange = (value: FileUploadThing[], newFile?: FileUploadThing) => {
+    setProductImages(value);
+    form.setValue("images", [...value]);
+    
+    // Only create gallery item for new uploads (not existing images)
+    if (newFile && !newFile.key?.startsWith('existing-')) {
+      createGalleryItem({
+        name: newFile.name,
+        size: newFile.size,
+        key: newFile.key,
+        lastModified: Math.floor((newFile.lastModified || Date.now()) / 1000),
+        serverData: newFile.serverData || { uploadedBy: null },
+        url: newFile.url,
+        appUrl: newFile.url,
+        ufsUrl: newFile.url,
+        customId: null,
+        type: newFile.type,
+        fileHash: newFile.key,
+        reference: null,
+        metadata: {},
+        width: null,
+        height: null,
+        tags: [],
+        uploadedBy: newFile.serverData?.uploadedBy || null,
+        usedIn: [],
+        isDeleted: false
+      });
+    }
+  };
+
+  const handleImageRemove = (value: FileUploadThing[], key?: string) => {
+    setProductImages(value);
+    form.setValue("images", [...value]);
+    
+    // Only delete from gallery if it's not an existing image
+    if (key && !key.startsWith('existing-')) {
+      deleteGalleryItem(key);
+    }
+  };
 
   function onSubmit(values: FormValues) {
     updateProduct(values);
@@ -297,65 +360,11 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="images"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Images</FormLabel>
-                  <FormControl>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-4">
-                        {field.value?.map((image, index) => (
-                          <div
-                            key={index}
-                            className="group relative aspect-square w-full"
-                          >
-                            <Image
-                              src={image}
-                              alt={`Product image ${index + 1}`}
-                              fill
-                              className="rounded-md object-cover"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
-                              onClick={() => {
-                                const newImages = [...field.value];
-                                newImages.splice(index, 1);
-                                field.onChange(newImages);
-                              }}
-                            >
-                              <X className="size-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <UploadButton
-                        endpoint="imageUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res) {
-                            field.onChange([
-                              ...field.value,
-                              ...res.map((r) => r.url),
-                            ]);
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          toast({
-                            title: "Error",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <MultiImageUploader
+              onChange={handleImageChange}
+              onRemove={handleImageRemove}
+              value={productImages}
+              maxLimit={10}
             />
             <Button type="submit" disabled={isPending}>
               {isPending ? "Updating..." : "Update"}

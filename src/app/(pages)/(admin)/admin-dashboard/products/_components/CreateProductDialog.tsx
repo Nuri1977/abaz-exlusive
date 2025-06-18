@@ -34,6 +34,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
+import type { FileUploadThing } from "@/types/UploadThing";
+import MultiImageUploader from "@/components/shared/MultiImageUploader";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -43,32 +46,39 @@ const formSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   style: z.string().min(1, "Style is required"),
   categoryId: z.string().min(1, "Category is required"),
-  images: z.array(z.string()).min(1, "At least one image is required"),
-  options: z.array(
-    z.object({
-      name: z.string().min(1, "Option name is required"),
-      values: z.array(z.string()).min(1, "At least one value is required"),
-    })
-  ),
-  variants: z.array(
-    z.object({
-      sku: z.string().min(1, "SKU is required"),
-      price: z.string().optional(),
-      stock: z.string().min(1, "Stock is required"),
-      options: z.array(
-        z.object({
-          optionName: z.string(),
-          value: z.string(),
-        })
-      ),
-    })
-  ),
+  images: z.array(z.custom<FileUploadThing>()).min(1, "At least one image is required"),
+  options: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Option name is required"),
+        values: z.array(z.string()).min(1, "At least one value is required"),
+      })
+    )
+    .optional()
+    .default([]),
+  variants: z
+    .array(
+      z.object({
+        sku: z.string().min(1, "SKU is required"),
+        price: z.string().optional(),
+        stock: z.string().min(1, "Stock is required"),
+        options: z.array(
+          z.object({
+            optionName: z.string(),
+            value: z.string(),
+          })
+        ),
+      })
+    )
+    .optional()
+    .default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateProductDialog() {
   const [open, setOpen] = useState(false);
+  const [productImages, setProductImages] = useState<FileUploadThing[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -136,8 +146,12 @@ export function CreateProductDialog() {
     },
   });
 
+  const { mutate: createGalleryItem } = useGalleryMutation();
+  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
+
   function onSubmit(values: FormValues) {
-    if (!validateVariants()) {
+    // Only validate variants if they exist
+    if (values.variants.length > 0 && !validateVariants()) {
       return;
     }
     createProduct(values);
@@ -149,25 +163,32 @@ export function CreateProductDialog() {
   };
 
   const removeOption = (index: number) => {
-    const options = form.getValues("options");
+    const options = form.getValues("options") || [];
     options.splice(index, 1);
     form.setValue("options", options);
   };
 
   const addOptionValue = (optionIndex: number) => {
-    const options = form.getValues("options");
-    options[optionIndex].values.push("");
-    form.setValue("options", options);
+    const options = form.getValues("options") || [];
+    const option = options[optionIndex];
+    if (option) {
+      option.values = option.values || [];
+      option.values.push("");
+      form.setValue("options", options);
+    }
   };
 
   const removeOptionValue = (optionIndex: number, valueIndex: number) => {
-    const options = form.getValues("options");
-    options[optionIndex].values.splice(valueIndex, 1);
-    form.setValue("options", options);
+    const options = form.getValues("options") || [];
+    const option = options[optionIndex];
+    if (option?.values) {
+      option.values.splice(valueIndex, 1);
+      form.setValue("options", options);
+    }
   };
 
   const generateVariants = () => {
-    const options = form.getValues("options");
+    const options = form.getValues("options") || [];
     if (options.length === 0) {
       toast({
         title: "Error",
@@ -227,13 +248,9 @@ export function CreateProductDialog() {
 
   const validateVariants = () => {
     const variants = form.getValues("variants");
+    // Skip validation if no variants
     if (variants.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please generate variants before creating the product",
-        variant: "destructive",
-      });
-      return false;
+      return true;
     }
 
     // Validate that all variants have required fields
@@ -250,6 +267,45 @@ export function CreateProductDialog() {
     }
 
     return true;
+  };
+
+  const handleImageChange = (value: FileUploadThing[], newFile?: FileUploadThing) => {
+    setProductImages(value);
+    form.setValue("images", [...value]);
+    
+    // Only create gallery item for new uploads
+    if (newFile) {
+      createGalleryItem({
+        name: newFile.name,
+        size: newFile.size,
+        key: newFile.key,
+        lastModified: Math.floor((newFile.lastModified || Date.now()) / 1000),
+        serverData: newFile.serverData || { uploadedBy: null },
+        url: newFile.url,
+        appUrl: newFile.url,
+        ufsUrl: newFile.url,
+        customId: null,
+        type: newFile.type,
+        fileHash: newFile.key,
+        reference: null,
+        metadata: {},
+        width: null,
+        height: null,
+        tags: [],
+        uploadedBy: newFile.serverData?.uploadedBy || null,
+        usedIn: [],
+        isDeleted: false
+      });
+    }
+  };
+
+  const handleImageRemove = (value: FileUploadThing[], key?: string) => {
+    setProductImages(value);
+    form.setValue("images", [...value]);
+    
+    if (key) {
+      deleteGalleryItem(key);
+    }
   };
 
   return (
@@ -371,7 +427,7 @@ export function CreateProductDialog() {
                 </FormItem>
               )}
             />
-            <FormField
+            {/* <FormField
               control={form.control}
               name="images"
               render={({ field }) => (
@@ -418,7 +474,15 @@ export function CreateProductDialog() {
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
+            <MultiImageUploader
+              onChange={handleImageChange}
+              onRemove={handleImageRemove}
+              value={productImages}
+              maxLimit={10}
+              />
+
+
 
             <Card>
               <CardHeader>

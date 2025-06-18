@@ -216,15 +216,17 @@ export default function GalleryPage() {
               if (!res?.[0]) return;
               
               const uploadedFile = res[0];
+              const mainUrl = uploadedFile.url;
+
               createGalleryItem({
                 name: uploadedFile.name,
                 size: uploadedFile.size,
                 key: uploadedFile.key,
-                lastModified: Math.floor((uploadedFile.lastModified || Date.now()) / 1000), // Convert to seconds
-                serverData: uploadedFile.serverData,
-                url: uploadedFile.url,
-                appUrl: uploadedFile.url,
-                ufsUrl: uploadedFile.url,
+                lastModified: Math.floor((uploadedFile.lastModified || Date.now()) / 1000),
+                serverData: uploadedFile.serverData || { uploadedBy: null },
+                url: mainUrl,
+                appUrl: mainUrl,
+                ufsUrl: mainUrl,
                 customId: null,
                 type: uploadedFile.type,
                 fileHash: uploadedFile.key,
