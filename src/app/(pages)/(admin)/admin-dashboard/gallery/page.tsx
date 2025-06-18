@@ -11,7 +11,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { UploadButton } from "@/utils/uploadthing";
 import { Eye, RefreshCw } from "lucide-react";
 import Image from "next/image";

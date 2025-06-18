@@ -281,11 +281,10 @@ model Gallery {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   metadata     Json
-  alt          String?
   width        Int?
   height       Int?
   tags         String[]
-  uploadedBy   String
+  uploadedBy   String?
   usedIn       Json[]
   isDeleted    Boolean  @default(false)
 

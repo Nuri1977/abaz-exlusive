@@ -10,8 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { deleteImage } from "@/services/shared/image-service";
+import { useToast } from "@/hooks/useToast";
+import { deleteImage } from "@/services/shared/imageService";
+
 import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

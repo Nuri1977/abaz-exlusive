@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-ZXimport type { Metadata } from "next";
+import type { Metadata } from "next";
 import {
   Card,
   CardContent,
