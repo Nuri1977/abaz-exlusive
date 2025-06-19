@@ -3,6 +3,7 @@ import {
   Home,
   Image,
   Info,
+  KeyRound,
   LayoutDashboard,
   Mail,
   Package,
@@ -60,6 +61,11 @@ export const adminLinks = [
 
 export const userLinks = [
   { name: "Profile", href: "/dashboard", icon: UserRoundPen },
+  {
+    name: "Change Password",
+    href: "/dashboard/change-password",
+    icon: KeyRound,
+  },
   { name: "Likes", href: "/dashboard/likes", icon: Heart },
 ];
 

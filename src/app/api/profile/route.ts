@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import * as bcrypt from "bcryptjs";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -19,18 +18,19 @@ export async function PUT(request: NextRequest) {
 
     const userId = session.user.id;
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name } = body;
 
     // Prepare update data
     const updateData: any = {};
 
     if (name) updateData.name = name;
-    if (email) updateData.email = email;
 
-    // Hash password if provided
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updateData.password = hashedPassword;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // Update user in database
