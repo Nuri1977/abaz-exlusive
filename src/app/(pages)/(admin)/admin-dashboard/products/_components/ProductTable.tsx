@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Product } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,8 +16,18 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Loader2,
+  Pencil,
+  Plus,
+} from "lucide-react";
 
+import { FileUploadThing } from "@/types/UploadThing";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
@@ -27,6 +38,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -43,10 +63,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { CreateProductDialog } from "./CreateProductDialog";
 import { DeleteProductDialog } from "./DeleteProductDialog";
-import { EditProductDialog } from "./EditProductDialog";
-import { FileUploadThing } from "@/types/UploadThing";
 
 export type ProductWithVariants = Product & {
   variants: Array<{
@@ -72,16 +89,17 @@ const columns: ColumnDef<ProductWithVariants>[] = [
   {
     accessorKey: "images",
     header: "Image",
-    cell: ({ row }) => 
-        (<div className="relative size-16">
-          <div>Data: J</div>
-          <Image
-            src={row.original.images?.[0]?.url || "/placeholder.png"} 
-            alt={row.original.name}
-            fill
-            className="rounded-md object-cover"
-          />
-        </div>)
+    cell: ({ row }) => (
+      <div className="relative size-16">
+        <div>Data: J</div>
+        <Image
+          src={row.original.images?.[0]?.url || "/placeholder.png"}
+          alt={row.original.name}
+          fill
+          className="rounded-md object-cover"
+        />
+      </div>
+    ),
   },
   {
     accessorKey: "name",
@@ -91,7 +109,8 @@ const columns: ColumnDef<ProductWithVariants>[] = [
     accessorKey: "price",
     header: "Base Price",
     cell: ({ row }) => {
-      return formatPrice(Number(row.original.price));
+      const price = row.original.price;
+      return formatPrice(price ? Number(price) : 0);
     },
   },
   {
@@ -164,7 +183,11 @@ const columns: ColumnDef<ProductWithVariants>[] = [
       const product = row.original;
       return (
         <div className="flex items-center gap-2">
-          <EditProductDialog product={product} />
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={`/admin-dashboard/products/${product.id}`}>
+              <Pencil className="size-4" />
+            </Link>
+          </Button>
           <DeleteProductDialog product={product} />
         </div>
       );
@@ -175,6 +198,10 @@ const columns: ColumnDef<ProductWithVariants>[] = [
 export function ProductTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const { toast } = useToast();
 
   const { data: products, isLoading } = useQuery({
@@ -184,7 +211,17 @@ export function ProductTable() {
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
-      return response.json();
+      const data = await response.json();
+      // Convert Decimal to number
+      return data.map((product: any) => ({
+        ...product,
+        price: product.price ? parseFloat(product.price.toString()) : null,
+        variants:
+          product.variants?.map((variant: any) => ({
+            ...variant,
+            price: variant.price ? parseFloat(variant.price.toString()) : null,
+          })) || [],
+      }));
     },
   });
 
@@ -208,9 +245,11 @@ export function ProductTable() {
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
+      pagination,
     },
   });
 
@@ -255,7 +294,12 @@ export function ProductTable() {
             </SelectContent>
           </Select>
         </div>
-        <CreateProductDialog />
+        <Button asChild>
+          <Link href="/admin-dashboard/products/add">
+            <Plus className="mr-2 size-4" />
+            Add Product
+          </Link>
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -307,23 +351,130 @@ export function ProductTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} row(s) found
+        </div>
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-4">
+            <p className="text-sm font-medium">Rows</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[120px]">
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.previousPage();
+                  }}
+                  aria-disabled={!table.getCanPreviousPage()}
+                  className={
+                    !table.getCanPreviousPage()
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+              {table.getPageCount() > 3 &&
+                table.getState().pagination.pageIndex > 1 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.setPageIndex(0);
+                        }}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  </>
+                )}
+              {Array.from(
+                { length: Math.min(3, table.getPageCount()) },
+                (_, i) => {
+                  const page = table.getState().pagination.pageIndex + i - 1;
+                  if (page < 0 || page >= table.getPageCount()) return null;
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.setPageIndex(page);
+                        }}
+                        isActive={
+                          page === table.getState().pagination.pageIndex
+                        }
+                      >
+                        {page + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+              )}
+              {table.getPageCount() > 3 &&
+                table.getState().pagination.pageIndex <
+                  table.getPageCount() - 2 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.setPageIndex(table.getPageCount() - 1);
+                        }}
+                      >
+                        {table.getPageCount()}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.nextPage();
+                  }}
+                  aria-disabled={!table.getCanNextPage()}
+                  className={
+                    !table.getCanNextPage()
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </div>
     </div>
   );

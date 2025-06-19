@@ -7,6 +7,11 @@ import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import type { FileUploadThing } from "@/types/UploadThing";
+import {
+  useDeleteGalleryMutation,
+  useGalleryMutation,
+} from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,8 +39,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
-import type { FileUploadThing } from "@/types/UploadThing";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
 
 const formSchema = z.object({
@@ -46,7 +49,9 @@ const formSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   style: z.string().min(1, "Style is required"),
   categoryId: z.string().min(1, "Category is required"),
-  images: z.array(z.custom<FileUploadThing>()).min(1, "At least one image is required"),
+  images: z
+    .array(z.custom<FileUploadThing>())
+    .min(1, "At least one image is required"),
   options: z
     .array(
       z.object({
@@ -269,10 +274,13 @@ export function CreateProductDialog() {
     return true;
   };
 
-  const handleImageChange = (value: FileUploadThing[], newFile?: FileUploadThing) => {
+  const handleImageChange = (
+    value: FileUploadThing[],
+    newFile?: FileUploadThing
+  ) => {
     setProductImages(value);
     form.setValue("images", [...value]);
-    
+
     // Only create gallery item for new uploads
     if (newFile) {
       createGalleryItem({
@@ -294,7 +302,7 @@ export function CreateProductDialog() {
         tags: [],
         uploadedBy: newFile.serverData?.uploadedBy || null,
         usedIn: [],
-        isDeleted: false
+        isDeleted: false,
       });
     }
   };
@@ -302,7 +310,7 @@ export function CreateProductDialog() {
   const handleImageRemove = (value: FileUploadThing[], key?: string) => {
     setProductImages(value);
     form.setValue("images", [...value]);
-    
+
     if (key) {
       deleteGalleryItem(key);
     }
@@ -480,9 +488,7 @@ export function CreateProductDialog() {
               onRemove={handleImageRemove}
               value={productImages}
               maxLimit={10}
-              />
-
-
+            />
 
             <Card>
               <CardHeader>
