@@ -37,11 +37,8 @@ interface ProfileFormProps {
 
 const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
   const [name, setName] = useState(user.name || "");
-  const [email, setEmail] = useState(user.email || "");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -58,8 +55,6 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
         },
         body: JSON.stringify({
           name: name || undefined,
-          email: email || undefined,
-          password: password || undefined,
         }),
       });
 
@@ -130,9 +125,7 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
     <Card>
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
-        <CardDescription>
-          Update your personal information or change your password
-        </CardDescription>
+        <CardDescription>Update your personal information</CardDescription>
       </CardHeader>
       <form onSubmit={handleProfileUpdate}>
         <CardContent className="space-y-4">
@@ -148,11 +141,10 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
+              disabled
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email address"
+              value={user.email || " user@example.com"}
             />
           </div>
           <div className="space-y-2">

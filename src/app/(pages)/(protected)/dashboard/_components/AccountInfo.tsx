@@ -25,10 +25,11 @@ const AccountInfo = ({ user, onEdit }: AccountInfoProps) => {
     if (!user?.name) return "U";
 
     const nameParts = user.name.split(" ");
-    if (nameParts.length > 1) {
+    if (nameParts[0] && nameParts[1] && nameParts.length > 1) {
       return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    } else if (nameParts[0]) {
+      return nameParts[0].substring(0, 2).toUpperCase();
     }
-    return nameParts[0].substring(0, 2).toUpperCase();
   };
 
   // Format date for display
