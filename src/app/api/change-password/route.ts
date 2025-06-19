@@ -1,10 +1,8 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 const changePasswordSchema = z
   .object({
@@ -25,20 +23,6 @@ export async function PUT(req: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = session.user.id;
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    if (!user.password) {
-      return NextResponse.json(
-        { message: "Password change is not available for this account." },
-        { status: 400 }
-      );
     }
 
     const body = await req.json();
@@ -69,29 +53,37 @@ export async function PUT(req: NextRequest) {
 
     const { currentPassword, newPassword } = parsed.data;
 
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    try {
+      await auth.api.changePassword({
+        body: {
+          currentPassword,
+          newPassword,
+        },
+        headers: await headers(),
+      });
 
-    console.log("currentPassword:", currentPassword);
-    console.log("user.password: ", user.password);
-
-    if (!isValid) {
       return NextResponse.json(
-        { message: "Current password is incorrect" },
-        { status: 401 }
+        { message: "Password updated successfully" },
+        { status: 200 }
+      );
+    } catch (error: any) {
+      console.error("Password change error:", error);
+
+      if (
+        error.message?.includes("Invalid password") ||
+        error.message?.includes("current password")
+      ) {
+        return NextResponse.json(
+          { message: "Current password is incorrect" },
+          { status: 401 }
+        );
+      }
+
+      return NextResponse.json(
+        { message: error.message || "Failed to change password" },
+        { status: 400 }
       );
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
-    });
-
-    return NextResponse.json(
-      { message: "Password updated successfully" },
-      { status: 200 }
-    );
   } catch (err) {
     console.error("Error updating password:", err);
     return NextResponse.json(
