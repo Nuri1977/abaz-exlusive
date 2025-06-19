@@ -8,9 +8,10 @@ import { Heart } from "lucide-react";
 
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ProductExt } from "@/types/product";
 
 interface ProductCardProps {
-  product: Product & {
+  product: ProductExt & {
     category: Category;
   };
 }
@@ -24,7 +25,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative aspect-square">
         <Image
-          src={product.images[0] || "/placeholder.png"}
+          src={product?.images?.[0]?.url || "/placeholder.png"}
           alt={product.name}
           fill
           className="object-cover"
@@ -59,7 +60,11 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardFooter className="flex-col items-start gap-4 p-4 pt-0">
         <p className="font-semibold">{formatPrice(Number(product.price))}</p>
         <button
-          onClick={() => toggleLike(product)}
+          onClick={() => {
+            if (product?.images) {
+              toggleLike({ ...product, images: product?.images ?? [] });
+            }
+          }}
           className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
         >
           <Heart className={liked ? "fill-current" : ""} />

@@ -1,0 +1,63 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Database Schema Guide
+
+## Core Models
+
+### User Management
+- `User` - Core user model with authentication
+- `Session` - User session management
+- `Account` - OAuth/social login accounts
+- `Verification` - Email verification
+
+### E-commerce
+- `Product` - Shoe products with details
+- `Category` - Product categorization
+- `ProductOption` - Product variations (size, color)
+- `ProductVariant` - Specific product variants
+- `InventoryItem` - Stock management
+
+### Shopping
+- `Cart` - Shopping cart
+- `CartItem` - Cart items
+- `Order` - Customer orders
+- `OrderItem` - Order items
+- `Like` - Product favorites
+
+### Media
+- `Gallery` - Image management
+- `MediaUsage` - Media reference tracking
+
+## Schema Conventions
+
+### IDs and Timestamps
+- All models use UUID for IDs
+- Include `createdAt` and `updatedAt` timestamps
+- Use `@default(now())` for `createdAt`
+- Use `@updatedAt` for `updatedAt`
+
+### Relations
+- Use `onDelete: Cascade` for child records
+- Use `onDelete: SetNull` for optional relations
+- Define unique constraints where needed
+- Use proper relation fields
+
+### Enums
+- `OrderStatus`: PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+- `PaymentStatus`: PENDING, PAID, FAILED, REFUNDED
+
+### Field Types
+- Use `Decimal` for prices with `@db.Decimal(10, 2)`
+- Use `Json` for complex data structures
+- Use `String[]` for array fields
+- Use `Boolean` with `@default(false)` for flags
+
+## Database Operations
+- Always use Prisma Client for database operations
+- Include all fields when creating/updating records
+- Handle relations properly in transactions
+- Use proper error handling
+- Implement proper validation

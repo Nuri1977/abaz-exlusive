@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import AdminSidebar from "./_components/AdminSidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -18,6 +19,7 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto p-6 pt-4 md:pt-6">
         {children}
       </main>
+      <Toaster />
     </div>
   );
 }

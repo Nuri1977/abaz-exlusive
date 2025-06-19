@@ -1,6 +1,7 @@
 import {
   Heart,
   Home,
+  Image,
   Info,
   KeyRound,
   LayoutDashboard,
@@ -41,6 +42,13 @@ export const adminLinks = [
     icon: Users,
     value: "25",
     description: "Manage user accounts and permissions",
+  },
+  {
+    name: "Gallery",
+    href: "/admin-dashboard/gallery",
+    icon: Image ,
+    value: "Manage",
+    description: "Manage the image gallery",
   },
   {
     name: "Settings",
