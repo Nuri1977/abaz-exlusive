@@ -45,8 +45,24 @@ export async function PUT(req: NextRequest) {
     const parsed = changePasswordSchema.safeParse(body);
 
     if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      Object.entries(parsed.error.format()).forEach(([key, value]) => {
+        if (
+          key !== "_errors" &&
+          value &&
+          typeof value === "object" &&
+          "_errors" in value
+        ) {
+          fieldErrors[key] = (value as any)._errors[0];
+        }
+      });
+
       return NextResponse.json(
-        { message: parsed.error.format() },
+        {
+          message: "Validation failed",
+          fieldErrors,
+        },
         { status: 400 }
       );
     }
@@ -54,6 +70,9 @@ export async function PUT(req: NextRequest) {
     const { currentPassword, newPassword } = parsed.data;
 
     const isValid = await bcrypt.compare(currentPassword, user.password);
+
+    console.log("currentPassword:", currentPassword);
+    console.log("user.password: ", user.password);
 
     if (!isValid) {
       return NextResponse.json(
