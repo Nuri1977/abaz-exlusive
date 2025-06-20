@@ -6,14 +6,15 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 
 interface ProductIdParams {
-  params: {
+  params: Promise<{
     productId: string;
-  };
+  }>;
 }
 
 export async function PATCH(req: Request, { params }: ProductIdParams) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
+    const { productId } = await params;
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -37,13 +38,32 @@ export async function PATCH(req: Request, { params }: ProductIdParams) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
+    // Generate base slug from name
+    const baseSlug = slugify(name);
+    let slug = baseSlug;
+
+    // Check if the slug would conflict with any other product (excluding the current one)
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        slug,
+        NOT: {
+          id: productId,
+        },
+      },
+    });
+
+    // If there's a conflict, append a timestamp to make it unique
+    if (existingProduct) {
+      slug = `${baseSlug}-${Date.now()}`;
+    }
+
     const product = await prisma.product.update({
       where: {
-        id: params.productId,
+        id: productId,
       },
       data: {
         name,
-        slug: slugify(name),
+        slug,
         description,
         price,
         brand,
@@ -66,6 +86,7 @@ export async function PATCH(req: Request, { params }: ProductIdParams) {
 export async function DELETE(req: Request, { params }: ProductIdParams) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
+    const { productId } = await params;
 
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -74,7 +95,7 @@ export async function DELETE(req: Request, { params }: ProductIdParams) {
     // Delete product
     await prisma.product.delete({
       where: {
-        id: params.productId,
+        id: productId,
       },
     });
 

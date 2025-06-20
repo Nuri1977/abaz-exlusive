@@ -35,14 +35,14 @@ import type { FileUploadThing } from "@/types/UploadThing";
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
-  image: z.any().optional(),
+  image: z.custom<FileUploadThing>().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
   category: Category & {
-    image: FileUploadThing | null;
+    image: string | FileUploadThing | null;
   };
 }
 
@@ -53,18 +53,32 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const { mutate: createGalleryItem } = useGalleryMutation();
   const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
+  // Safely parse the image data
+  const parseImage = (imageData: string | FileUploadThing | null): FileUploadThing | null => {
+    if (!imageData) return null;
+    if (typeof imageData === "string") {
+      try {
+        return JSON.parse(imageData);
+      } catch (error) {
+        console.error("Failed to parse image data:", error);
+        return null;
+      }
+    }
+    return imageData;
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: category.name,
-      description: category.description || "",
-      image: category.image,
+      name: category?.name || "",
+      description: category?.description || "",
+      image: parseImage(category?.image),
     },
   });
 
   const { mutate: updateCategory, isPending } = useMutation({
     mutationFn: async (values: FormValues) => {
-      const response = await fetch(`/api/admin/categories/${category.id}`, {
+      const response = await fetch(`/api/admin/categories/${category?.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -79,10 +93,13 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
       const updatedCategory = await response.json();
 
       // Handle gallery item if there's an image change
-      if (values.image?.key && values.image?.key !== category.image?.key) {
+      if (values.image?.key && values.image?.key !== parseImage(category?.image)?.key) {
         // Delete old image if it exists
-        if (category.image?.key) {
-          deleteGalleryItem(category.image.key);
+        if (category?.image) {
+          const oldImage = parseImage(category.image);
+          if (oldImage?.key) {
+            deleteGalleryItem(oldImage.key);
+          }
         }
 
         // Create new gallery item with reference
@@ -91,19 +108,19 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
           size: values.image.size,
           key: values.image.key,
           lastModified: Math.floor((values.image.lastModified || Date.now()) / 1000),
-          serverData: values.image.serverData,
+          serverData: values.image.serverData || {},
           url: values.image.url,
           appUrl: values.image.url,
           ufsUrl: values.image.url,
           customId: null,
-          type: values.image.type,
+          type: "image",
           fileHash: values.image.key,
           reference: category.id,
           metadata: {},
           width: null,
           height: null,
           tags: ["category"],
-          uploadedBy: values.image.serverData?.uploadedBy || null,
+          uploadedBy: null,
           usedIn: [],
           isDeleted: false
         });
@@ -135,7 +152,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="outline" size="icon">
           <Pencil className="size-4" />
           <span className="sr-only">Edit category</span>
         </Button>
@@ -164,9 +181,13 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Category description" {...field} />
+                    <Textarea
+                      placeholder="Category description"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -177,30 +198,32 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image</FormLabel>
+                  <FormLabel>Image (Optional)</FormLabel>
                   <FormControl>
-                    <div className="space-y-4">
-                      {field.value?.url ? (
-                        <div className="group relative size-40">
+                    <div className="flex items-center gap-4">
+                      {field.value ? (
+                        <div className="relative">
                           <Image
                             src={field.value.url}
                             alt="Category image"
-                            fill
-                            className="rounded-md object-cover"
+                            width={100}
+                            height={100}
+                            className="rounded-lg object-cover"
                           />
                           <Button
                             type="button"
-                            variant="destructive"
+                            variant="outline"
                             size="icon"
-                            className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+                            className="absolute -right-2 -top-2 size-6 rounded-full p-0"
                             onClick={() => {
                               if (field.value?.key) {
                                 deleteGalleryItem(field.value.key);
-                                field.onChange(null);
                               }
+                              field.onChange(null);
                             }}
                           >
                             <X className="size-4" />
+                            <span className="sr-only">Remove image</span>
                           </Button>
                         </div>
                       ) : (
@@ -209,6 +232,29 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                           onClientUploadComplete={(res) => {
                             if (res?.[0]) {
                               field.onChange(res[0]);
+                              // Convert UploadThing response to Gallery type
+                              const galleryItem = {
+                                name: res[0].name,
+                                size: res[0].size,
+                                key: res[0].key,
+                                url: res[0].url,
+                                lastModified: Math.floor(Date.now() / 1000),
+                                serverData: {},
+                                metadata: {},
+                                type: "image",
+                                fileHash: "",
+                                height: null,
+                                width: null,
+                                customId: null,
+                                reference: null,
+                                tags: [],
+                                uploadedBy: null,
+                                usedIn: [],
+                                isDeleted: false,
+                                appUrl: res[0].url,
+                                ufsUrl: res[0].url,
+                              };
+                              createGalleryItem(galleryItem);
                             }
                           }}
                           onUploadError={(error: Error) => {
@@ -227,7 +273,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
               )}
             />
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Updating..." : "Update"}
+              {isPending ? "Saving..." : "Save Changes"}
             </Button>
           </form>
         </Form>
