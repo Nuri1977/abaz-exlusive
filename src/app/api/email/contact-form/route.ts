@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { render } from "@react-email/render";
 
+import { contactFormSchema } from "@/schemas/email";
 import EmailContactTemplate from "@/components/emails/EmailContactTemplate";
 import { emailService } from "@/services/shared/emailService";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, email, message } = body;
-
-  if (!name || !email || !message) {
-    return NextResponse.json(
-      { data: null, error: "Missing required fields" },
-      { status: 400 }
-    );
-  }
-
   try {
+    const body = await req.json();
+    const result = contactFormSchema.safeParse(body);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0].toString()] = issue.message;
+        }
+      });
+
+      return NextResponse.json(
+        { data: null, error: "Invalid form data", fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, message } = result.data;
     const emailTemplate = EmailContactTemplate({
       name,
       email,
@@ -23,7 +32,7 @@ export async function POST(req: NextRequest) {
     });
     const htmlContent = await render(emailTemplate);
 
-    const result = await emailService.sendEmail({
+    const emailResult = await emailService.sendEmail({
       fromEmail: process.env.ADMIN_EMAIL || "noreply@example.com",
       fromName: process.env.EMAIL_FROM_NAME || "Next.js Template",
       toEmail: process.env.ADMIN_EMAIL || "admin@example.com",
@@ -36,17 +45,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (result.success) {
+    if (emailResult.success) {
       console.log("Contact form email sent successfully");
       return NextResponse.json(
-        { data: result.data, error: null },
+        { data: emailResult.data, error: null },
         { status: 200 }
       );
     }
 
-    console.error("Failed to send contact form email:", result.error);
+    console.error("Failed to send contact form email:", emailResult.error);
     return NextResponse.json(
-      { data: null, error: result.error },
+      { data: null, error: emailResult.error },
       { status: 500 }
     );
   } catch (error) {

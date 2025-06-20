@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { updateProfileSchema, type UpdateProfileValues } from "@/schemas/user";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User } from "@prisma/client";
-import { Eye, EyeOff, Loader2, Save, Trash2 } from "lucide-react";
+import { Loader2, Save, Trash2 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 import { authClient } from "@/lib/auth-client";
 import { useToast } from "@/hooks/useToast";
@@ -27,8 +30,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface ProfileFormProps {
   user: User;
@@ -36,26 +46,25 @@ interface ProfileFormProps {
 }
 
 const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
-  const [name, setName] = useState(user.name || "");
-  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const form = useForm<UpdateProfileValues>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: {
+      name: user?.name || "",
+    },
+  });
 
+  const onSubmit = async (values: UpdateProfileValues) => {
     try {
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: name || undefined,
-        }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
@@ -77,8 +86,6 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -118,7 +125,6 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
       });
       setIsDeleting(false);
     }
-    // Note: Not setting isDeleting to false here since we're navigating away
   };
 
   return (
@@ -127,89 +133,96 @@ const ProfileForm = ({ user, onComplete }: ProfileFormProps) => {
         <CardTitle>Profile Settings</CardTitle>
         <CardDescription>Update your personal information</CardDescription>
       </CardHeader>
-      <form onSubmit={handleProfileUpdate}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your full name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Your full name"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              disabled
-              id="email"
-              type="email"
-              value={user.email || " user@example.com"}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="flex items-center"
-          >
-            {isLoading ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 size-4" />
-            )}
-            Save Changes
-          </Button>
+            <div className="space-y-2">
+              <FormLabel>Email</FormLabel>
+              <Input disabled type="email" value={user?.email || ""} />
+            </div>
+          </CardContent>
+          <CardFooter className="flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0">
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="flex items-center"
+            >
+              {form.formState.isSubmitting ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 size-4" />
+              )}
+              Save Changes
+            </Button>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                disabled={isDeleting}
-                className="flex items-center"
-              >
-                {isDeleting ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="mr-2 size-4" />
-                )}
-                Delete Account
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleAccountDeletion}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
                   disabled={isDeleting}
-                  className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="flex items-center"
                 >
                   {isDeleting ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />{" "}
-                      Deleting...
-                    </>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
                   ) : (
-                    <>
-                      <Trash2 className="mr-2 size-4" /> Yes, delete my account
-                    </>
+                    <Trash2 className="mr-2 size-4" />
                   )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardFooter>
-      </form>
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your account and remove your data from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleAccountDeletion}
+                    disabled={isDeleting}
+                    className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />{" "}
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="mr-2 size-4" /> Yes, delete my
+                        account
+                      </>
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 };
