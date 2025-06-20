@@ -2,15 +2,22 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import {
+  categoryFormSchema,
+  type CategoryFormValues,
+} from "@/schemas/category";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Category } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, X } from "lucide-react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
+import type { FileUploadThing } from "@/types/UploadThing";
+import {
+  useDeleteGalleryMutation,
+  useGalleryMutation,
+} from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
-import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,15 +37,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
-import type { FileUploadThing } from "@/types/UploadThing";
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().optional(),
-  image: z.any().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
   category: Category & {
@@ -53,8 +51,8 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const { mutate: createGalleryItem } = useGalleryMutation();
   const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CategoryFormValues>({
+    resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       name: category.name,
       description: category.description || "",
@@ -63,7 +61,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   });
 
   const { mutate: updateCategory, isPending } = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: CategoryFormValues) => {
       const response = await fetch(`/api/admin/categories/${category.id}`, {
         method: "PATCH",
         headers: {
@@ -90,7 +88,9 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
           name: values.image.name,
           size: values.image.size,
           key: values.image.key,
-          lastModified: Math.floor((values.image.lastModified || Date.now()) / 1000),
+          lastModified: Math.floor(
+            (values.image.lastModified || Date.now()) / 1000
+          ),
           serverData: values.image.serverData,
           url: values.image.url,
           appUrl: values.image.url,
@@ -105,7 +105,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
           tags: ["category"],
           uploadedBy: values.image.serverData?.uploadedBy || null,
           usedIn: [],
-          isDeleted: false
+          isDeleted: false,
         });
       }
 
@@ -128,7 +128,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
     },
   });
 
-  function onSubmit(values: FormValues) {
+  function onSubmit(values: CategoryFormValues) {
     updateCategory(values);
   }
 

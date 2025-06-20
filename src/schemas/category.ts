@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { imageSchema, timestampsSchema } from "./common";
+import type { FileUploadThing } from "@/types/UploadThing";
 
 export const categoryFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
-  image: imageSchema.nullable(),
+  image: z.custom<FileUploadThing>().nullable(),
 });
 
 export const categorySchema = categoryFormSchema

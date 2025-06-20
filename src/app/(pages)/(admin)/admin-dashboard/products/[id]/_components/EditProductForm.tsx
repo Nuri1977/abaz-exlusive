@@ -3,6 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  editProductFormSchema,
+  type EditProductFormValues,
+} from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -10,7 +14,6 @@ import { useForm } from "react-hook-form";
 
 import { ProductExt } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
-import { editProductFormSchema, type EditProductFormValues } from "@/schemas/product";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
