@@ -20,8 +20,8 @@ export const productVariantSchema = z.object({
   options: z.array(productOptionValueSchema),
 });
 
-// Product form schema (for create/edit)
-export const productFormSchema = z.object({
+// Base product form schema
+export const baseProductFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
   price: priceSchema,
@@ -32,18 +32,29 @@ export const productFormSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   features: z.array(z.string()).optional(),
   images: z.array(imageSchema).min(1, "At least one image is required"),
+});
+
+// Add product form schema (includes options and variants)
+export const addProductFormSchema = baseProductFormSchema.extend({
   options: z.array(productOptionSchema).optional().default([]),
   variants: z.array(productVariantSchema).optional().default([]),
 });
 
+// Edit product form schema (no options/variants management)
+export const editProductFormSchema = baseProductFormSchema;
+
 // Complete product schema including database fields
-export const productSchema = productFormSchema
+export const productSchema = baseProductFormSchema
   .extend({
     id: z.string(),
     slug: z.string(),
+    variants: z.array(productVariantSchema).optional(),
   })
   .merge(timestampsSchema);
 
-export type ProductFormValues = z.infer<typeof productFormSchema>;
+// Export types
+export type BaseProductFormValues = z.infer<typeof baseProductFormSchema>;
+export type AddProductFormValues = z.infer<typeof addProductFormSchema>;
+export type EditProductFormValues = z.infer<typeof editProductFormSchema>;
 export type ProductVariant = z.infer<typeof productVariantSchema>;
 export type Product = z.infer<typeof productSchema>;

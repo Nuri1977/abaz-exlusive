@@ -3,11 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  addProductFormSchema,
+  type AddProductFormValues,
+} from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import type { FileUploadThing } from "@/types/UploadThing";
 import {
@@ -36,46 +39,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  price: z.string().min(1, "Price is required"),
-  brand: z.string().min(1, "Brand is required"),
-  gender: z.string().min(1, "Gender is required"),
-  style: z.string().min(1, "Style is required"),
-  categoryId: z.string().min(1, "Category is required"),
-  images: z
-    .array(z.custom<FileUploadThing>())
-    .min(1, "At least one image is required"),
-  options: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Option name is required"),
-        values: z.array(z.string()).min(1, "At least one value is required"),
-      })
-    )
-    .optional()
-    .default([]),
-  variants: z
-    .array(
-      z.object({
-        sku: z.string().min(1, "SKU is required"),
-        price: z.string().optional(),
-        stock: z.string().min(1, "Stock is required"),
-        options: z.array(
-          z.object({
-            optionName: z.string(),
-            value: z.string(),
-          })
-        ),
-      })
-    )
-    .optional()
-    .default([]),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function AddProductForm() {
   const [productImages, setProductImages] = useState<FileUploadThing[]>([]);
   const { toast } = useToast();
@@ -92,8 +55,8 @@ export function AddProductForm() {
     },
   });
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<AddProductFormValues>({
+    resolver: zodResolver(addProductFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -109,7 +72,7 @@ export function AddProductForm() {
   });
 
   const { mutate: createProduct, isPending } = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: AddProductFormValues) => {
       const response = await fetch("/api/admin/products", {
         method: "POST",
         headers: {
@@ -146,7 +109,7 @@ export function AddProductForm() {
   const { mutate: createGalleryItem } = useGalleryMutation();
   const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
-  function onSubmit(values: FormValues) {
+  function onSubmit(values: AddProductFormValues) {
     // Only validate variants if they exist
     if (values.variants.length > 0 && !validateVariants()) {
       return;

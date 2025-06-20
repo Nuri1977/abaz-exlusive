@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { ProductExt } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
+import { editProductFormSchema, type EditProductFormValues } from "@/schemas/product";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -38,23 +38,6 @@ import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
 
 import { ProductWithVariants } from "../../_components/ProductTable";
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().optional(),
-  price: z.string().min(1, "Price is required"),
-  brand: z.string().min(1, "Brand is required"),
-  material: z.string().optional(),
-  gender: z.string().min(1, "Gender is required"),
-  style: z.string().min(1, "Style is required"),
-  features: z.array(z.string()).optional(),
-  categoryId: z.string().min(1, "Category is required"),
-  images: z
-    .array(z.custom<FileUploadThing>())
-    .min(1, "At least one image is required"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface EditProductFormProps {
   product: ProductExt | null;
@@ -92,8 +75,8 @@ export function EditProductForm({ product }: EditProductFormProps) {
     },
   });
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<EditProductFormValues>({
+    resolver: zodResolver(editProductFormSchema),
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
@@ -109,7 +92,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
   });
 
   const { mutate: updateProduct, isPending } = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: EditProductFormValues) => {
       const response = await fetch(`/api/admin/products/${product?.id}`, {
         method: "PATCH",
         headers: {
@@ -189,7 +172,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
     }
   };
 
-  function onSubmit(values: FormValues) {
+  function onSubmit(values: EditProductFormValues) {
     updateProduct(values);
   }
 
