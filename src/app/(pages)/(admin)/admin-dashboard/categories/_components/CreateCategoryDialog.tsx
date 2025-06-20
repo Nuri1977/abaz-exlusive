@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import {
-  categoryFormSchema,
-  type CategoryFormValues,
+  createCategoryFormSchema,
+  type CreateCategoryFormValues,
 } from "@/schemas/category";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,13 +39,11 @@ import { UploadButton } from "@/utils/uploadthing";
 
 export function CreateCategoryDialog() {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { mutate: createGalleryItem } = useGalleryMutation();
-  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
+  const { toast } = useToast();
 
-  const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema),
+  const form = useForm<CreateCategoryFormValues>({
+    resolver: zodResolver(createCategoryFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -53,93 +51,53 @@ export function CreateCategoryDialog() {
     },
   });
 
-  const { mutate: createCategory, isPending } = useMutation({
-    mutationFn: async (values: CategoryFormValues) => {
+  const mutation = useMutation({
+    mutationFn: async (values: CreateCategoryFormValues) => {
       const response = await fetch("/api/admin/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: values.name,
-          description: values.description,
-          image: values.image,
-        }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
         throw new Error("Failed to create category");
       }
 
-      const category = await response.json();
-
-      // Create gallery item if there's an image
-      if (values.image?.key) {
-        createGalleryItem({
-          name: values.image.name,
-          size: values.image.size,
-          key: values.image.key,
-          lastModified: Math.floor(
-            (values.image.lastModified || Date.now()) / 1000
-          ),
-          serverData: values.image.serverData,
-          url: values.image.url,
-          appUrl: values.image.url,
-          ufsUrl: values.image.url,
-          customId: null,
-          type: values.image.type,
-          fileHash: values.image.key,
-          reference: category.id,
-          metadata: {
-            entityType: "category",
-            categoryName: values.name,
-            uploadedBy: "admin",
-          },
-          width: null,
-          height: null,
-          tags: ["category", values.name.toLowerCase()],
-          uploadedBy: null,
-          usedIn: [
-            {
-              type: "category",
-              id: category.id,
-              name: values.name,
-            },
-          ],
-          isDeleted: false,
-        });
-      }
-
-      return category;
+      return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setOpen(false);
+      form.reset();
       toast({
         title: "Success",
         description: "Category created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      setOpen(false);
-      form.reset();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error creating category:", error);
       toast({
         title: "Error",
-        description: "Failed to create category",
+        description: "Failed to create category. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  function onSubmit(values: CategoryFormValues) {
-    createCategory(values);
-  }
+  const { mutate: uploadImage } = useGalleryMutation();
+  const { mutate: deleteImage } = useDeleteGalleryMutation();
+
+  const onSubmit = (values: CreateCategoryFormValues) => {
+    mutation.mutate(values);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 size-4" />
-          Add Category
+          <Plus className="mr-2 size-4" /> Add Category
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -166,9 +124,13 @@ export function CreateCategoryDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Category description" {...field} />
+                    <Textarea
+                      placeholder="Category description"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -179,30 +141,32 @@ export function CreateCategoryDialog() {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image</FormLabel>
+                  <FormLabel>Image (Optional)</FormLabel>
                   <FormControl>
-                    <div className="space-y-4">
-                      {field.value?.url ? (
-                        <div className="group relative size-40">
+                    <div className="flex items-center gap-4">
+                      {field.value ? (
+                        <div className="relative">
                           <Image
                             src={field.value.url}
                             alt="Category image"
-                            fill
-                            className="rounded-md object-cover"
+                            width={100}
+                            height={100}
+                            className="rounded-lg object-cover"
                           />
                           <Button
                             type="button"
-                            variant="destructive"
+                            variant="outline"
                             size="icon"
-                            className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+                            className="absolute -right-2 -top-2 size-6 rounded-full p-0"
                             onClick={() => {
                               if (field.value?.key) {
-                                deleteGalleryItem(field.value.key);
-                                field.onChange(null);
+                                deleteImage(field.value.key);
                               }
+                              field.onChange(null);
                             }}
                           >
                             <X className="size-4" />
+                            <span className="sr-only">Remove image</span>
                           </Button>
                         </div>
                       ) : (
@@ -211,6 +175,29 @@ export function CreateCategoryDialog() {
                           onClientUploadComplete={(res) => {
                             if (res?.[0]) {
                               field.onChange(res[0]);
+                              // Convert UploadThing response to Gallery type
+                              const galleryItem = {
+                                name: res[0].name,
+                                size: res[0].size,
+                                key: res[0].key,
+                                url: res[0].url,
+                                lastModified: Math.floor(Date.now() / 1000),
+                                serverData: {},
+                                metadata: {},
+                                type: "image",
+                                fileHash: "",
+                                height: null,
+                                width: null,
+                                customId: null,
+                                reference: null,
+                                tags: [],
+                                uploadedBy: null,
+                                usedIn: [],
+                                isDeleted: false,
+                                appUrl: res[0].url,
+                                ufsUrl: res[0].url,
+                              };
+                              uploadImage(galleryItem);
                             }
                           }}
                           onUploadError={(error: Error) => {
@@ -228,8 +215,8 @@ export function CreateCategoryDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create"}
+            <Button type="submit" disabled={mutation.isPending}>
+              Create
             </Button>
           </form>
         </Form>
