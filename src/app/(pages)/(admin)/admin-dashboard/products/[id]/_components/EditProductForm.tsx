@@ -8,12 +8,13 @@ import {
   type EditProductFormValues,
 } from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { ProductExt } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
+import { brandOptions, genderOptions } from "@/constants/options";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -66,6 +67,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
     useState<FileUploadThing[]>(initialImages);
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -114,6 +116,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate products queries to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product", product?.id] });
+
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -252,9 +258,28 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Brand name" {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a brand" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {brandOptions
+                            .filter((opt) => opt.value !== "all")
+                            .map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -291,9 +316,16 @@ export function EditProductForm({ product }: EditProductFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="men">Men</SelectItem>
-                          <SelectItem value="women">Women</SelectItem>
-                          <SelectItem value="unisex">Unisex</SelectItem>
+                          {genderOptions
+                            .filter((opt) => opt.value !== "all")
+                            .map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
