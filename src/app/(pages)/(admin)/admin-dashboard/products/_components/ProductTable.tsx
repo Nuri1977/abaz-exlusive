@@ -16,16 +16,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Loader2,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { ArrowUpDown, ChevronDown, Loader2, Pencil, Plus } from "lucide-react";
 
 import { FileUploadThing } from "@/types/UploadThing";
 import { formatPrice } from "@/lib/utils";
@@ -107,7 +98,9 @@ type CategoryWithParent = {
 };
 
 export function ProductTable() {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "updatedAt", desc: true }, // Default sort by latest modified
+  ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -184,6 +177,7 @@ export function ProductTable() {
     {
       accessorKey: "images",
       header: "Image",
+      enableSorting: false,
       cell: ({ row }) => (
         <div className="relative size-16">
           <div>Data: J</div>
@@ -198,31 +192,109 @@ export function ProductTable() {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Name
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
     },
     {
       accessorKey: "price",
-      header: "Base Price",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Base Price
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
       cell: ({ row }) => {
-        const price = row.original.price;
+        const price = row?.original?.price;
         return formatPrice(price ? Number(price) : 0);
       },
     },
     {
       accessorKey: "brand",
-      header: "Brand",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Brand
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
     },
     {
       accessorKey: "gender",
-      header: "Gender",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Gender
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
     },
     {
       accessorKey: "style",
-      header: "Style",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Style
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Category
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const category = row?.original?.category;
         if (!category) return "Uncategorized";
@@ -246,11 +318,49 @@ export function ProductTable() {
         // Join with " > " separator
         return names?.join(" > ");
       },
+      sortingFn: (rowA, rowB) => {
+        const catA = rowA?.original?.category;
+        const catB = rowB?.original?.category;
+
+        const getFullCategoryName = (cat: typeof catA) => {
+          if (!cat) return "Uncategorized";
+          const parts = [];
+          if (cat?.parent?.parent?.name) parts?.push(cat?.parent?.parent?.name);
+          if (cat?.parent?.name) parts?.push(cat?.parent?.name);
+          parts?.push(cat?.name);
+          return parts?.join(" > ");
+        };
+
+        return getFullCategoryName(catA)?.localeCompare(
+          getFullCategoryName(catB)
+        );
+      },
       filterFn: categoryFilterFn,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Last Modified
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return new Date(row?.original?.updatedAt)?.toLocaleDateString();
+      },
     },
     {
       accessorKey: "variants",
       header: "Variants",
+      enableSorting: false,
       cell: ({ row }) => {
         const variants = row.original.variants;
         if (!variants || variants.length === 0) {
@@ -294,6 +404,7 @@ export function ProductTable() {
     },
     {
       id: "actions",
+      enableSorting: false,
       cell: ({ row }) => {
         const product = row.original;
         return (
