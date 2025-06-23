@@ -20,18 +20,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js Template",
-  description:
-    "A modern Next.js template with TypeScript, Tailwind CSS, and React Query",
+  title: "Molini Shoes",
+  description: "Premium women's shoes for every occasion",
   keywords: [
-    "Next.js",
-    "React",
-    "TypeScript",
-    "Tailwind CSS",
-    "React Query",
-    "Template",
+    "shoes",
+    "women's shoes",
+    "footwear",
+    "premium shoes",
+    "fashion",
+    "accessories",
   ],
-  authors: [{ name: "Your Name" }],
+  authors: [{ name: "Molini Shoes" }],
   robots: "index, follow",
 };
 
@@ -41,13 +40,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${montserrat.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className={`${montserrat.variable} ${geistMono.variable}`}>
+      <body suppressHydrationWarning>
         <Providers>
           <Header />
-          <main className="min-h-[70vh]">{children}</main>
+          <main>{children}</main>
           <Footer />
           <Toaster />
         </Providers>
