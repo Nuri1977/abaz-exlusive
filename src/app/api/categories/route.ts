@@ -7,11 +7,19 @@ export async function GET() {
     const categories = await prisma.category.findMany({
       include: {
         parent: true,
+        children: true,
       },
       orderBy: [
-        { level: 'asc' },
-        { name: 'asc' }
+        {
+          level: "asc",
+        },
+        {
+          name: "asc",
+        },
       ],
+      where: {
+        isActive: true,
+      },
     });
 
     return NextResponse.json(categories);

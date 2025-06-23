@@ -17,15 +17,26 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Fetch all categories with their relationships
     const categories = await prisma.category.findMany({
       include: {
-        children: true,
-        parent: true,
+        parent: {
+          include: {
+            parent: true,
+          },
+        },
+        children: {
+          include: {
+            children: true,
+          },
+        },
       },
       orderBy: [
-        { level: 'asc' },
-        { name: 'asc' }
+        {
+          level: "asc",
+        },
+        {
+          name: "asc",
+        },
       ],
     });
 
@@ -49,9 +60,9 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description, image, parentId, isActive } = body;
+    const { name, description, image, parentId } = body;
 
-    // If parentId is provided, get the parent's level
+    // Calculate level based on parent
     let level = 0;
     if (parentId) {
       const parent = await prisma.category.findUnique({
@@ -69,10 +80,13 @@ export async function POST(req: Request) {
         description,
         image,
         level,
-        isActive,
-        parent: parentId ? {
-          connect: { id: parentId }
-        } : undefined,
+        parent: parentId
+          ? {
+              connect: {
+                id: parentId,
+              },
+            }
+          : undefined,
       },
       include: {
         parent: true,

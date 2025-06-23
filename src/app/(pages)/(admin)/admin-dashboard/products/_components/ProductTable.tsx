@@ -81,140 +81,30 @@ export type ProductWithVariants = Product & {
   category: {
     id: string;
     name: string;
+    level: number;
+    parentId: string | null;
     parent?: {
       id: string;
       name: string;
+      parentId: string | null;
+      parent?: {
+        id: string;
+        name: string;
+        parentId: string | null;
+      } | null;
     } | null;
   } | null;
   images: FileUploadThing[] | null;
 };
 
-const columns: ColumnDef<ProductWithVariants>[] = [
-  {
-    accessorKey: "images",
-    header: "Image",
-    cell: ({ row }) => (
-      <div className="relative size-16">
-        <div>Data: J</div>
-        <Image
-          src={row.original.images?.[0]?.url || "/placeholder.png"}
-          alt={row.original.name}
-          fill
-          className="rounded-md object-cover"
-        />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
-    accessorKey: "price",
-    header: "Base Price",
-    cell: ({ row }) => {
-      const price = row.original.price;
-      return formatPrice(price ? Number(price) : 0);
-    },
-  },
-  {
-    accessorKey: "brand",
-    header: "Brand",
-  },
-  {
-    accessorKey: "gender",
-    header: "Gender",
-  },
-  {
-    accessorKey: "style",
-    header: "Style",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original.category;
-      return category
-        ? category.parent
-          ? `${category.parent.name} > ${category.name}`
-          : category.name
-        : "Uncategorized";
-    },
-    filterFn: (row, id, filterValue) => {
-      if (!filterValue) return true;
-      const category = row.original.category;
-      if (!category) return false;
-
-      // Match if the product is directly in the selected category
-      if (category.id === filterValue) return true;
-
-      // Match if the product's category is a child of the selected category
-      if (category.parent?.id === filterValue) return true;
-
-      return false;
-    },
-  },
-  {
-    accessorKey: "variants",
-    header: "Variants",
-    cell: ({ row }) => {
-      const variants = row.original.variants;
-      if (!variants || variants.length === 0) {
-        return <span className="text-muted-foreground">No variants</span>;
-      }
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {variants.length} variants
-              <ChevronDown className="ml-2 size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[200px]">
-            {variants.map((variant: any) => (
-              <DropdownMenuItem key={variant.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{variant.sku}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {variant.options.map((opt: any) => (
-                      <span key={opt.optionValue.id}>
-                        {opt.optionValue.value}{" "}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-sm">
-                    {variant.price
-                      ? formatPrice(Number(variant.price))
-                      : formatPrice(Number(row.original.price))}
-                    {" • "}
-                    {variant.stock} in stock
-                  </span>
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const product = row.original;
-      return (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/admin-dashboard/products/${product.id}`}>
-              <Pencil className="size-4" />
-            </Link>
-          </Button>
-          <DeleteProductDialog product={product} />
-        </div>
-      );
-    },
-  },
-];
+type CategoryWithParent = {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string | null;
+  parent?: CategoryWithParent | null;
+  children?: CategoryWithParent[];
+};
 
 export function ProductTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -229,33 +119,196 @@ export function ProductTable() {
     queryKey: ["products"],
     queryFn: async () => {
       const response = await fetch("/api/admin/products");
-      if (!response.ok) {
+      if (!response?.ok) {
         throw new Error("Failed to fetch products");
       }
-      const data = await response.json();
+      const data = await response?.json();
       // Convert Decimal to number
-      return data.map((product: any) => ({
+      return data?.map((product: any) => ({
         ...product,
-        price: product.price ? parseFloat(product.price.toString()) : null,
+        price: product?.price ? parseFloat(product?.price?.toString()) : null,
         variants:
-          product.variants?.map((variant: any) => ({
+          product?.variants?.map((variant: any) => ({
             ...variant,
-            price: variant.price ? parseFloat(variant.price.toString()) : null,
+            price: variant?.price
+              ? parseFloat(variant?.price?.toString())
+              : null,
           })) || [],
       }));
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<CategoryWithParent[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await fetch("/api/admin/categories");
-      if (!response.ok) {
+      if (!response?.ok) {
         throw new Error("Failed to fetch categories");
       }
-      return response.json();
+      return response?.json();
     },
   });
+
+  const categoryFilterFn = (
+    row: any,
+    columnId: string,
+    filterValue: string
+  ) => {
+    if (!filterValue) return true;
+    const category = row?.original?.category;
+    if (!category) return false;
+
+    // Find the selected category from the categories data
+    const selectedCategory = categories?.find((cat) => cat?.id === filterValue);
+    if (!selectedCategory) return false;
+
+    // Direct match
+    if (category?.id === filterValue) return true;
+
+    // If selected category is a parent (level 0 or 1), match children
+    if (selectedCategory?.level < 2) {
+      // Match direct children
+      if (category?.parentId === filterValue) return true;
+
+      // If it's a top-level category (level 0), also match grandchildren
+      if (selectedCategory?.level === 0) {
+        const parentCategory = category?.parent;
+        if (parentCategory?.parentId === filterValue) return true;
+      }
+    }
+
+    return false;
+  };
+
+  const columns: ColumnDef<ProductWithVariants>[] = [
+    {
+      accessorKey: "images",
+      header: "Image",
+      cell: ({ row }) => (
+        <div className="relative size-16">
+          <div>Data: J</div>
+          <Image
+            src={row.original.images?.[0]?.url || "/placeholder.png"}
+            alt={row.original.name}
+            fill
+            className="rounded-md object-cover"
+          />
+        </div>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "price",
+      header: "Base Price",
+      cell: ({ row }) => {
+        const price = row.original.price;
+        return formatPrice(price ? Number(price) : 0);
+      },
+    },
+    {
+      accessorKey: "brand",
+      header: "Brand",
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+    },
+    {
+      accessorKey: "style",
+      header: "Style",
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        const category = row?.original?.category;
+        if (!category) return "Uncategorized";
+
+        // Build the category hierarchy string
+        const names = [];
+
+        // Start with grandparent if it exists
+        if (category?.parent?.parent) {
+          names?.push(category?.parent?.parent?.name);
+        }
+
+        // Add parent if it exists
+        if (category?.parent) {
+          names?.push(category?.parent?.name);
+        }
+
+        // Add current category
+        names?.push(category?.name);
+
+        // Join with " > " separator
+        return names?.join(" > ");
+      },
+      filterFn: categoryFilterFn,
+    },
+    {
+      accessorKey: "variants",
+      header: "Variants",
+      cell: ({ row }) => {
+        const variants = row.original.variants;
+        if (!variants || variants.length === 0) {
+          return <span className="text-muted-foreground">No variants</span>;
+        }
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {variants.length} variants
+                <ChevronDown className="ml-2 size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              {variants.map((variant: any) => (
+                <DropdownMenuItem key={variant.id}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{variant.sku}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {variant.options.map((opt: any) => (
+                        <span key={opt.optionValue.id}>
+                          {opt.optionValue.value}{" "}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="text-sm">
+                      {variant.price
+                        ? formatPrice(Number(variant.price))
+                        : formatPrice(Number(row.original.price))}
+                      {" • "}
+                      {variant.stock} in stock
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/admin-dashboard/products/${product.id}`}>
+                <Pencil className="size-4" />
+              </Link>
+            </Button>
+            <DeleteProductDialog product={product} />
+          </div>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data: products || [],
