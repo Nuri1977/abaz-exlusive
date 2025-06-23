@@ -392,7 +392,9 @@ export function AddProductForm() {
                       <SelectContent>
                         {categories?.map((category: any) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                            {category.parent
+                              ? `${category.parent.name} > ${category.name}`
+                              : category.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

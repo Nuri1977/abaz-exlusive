@@ -81,6 +81,10 @@ export type ProductWithVariants = Product & {
   category: {
     id: string;
     name: string;
+    parent?: {
+      id: string;
+      name: string;
+    } | null;
   } | null;
   images: FileUploadThing[] | null;
 };
@@ -130,7 +134,24 @@ const columns: ColumnDef<ProductWithVariants>[] = [
     header: "Category",
     cell: ({ row }) => {
       const category = row.original.category;
-      return category ? category.name : "Uncategorized";
+      return category
+        ? category.parent
+          ? `${category.parent.name} > ${category.name}`
+          : category.name
+        : "Uncategorized";
+    },
+    filterFn: (row, id, filterValue) => {
+      if (!filterValue) return true;
+      const category = row.original.category;
+      if (!category) return false;
+
+      // Match if the product is directly in the selected category
+      if (category.id === filterValue) return true;
+
+      // Match if the product's category is a child of the selected category
+      if (category.parent?.id === filterValue) return true;
+
+      return false;
     },
   },
   {
@@ -287,8 +308,10 @@ export function ProductTable() {
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((category: any) => (
-                <SelectItem key={category.id} value={category.name}>
-                  {category.name}
+                <SelectItem key={category?.id} value={category?.id}>
+                  {category?.parent
+                    ? `${category.parent.name} > ${category.name}`
+                    : category?.name}
                 </SelectItem>
               ))}
             </SelectContent>
