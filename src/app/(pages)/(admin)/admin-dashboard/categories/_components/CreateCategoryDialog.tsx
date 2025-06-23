@@ -7,6 +7,7 @@ import {
   type CreateCategoryFormValues,
 } from "@/schemas/category";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Category } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -34,10 +35,27 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
 
-export function CreateCategoryDialog() {
+interface CreateCategoryDialogProps {
+  categories: (Category & {
+    children?: Category[];
+    parent?: Category | null;
+  })[];
+}
+
+export function CreateCategoryDialog({
+  categories,
+}: CreateCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -48,6 +66,8 @@ export function CreateCategoryDialog() {
       name: "",
       description: "",
       image: null,
+      parentId: null,
+      isActive: true,
     },
   });
 
@@ -89,7 +109,15 @@ export function CreateCategoryDialog() {
   const { mutate: uploadImage } = useGalleryMutation();
   const { mutate: deleteImage } = useDeleteGalleryMutation();
 
+  // Filter out categories based on level to prevent deep nesting
+  const availableParentCategories =
+    categories?.filter((category) => category.level < 2) || [];
+
   const onSubmit = (values: CreateCategoryFormValues) => {
+    // If parentId is "none", set it to null
+    if (values.parentId === "none") {
+      values.parentId = null;
+    }
     mutation.mutate(values);
   };
 
@@ -138,6 +166,52 @@ export function CreateCategoryDialog() {
             />
             <FormField
               control={form.control}
+              name="parentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent Category (Optional)</FormLabel>
+                  <Select
+                    value={field.value ?? ""}
+                    onValueChange={(value) => field.onChange(value || null)}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a parent category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {availableParentCategories?.map((category) => (
+                        <SelectItem key={category?.id} value={category?.id}>
+                          {category?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active</FormLabel>
+                    <FormMessage />
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
@@ -147,7 +221,7 @@ export function CreateCategoryDialog() {
                       {field.value ? (
                         <div className="relative">
                           <Image
-                            src={field.value.url}
+                            src={field.value.ufsUrl}
                             alt="Category image"
                             width={100}
                             height={100}
@@ -180,7 +254,7 @@ export function CreateCategoryDialog() {
                                 name: res[0].name,
                                 size: res[0].size,
                                 key: res[0].key,
-                                url: res[0].url,
+                                url: res[0].ufsUrl,
                                 lastModified: Math.floor(Date.now() / 1000),
                                 serverData: {},
                                 metadata: {},
@@ -194,8 +268,8 @@ export function CreateCategoryDialog() {
                                 uploadedBy: null,
                                 usedIn: [],
                                 isDeleted: false,
-                                appUrl: res[0].url,
-                                ufsUrl: res[0].url,
+                                appUrl: res[0].ufsUrl,
+                                ufsUrl: res[0].ufsUrl,
                               };
                               uploadImage(galleryItem);
                             }
@@ -216,7 +290,7 @@ export function CreateCategoryDialog() {
               )}
             />
             <Button type="submit" disabled={mutation.isPending}>
-              Create
+              {mutation.isPending ? "Creating..." : "Create"}
             </Button>
           </form>
         </Form>

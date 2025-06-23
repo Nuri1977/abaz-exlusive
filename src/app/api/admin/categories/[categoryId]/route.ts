@@ -9,30 +9,40 @@ import { slugify } from "@/lib/utils";
 import { utapi } from "@/utils/utapi";
 
 interface CategoryIdParams {
-  params: {
-    categoryId: string;
-  };
+  params: Promise<{ categoryId: string }>;
 }
 
 export async function PATCH(req: Request, { params }: CategoryIdParams) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user) {
+    if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { categoryId } = await params;
     const body = await req.json();
-    const { name, description, image } = body;
-
-    if (!name) {
-      return new NextResponse("Name is required", { status: 400 });
-    }
+    const { name, description, image, parentId, isActive } = body;
 
     // Get current category to check for existing image
     const currentCategory = await prisma.category.findUnique({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
+      include: { parent: true },
     });
+
+    if (!currentCategory) {
+      return new NextResponse("Category not found", { status: 404 });
+    }
+
+    // Calculate new level based on parent
+    let level = 0;
+    if (parentId) {
+      const parent = await prisma.category.findUnique({
+        where: { id: parentId },
+      });
+      if (parent) {
+        level = parent.level + 1;
+      }
+    }
 
     // If there's an existing image and it's being updated, delete the old one
     if (currentCategory?.image && image) {
@@ -42,13 +52,24 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
 
     const category = await prisma.category.update({
       where: {
-        id: params.categoryId,
+        id: categoryId,
       },
       data: {
         name,
         slug: slugify(name),
         description,
         image: image ? image : Prisma.JsonNull,
+        level,
+        isActive,
+        parent: parentId ? {
+          connect: { id: parentId }
+        } : {
+          disconnect: true
+        },
+      },
+      include: {
+        parent: true,
+        children: true,
       },
     });
 
@@ -62,15 +83,21 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
 export async function DELETE(req: Request, { params }: CategoryIdParams) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Get category to check for image
+    const { categoryId } = await params;
+
+    // Get category to check for image and children
     const category = await prisma.category.findUnique({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
+      include: { children: true },
     });
+
+    if (!category) {
+      return new NextResponse("Category not found", { status: 404 });
+    }
 
     // Delete image if exists
     if (category?.image) {
@@ -78,10 +105,21 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
       await utapi.deleteFiles(imageData.key);
     }
 
+    // Update children to remove their parent reference
+    if (category.children.length > 0) {
+      await prisma.category.updateMany({
+        where: { parentId: categoryId },
+        data: { 
+          parentId: null,
+          level: 0,
+        },
+      });
+    }
+
     // Delete category
     await prisma.category.delete({
       where: {
-        id: params.categoryId,
+        id: categoryId,
       },
     });
 

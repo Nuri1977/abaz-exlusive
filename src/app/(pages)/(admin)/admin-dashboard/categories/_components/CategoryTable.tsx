@@ -17,9 +17,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,22 +36,25 @@ import { CreateCategoryDialog } from "./CreateCategoryDialog";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import { EditCategoryDialog } from "./EditCategoryDialog";
 
-type CategoryWithImage = Category & {
+type CategoryWithRelations = Category & {
   image: FileUploadThing | null;
+  children?: CategoryWithRelations[];
+  parent?: CategoryWithRelations | null;
 };
 
-const columns: ColumnDef<CategoryWithImage>[] = [
+const columns: ColumnDef<CategoryWithRelations>[] = [
   {
     accessorKey: "image",
     header: "Image",
     cell: ({ row }) => {
       const image = row.original.image;
-      return image?.url ? (
+      return image?.ufsUrl ? (
         <div className="relative size-16">
           <Image
-            src={image.url}
+            src={image.ufsUrl}
             alt={row.original.name}
             fill
+            sizes="(max-width: 768px) 64px, 64px"
             className="rounded-md object-cover"
           />
         </div>
@@ -64,14 +68,52 @@ const columns: ColumnDef<CategoryWithImage>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      const level = row.original.level;
+      const isParent = (row.original.children?.length ?? 0) > 0;
+      return (
+        <div className="flex items-center gap-2">
+          <div
+            style={{ marginLeft: `${level * 20}px` }}
+            className="flex items-center gap-2"
+          >
+            {level > 0 && (
+              <ChevronRight className="size-4 text-muted-foreground" />
+            )}
+            {row.getValue("name")}
+            {isParent && (
+              <Badge variant="secondary" className="ml-2">
+                Parent
+              </Badge>
+            )}
+          </div>
+        </div>
+      );
+    },
   },
   {
-    accessorKey: "slug",
-    header: "Slug",
+    accessorKey: "parent",
+    header: "Parent Category",
+    cell: ({ row }) => {
+      const parent = row.original.parent;
+      return parent ? parent.name : "-";
+    },
   },
   {
     accessorKey: "description",
     header: "Description",
+  },
+  {
+    accessorKey: "isActive",
+    header: "Status",
+    cell: ({ row }) => {
+      const isActive = row.original.isActive;
+      return (
+        <Badge variant={isActive ? "default" : "secondary"}>
+          {isActive ? "Active" : "Inactive"}
+        </Badge>
+      );
+    },
   },
   {
     id: "actions",
@@ -136,7 +178,7 @@ export function CategoryTable() {
           }
           className="max-w-sm"
         />
-        <CreateCategoryDialog />
+        <CreateCategoryDialog categories={categories} />
       </div>
       <div className="rounded-md border">
         <Table>

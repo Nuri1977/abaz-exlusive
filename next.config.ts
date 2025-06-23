@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "*.ufs.sh",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "plus.unsplash.com",
         port: "",
         pathname: "/**",

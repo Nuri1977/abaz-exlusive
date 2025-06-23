@@ -84,7 +84,6 @@ model Verification {
 
 model Category {
   id          String     @id @default(uuid())
-  test        String?
   name        String
   slug        String     @unique
   description String?
@@ -93,9 +92,12 @@ model Category {
   parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
   children    Category[] @relation("CategoryToCategory")
   products    Product[]
+  level       Int        @default(0) // Track hierarchy level
+  isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  @@index([parentId])
   @@map("category")
 }
 
