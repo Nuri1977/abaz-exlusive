@@ -303,6 +303,25 @@ model MediaUsage {
   @@map("media_usage")
 }
 
+model Settings {
+  id        String   @id @default("default") // Using "default" as the only ID since this is a singleton
+  name      String
+  address   String
+  city      String
+  state     String
+  telephone String
+  email     String
+  facebook  String?
+  twitter   String? // X (formerly Twitter)
+  instagram String?
+  youtube   String?
+  aboutInfo String   @db.Text // Using Text type for longer content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
 enum OrderStatus {
   PENDING
   PROCESSING
