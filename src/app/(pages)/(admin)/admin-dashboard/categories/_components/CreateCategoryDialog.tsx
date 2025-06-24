@@ -13,6 +13,7 @@ import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import { categoryKeys } from "@/lib/query/categories";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -47,7 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
 
 interface CreateCategoryDialogProps {
-  categories: (Category & {
+  categories?: (Category & {
     children?: Category[];
     parent?: Category | null;
   })[];
@@ -59,6 +60,8 @@ export function CreateCategoryDialog({
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { mutate: uploadImage } = useGalleryMutation();
+  const { mutate: deleteImage } = useDeleteGalleryMutation();
 
   const form = useForm<CreateCategoryFormValues>({
     resolver: zodResolver(createCategoryFormSchema),
@@ -71,7 +74,7 @@ export function CreateCategoryDialog({
     },
   });
 
-  const mutation = useMutation({
+  const { mutate: createCategory, isPending } = useMutation({
     mutationFn: async (values: CreateCategoryFormValues) => {
       const response = await fetch("/api/admin/categories", {
         method: "POST",
@@ -85,29 +88,56 @@ export function CreateCategoryDialog({
         throw new Error("Failed to create category");
       }
 
-      return response.json();
+      const newCategory = await response.json();
+
+      // Handle gallery item if there's an image
+      if (values.image?.key) {
+        // Create gallery item with reference
+        uploadImage({
+          name: values.image.name,
+          size: values.image.size,
+          key: values.image.key,
+          lastModified: Math.floor(
+            (values.image.lastModified || Date.now()) / 1000
+          ),
+          serverData: values.image.serverData || {},
+          url: values.image.url,
+          appUrl: values.image.url,
+          ufsUrl: values.image.url,
+          customId: null,
+          type: "image",
+          fileHash: values.image.key,
+          reference: newCategory.id,
+          metadata: {},
+          width: null,
+          height: null,
+          tags: ["category"],
+          uploadedBy: null,
+          usedIn: [],
+          isDeleted: false,
+        });
+      }
+
+      return newCategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      setOpen(false);
-      form.reset();
       toast({
         title: "Success",
         description: "Category created successfully",
       });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      setOpen(false);
+      form.reset();
     },
-    onError: (error) => {
-      console.error("Error creating category:", error);
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create category. Please try again.",
+        description: "Failed to create category",
         variant: "destructive",
       });
     },
   });
-
-  const { mutate: uploadImage } = useGalleryMutation();
-  const { mutate: deleteImage } = useDeleteGalleryMutation();
 
   // Filter out categories based on level to prevent deep nesting
   const availableParentCategories =
@@ -118,7 +148,7 @@ export function CreateCategoryDialog({
     if (values.parentId === "none") {
       values.parentId = null;
     }
-    mutation.mutate(values);
+    createCategory(values);
   };
 
   return (
@@ -289,8 +319,8 @@ export function CreateCategoryDialog({
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Creating..." : "Create"}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Creating..." : "Create"}
             </Button>
           </form>
         </Form>

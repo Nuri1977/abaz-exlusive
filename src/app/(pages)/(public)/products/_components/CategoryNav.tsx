@@ -1,31 +1,36 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Category } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 
+import {
+  categoryKeys,
+  fetchPublicCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
 import { cn } from "@/lib/utils";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type CategoryWithRelations = Category & {
-  parent: CategoryWithRelations | null;
-  children: CategoryWithRelations[];
-};
 
 export function CategoryNav() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedCategory = searchParams?.get("category");
 
-  const { data: categories, isLoading } = useQuery<CategoryWithRelations[]>({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/categories");
-      if (!response?.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response?.json();
-    },
+  const { data: categories, isLoading } = useQuery({
+    queryKey: categoryKeys.public(),
+    queryFn: fetchPublicCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const handleCategoryClick = (categoryId: string) => {
@@ -39,183 +44,175 @@ export function CategoryNav() {
   };
 
   const CategorySkeleton = () => (
-    <div className="space-y-4">
-      <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            className="h-9 w-24 shrink-0 rounded-md border border-border bg-muted/50"
-          />
-        ))}
-      </div>
-      <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            className="h-9 w-24 shrink-0 rounded-md border border-border bg-muted/50"
-          />
-        ))}
-      </div>
-      <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            className="h-9 w-24 shrink-0 rounded-md border border-border bg-muted/50"
-          />
-        ))}
-      </div>
+    <div className="flex gap-2">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-10 w-32" />
+      ))}
     </div>
   );
 
-  const CategoryButtons = () => {
-    if (!categories) return null;
-
-    // Find the currently selected category and its ancestors
-    const selectedCategoryData = selectedCategory
-      ? findCategoryAndAncestors(categories, selectedCategory)
-      : null;
-
-    // Get categories for each level with null checks
-    const topLevelCategories =
-      categories?.filter((cat) => cat?.level === 0) ?? [];
-    const secondLevelCategories = selectedCategoryData?.level0
-      ? (categories?.filter(
-          (cat) => cat?.parentId === selectedCategoryData?.level0?.id
-        ) ?? [])
-      : [];
-    const thirdLevelCategories = selectedCategoryData?.level1
-      ? (categories?.filter(
-          (cat) => cat?.parentId === selectedCategoryData?.level1?.id
-        ) ?? [])
-      : [];
-
-    return (
-      <div className="space-y-4">
-        {/* Top Level Categories */}
-        <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-          <button
-            onClick={() => handleCategoryClick("all")}
-            className={cn(
-              "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
-              !selectedCategory
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            )}
-          >
-            All
-          </button>
-          {topLevelCategories?.map((category) => (
-            <button
-              key={category?.id}
-              onClick={() => handleCategoryClick(category?.id)}
-              className={cn(
-                "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
-                selectedCategoryData?.level0?.id === category?.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              {category?.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Second Level Categories */}
-        {secondLevelCategories?.length > 0 && (
-          <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-            {secondLevelCategories?.map((category) => (
-              <button
-                key={category?.id}
-                onClick={() => handleCategoryClick(category?.id)}
-                className={cn(
-                  "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
-                  selectedCategoryData?.level1?.id === category?.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                )}
-              >
-                {category?.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Third Level Categories */}
-        {thirdLevelCategories?.length > 0 && (
-          <div className="scrollbar-hide flex items-center space-x-1 overflow-x-auto pb-2">
-            {thirdLevelCategories?.map((category) => (
-              <button
-                key={category?.id}
-                onClick={() => handleCategoryClick(category?.id)}
-                className={cn(
-                  "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
-                  selectedCategoryData?.level2?.id === category?.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                )}
-              >
-                {category?.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="space-y-4">
-      {isLoading ? <CategorySkeleton /> : <CategoryButtons />}
-    </div>
-  );
-}
-
-// Helper function to find a category and its ancestors
-function findCategoryAndAncestors(
-  categories: CategoryWithRelations[],
-  categoryId: string
-) {
-  const findCategory = (id: string): CategoryWithRelations | null => {
-    for (const category of categories) {
-      if (category?.id === id) return category;
-      if (category?.children) {
-        const found = category.children?.find((child) => child?.id === id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const category = findCategory(categoryId);
-  if (!category) return null;
-
-  const result: {
-    level0?: CategoryWithRelations;
-    level1?: CategoryWithRelations;
-    level2?: CategoryWithRelations;
-  } = {};
-
-  if (category?.level === 2) {
-    result.level2 = category;
-    const parent = category?.parentId ? findCategory(category.parentId) : null;
-    if (parent) {
-      result.level1 = parent;
-      const grandparent = parent?.parentId
-        ? findCategory(parent.parentId)
-        : null;
-      if (grandparent) {
-        result.level0 = grandparent;
-      }
-    }
-  } else if (category?.level === 1) {
-    result.level1 = category;
-    const parent = category?.parentId ? findCategory(category.parentId) : null;
-    if (parent) {
-      result.level0 = parent;
-    }
-  } else {
-    result.level0 = category;
+  if (isLoading) {
+    return <CategorySkeleton />;
   }
 
-  return result;
+  // Get top level (grandparent) categories
+  const grandparentCategories =
+    categories?.filter((cat) => cat?.level === 0) ?? [];
+
+  return (
+    <NavigationMenu>
+      <NavigationMenuList className="gap-2">
+        <NavigationMenuItem>
+          <NavigationMenuLink
+            className={cn(
+              navigationMenuTriggerStyle(),
+              !selectedCategory && "bg-accent",
+              "cursor-pointer"
+            )}
+            onClick={() => handleCategoryClick("all")}
+          >
+            All Products
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        {grandparentCategories?.map((grandparent) => (
+          <NavigationMenuItem key={grandparent?.id}>
+            {grandparent?.children?.length > 0 ? (
+              <>
+                <NavigationMenuTrigger
+                  className={cn(
+                    selectedCategory === grandparent?.id && "bg-accent"
+                  )}
+                >
+                  {grandparent?.name}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid w-[500px] gap-3 p-4 md:w-[600px] lg:w-[700px]">
+                    <nav className="grid gap-4">
+                      {/* Grandparent category link */}
+                      <NavigationMenuLink
+                        className={cn(
+                          "block w-full cursor-pointer select-none rounded-md bg-muted/50 p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                          selectedCategory === grandparent?.id && "bg-accent"
+                        )}
+                        onClick={() => handleCategoryClick(grandparent?.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {grandparent?.image?.ufsUrl && (
+                            <div className="relative size-16 shrink-0 overflow-hidden rounded-md">
+                              <Image
+                                src={grandparent.image.ufsUrl}
+                                alt={grandparent?.name}
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-base font-medium">
+                              {grandparent?.name}
+                            </div>
+                            {grandparent?.description && (
+                              <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {grandparent?.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </NavigationMenuLink>
+
+                      {/* Parent categories */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {grandparent?.children?.map((parent) => (
+                          <div key={parent?.id} className="space-y-2">
+                            <NavigationMenuLink
+                              className={cn(
+                                "block cursor-pointer select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                selectedCategory === parent?.id && "bg-accent"
+                              )}
+                              onClick={() => handleCategoryClick(parent?.id)}
+                            >
+                              <div className="flex items-center gap-3">
+                                {parent?.image?.ufsUrl && (
+                                  <div className="relative size-12 shrink-0 overflow-hidden rounded-md">
+                                    <Image
+                                      src={parent.image.ufsUrl}
+                                      alt={parent.name}
+                                      fill
+                                      sizes="48px"
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-sm font-medium leading-none">
+                                    {parent?.name}
+                                  </div>
+                                  {parent?.description && (
+                                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                      {parent?.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </NavigationMenuLink>
+
+                            {/* Child categories */}
+                            {parent?.children?.length > 0 && (
+                              <div className="ml-3 space-y-1 border-l pl-3">
+                                {parent?.children?.map((child) => (
+                                  <NavigationMenuLink
+                                    key={child?.id}
+                                    className={cn(
+                                      "flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                      selectedCategory === child?.id &&
+                                        "bg-accent"
+                                    )}
+                                    onClick={() =>
+                                      handleCategoryClick(child?.id)
+                                    }
+                                  >
+                                    {child?.image?.ufsUrl ? (
+                                      <div className="relative size-6 shrink-0 overflow-hidden rounded-md">
+                                        <Image
+                                          src={child.image.ufsUrl}
+                                          alt={child.name}
+                                          fill
+                                          sizes="24px"
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <ChevronRight className="h-3 w-3" />
+                                    )}
+                                    <span>{child?.name}</span>
+                                  </NavigationMenuLink>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </nav>
+                  </div>
+                </NavigationMenuContent>
+              </>
+            ) : (
+              <NavigationMenuLink
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  selectedCategory === grandparent?.id && "bg-accent",
+                  "cursor-pointer"
+                )}
+                onClick={() => handleCategoryClick(grandparent?.id)}
+              >
+                {grandparent?.name}
+              </NavigationMenuLink>
+            )}
+          </NavigationMenuItem>
+        ))}
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
 }

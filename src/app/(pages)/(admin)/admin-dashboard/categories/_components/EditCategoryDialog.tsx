@@ -11,6 +11,11 @@ import * as z from "zod";
 
 import type { FileUploadThing } from "@/types/UploadThing";
 import {
+  categoryKeys,
+  fetchAdminCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
+import {
   useDeleteGalleryMutation,
   useGalleryMutation,
 } from "@/hooks/useGallery";
@@ -54,30 +59,21 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
-  category: Category & {
-    image: string | FileUploadThing | null;
-    parent?: Category | null;
-    children?: Category[];
-  };
+  category: CategoryWithRelations;
 }
 
 export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { mutate: createGalleryItem } = useGalleryMutation();
-  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
+  const { mutate: uploadImage } = useGalleryMutation();
+  const { mutate: deleteImage } = useDeleteGalleryMutation();
 
   // Fetch all categories for parent selection
   const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response.json();
-    },
+    queryKey: categoryKeys.admin(),
+    queryFn: fetchAdminCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Filter out categories based on level and prevent self-selection
@@ -138,12 +134,12 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         if (category?.image) {
           const oldImage = parseImage(category.image);
           if (oldImage?.key) {
-            deleteGalleryItem(oldImage.key);
+            deleteImage(oldImage.key);
           }
         }
 
         // Create new gallery item with reference
-        createGalleryItem({
+        uploadImage({
           name: values.image.name,
           size: values.image.size,
           key: values.image.key,
@@ -175,7 +171,8 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         title: "Success",
         description: "Category updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       setOpen(false);
     },
     onError: () => {
@@ -307,7 +304,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                             className="absolute -right-2 -top-2 size-6 rounded-full p-0"
                             onClick={() => {
                               if (field.value?.key) {
-                                deleteGalleryItem(field.value.key);
+                                deleteImage(field.value.key);
                               }
                               field.onChange(null);
                             }}
@@ -344,7 +341,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                                 appUrl: res[0].ufsUrl,
                                 ufsUrl: res[0].ufsUrl,
                               };
-                              createGalleryItem(galleryItem);
+                              uploadImage(galleryItem);
                             }
                           }}
                           onUploadError={(error: Error) => {

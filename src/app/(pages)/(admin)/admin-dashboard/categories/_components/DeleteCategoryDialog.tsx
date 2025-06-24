@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Trash2 } from "lucide-react";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import { categoryKeys } from "@/lib/query/categories";
 import { useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -35,19 +36,13 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
 
   const { mutate: deleteCategory, isPending } = useMutation({
     mutationFn: async () => {
-      // Delete the gallery item first if it exists
-      if (category?.image?.key) {
-        deleteGalleryItem(category.image.key);
-      }
-
       const response = await fetch(`/api/admin/categories/${category.id}`, {
         method: "DELETE",
       });
-
       if (!response.ok) {
-        throw new Error("Failed to delete category");
+        const error = await response.text();
+        throw new Error(error);
       }
-
       return response.json();
     },
     onSuccess: () => {
@@ -55,13 +50,14 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
         title: "Success",
         description: "Category deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       setOpen(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete category",
+        description: error.message || "Failed to delete category",
         variant: "destructive",
       });
     },

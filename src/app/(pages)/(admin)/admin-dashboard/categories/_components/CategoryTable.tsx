@@ -20,6 +20,11 @@ import {
 import { ChevronRight, Loader2 } from "lucide-react";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import {
+  categoryKeys,
+  fetchAdminCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,12 +40,6 @@ import {
 import { CreateCategoryDialog } from "./CreateCategoryDialog";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import { EditCategoryDialog } from "./EditCategoryDialog";
-
-type CategoryWithRelations = Category & {
-  image: FileUploadThing | null;
-  children?: CategoryWithRelations[];
-  parent?: CategoryWithRelations | null;
-};
 
 const columns: ColumnDef<CategoryWithRelations>[] = [
   {
@@ -134,14 +133,9 @@ export function CategoryTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response.json();
-    },
+    queryKey: categoryKeys.admin(),
+    queryFn: fetchAdminCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const table = useReactTable({
@@ -178,7 +172,7 @@ export function CategoryTable() {
           }
           className="max-w-sm"
         />
-        <CreateCategoryDialog categories={categories} />
+        <CreateCategoryDialog categories={categories || []} />
       </div>
       <div className="rounded-md border">
         <Table>

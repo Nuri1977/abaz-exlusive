@@ -19,6 +19,11 @@ import {
 import { ArrowUpDown, ChevronDown, Loader2, Pencil, Plus } from "lucide-react";
 
 import { FileUploadThing } from "@/types/UploadThing";
+import {
+  categoryKeys,
+  fetchAdminCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
@@ -131,15 +136,10 @@ export function ProductTable() {
     },
   });
 
-  const { data: categories } = useQuery<CategoryWithParent[]>({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/categories");
-      if (!response?.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response?.json();
-    },
+  const { data: categories } = useQuery({
+    queryKey: categoryKeys.admin(),
+    queryFn: fetchAdminCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const categoryFilterFn = (
