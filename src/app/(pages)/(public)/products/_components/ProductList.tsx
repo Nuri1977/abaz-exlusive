@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { Category, Product } from "@prisma/client";
+import { Category } from "@prisma/client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 
 import { ProductExt } from "@/types/product";
-
 import { ProductCard } from "./ProductCard";
+
 import { ProductSkeleton } from "./ProductSkeleton";
 
 interface ProductListProps {
