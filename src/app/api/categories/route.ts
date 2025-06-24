@@ -5,8 +5,20 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: {
-        name: "asc",
+      include: {
+        parent: true,
+        children: true,
+      },
+      orderBy: [
+        {
+          level: "asc",
+        },
+        {
+          name: "asc",
+        },
+      ],
+      where: {
+        isActive: true,
       },
     });
 

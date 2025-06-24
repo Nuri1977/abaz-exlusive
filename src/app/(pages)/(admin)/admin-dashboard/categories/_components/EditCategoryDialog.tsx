@@ -4,13 +4,22 @@ import { useState } from "react";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Category } from "@prisma/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import type { FileUploadThing } from "@/types/UploadThing";
+import {
+  categoryKeys,
+  fetchAdminCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
+import {
+  useDeleteGalleryMutation,
+  useGalleryMutation,
+} from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
-import { useGalleryMutation, useDeleteGalleryMutation } from "@/hooks/useGallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,33 +37,55 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
-import type { FileUploadThing } from "@/types/UploadThing";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   image: z.custom<FileUploadThing>().nullable(),
+  parentId: z.string().nullable().optional(),
+  isActive: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
-  category: Category & {
-    image: string | FileUploadThing | null;
-  };
+  category: CategoryWithRelations;
 }
 
 export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { mutate: createGalleryItem } = useGalleryMutation();
-  const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
+  const { mutate: uploadImage } = useGalleryMutation();
+  const { mutate: deleteImage } = useDeleteGalleryMutation();
+
+  // Fetch all categories for parent selection
+  const { data: categories } = useQuery({
+    queryKey: categoryKeys.admin(),
+    queryFn: fetchAdminCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Filter out categories based on level and prevent self-selection
+  const availableParentCategories =
+    categories?.filter(
+      (cat: Category) => cat.level < 2 && cat.id !== category.id
+    ) || [];
 
   // Safely parse the image data
-  const parseImage = (imageData: string | FileUploadThing | null): FileUploadThing | null => {
+  const parseImage = (
+    imageData: string | FileUploadThing | null
+  ): FileUploadThing | null => {
     if (!imageData) return null;
     if (typeof imageData === "string") {
       try {
@@ -73,6 +104,8 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
       name: category?.name || "",
       description: category?.description || "",
       image: parseImage(category?.image),
+      parentId: category?.parentId || null,
+      isActive: category?.isActive ?? true,
     },
   });
 
@@ -93,21 +126,26 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
       const updatedCategory = await response.json();
 
       // Handle gallery item if there's an image change
-      if (values.image?.key && values.image?.key !== parseImage(category?.image)?.key) {
+      if (
+        values.image?.key &&
+        values.image?.key !== parseImage(category?.image)?.key
+      ) {
         // Delete old image if it exists
         if (category?.image) {
           const oldImage = parseImage(category.image);
           if (oldImage?.key) {
-            deleteGalleryItem(oldImage.key);
+            deleteImage(oldImage.key);
           }
         }
 
         // Create new gallery item with reference
-        createGalleryItem({
+        uploadImage({
           name: values.image.name,
           size: values.image.size,
           key: values.image.key,
-          lastModified: Math.floor((values.image.lastModified || Date.now()) / 1000),
+          lastModified: Math.floor(
+            (values.image.lastModified || Date.now()) / 1000
+          ),
           serverData: values.image.serverData || {},
           url: values.image.url,
           appUrl: values.image.url,
@@ -122,7 +160,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
           tags: ["category"],
           uploadedBy: null,
           usedIn: [],
-          isDeleted: false
+          isDeleted: false,
         });
       }
 
@@ -133,7 +171,8 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         title: "Success",
         description: "Category updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       setOpen(false);
     },
     onError: () => {
@@ -195,6 +234,54 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
             />
             <FormField
               control={form.control}
+              name="parentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent Category (Optional)</FormLabel>
+                  <Select
+                    value={field.value ?? ""}
+                    onValueChange={(value) =>
+                      field.onChange(value === "none" ? null : value)
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a parent category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {availableParentCategories?.map((cat: Category) => (
+                        <SelectItem key={cat?.id} value={cat?.id}>
+                          {cat?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active</FormLabel>
+                    <FormMessage />
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
@@ -204,7 +291,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                       {field.value ? (
                         <div className="relative">
                           <Image
-                            src={field.value.url}
+                            src={field.value.ufsUrl}
                             alt="Category image"
                             width={100}
                             height={100}
@@ -217,7 +304,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                             className="absolute -right-2 -top-2 size-6 rounded-full p-0"
                             onClick={() => {
                               if (field.value?.key) {
-                                deleteGalleryItem(field.value.key);
+                                deleteImage(field.value.key);
                               }
                               field.onChange(null);
                             }}
@@ -237,7 +324,7 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                                 name: res[0].name,
                                 size: res[0].size,
                                 key: res[0].key,
-                                url: res[0].url,
+                                url: res[0].ufsUrl,
                                 lastModified: Math.floor(Date.now() / 1000),
                                 serverData: {},
                                 metadata: {},
@@ -251,10 +338,10 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                                 uploadedBy: null,
                                 usedIn: [],
                                 isDeleted: false,
-                                appUrl: res[0].url,
-                                ufsUrl: res[0].url,
+                                appUrl: res[0].ufsUrl,
+                                ufsUrl: res[0].ufsUrl,
                               };
-                              createGalleryItem(galleryItem);
+                              uploadImage(galleryItem);
                             }
                           }}
                           onUploadError={(error: Error) => {

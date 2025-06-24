@@ -3,10 +3,13 @@
 import { useState } from "react";
 import type { Category } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { AlertCircle, Trash2 } from "lucide-react";
 
-import { useToast } from "@/hooks/useToast";
+import type { FileUploadThing } from "@/types/UploadThing";
+import { categoryKeys } from "@/lib/query/categories";
 import { useDeleteGalleryMutation } from "@/hooks/useGallery";
+import { useToast } from "@/hooks/useToast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,11 +20,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { FileUploadThing } from "@/types/UploadThing";
 
 interface DeleteCategoryDialogProps {
   category: Category & {
     image: FileUploadThing | null;
+    children?: Category[];
   };
 }
 
@@ -33,19 +36,13 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
 
   const { mutate: deleteCategory, isPending } = useMutation({
     mutationFn: async () => {
-      // Delete the gallery item first if it exists
-      if (category?.image?.key) {
-        deleteGalleryItem(category.image.key);
-      }
-
       const response = await fetch(`/api/admin/categories/${category.id}`, {
         method: "DELETE",
       });
-
       if (!response.ok) {
-        throw new Error("Failed to delete category");
+        const error = await response.text();
+        throw new Error(error);
       }
-
       return response.json();
     },
     onSuccess: () => {
@@ -53,13 +50,14 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
         title: "Success",
         description: "Category deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       setOpen(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete category",
+        description: error.message || "Failed to delete category",
         variant: "destructive",
       });
     },
@@ -80,6 +78,19 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
             undone.
           </DialogDescription>
         </DialogHeader>
+
+        {(category.children?.length ?? 0) > 0 && (
+          <Alert>
+            <AlertCircle className="size-4" />
+            <AlertTitle>Warning</AlertTitle>
+            <AlertDescription>
+              This category has {category.children?.length} subcategories. If
+              you delete this category, all subcategories will become top-level
+              categories.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <DialogFooter>
           <Button
             variant="outline"

@@ -3,40 +3,66 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
+type SortFields = "createdAt" | "price" | "name";
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
-    const sortParam = searchParams.get("sort") || "createdAt:desc";
-    const category = searchParams.get("category");
-    const minPrice = searchParams.get("minPrice");
-    const maxPrice = searchParams.get("maxPrice");
-    const gender = searchParams.get("gender");
-    const brand = searchParams.get("brand");
-    const material = searchParams.get("material");
-    const style = searchParams.get("style");
-    const features = searchParams.get("features");
+    const page = parseInt(searchParams?.get("page") || "1");
+    const limit = parseInt(searchParams?.get("limit") || "12");
+    const sortParam = searchParams?.get("sort") || "createdAt:desc";
+    const category = searchParams?.get("category");
+    const minPrice = searchParams?.get("minPrice");
+    const maxPrice = searchParams?.get("maxPrice");
+    const gender = searchParams?.get("gender");
+    const brand = searchParams?.get("brand");
+    const material = searchParams?.get("material");
+    const style = searchParams?.get("style");
+    const features = searchParams?.get("features");
 
-    // Parse sort parameter
-    const [sortField, sortOrder] = sortParam.split(":");
-    const orderBy = {
+    // Parse sort parameter with type safety
+    const [field, order] = sortParam?.split(":");
+    const sortField = (field || "createdAt") as SortFields;
+    const sortOrder = (order || "desc") as "asc" | "desc";
+
+    // Create properly typed orderBy object
+    const orderBy: { [K in SortFields]?: "asc" | "desc" } = {
       [sortField]: sortOrder,
     };
 
     const where: Prisma.ProductWhereInput = {};
 
-    // TODO: Refactor filtering logic
-    // Consider:
-    // 1. Creating a separate function to handle filter transformations
-    // 2. Using a more declarative approach with filter mapping
-    // 3. Potentially using a filter builder pattern
-    // 4. Adding validation for filter values
     if (category) {
-      const categoryIds = category.split(",").filter(Boolean);
-      if (categoryIds.length > 0) {
+      // Get the selected category and its level
+      const selectedCategory = await prisma.category.findUnique({
+        where: { id: category },
+        include: {
+          children: true,
+        },
+      });
+
+      if (selectedCategory) {
+        let categoryIds = [selectedCategory?.id];
+
+        // If it's a parent category (level 0 or 1), include all its children
+        if (selectedCategory?.level < 2 && selectedCategory?.children) {
+          categoryIds = [...categoryIds, ...selectedCategory?.children?.map(child => child?.id)];
+
+          // If it's a top-level category (level 0), also include grandchildren
+          if (selectedCategory?.level === 0) {
+            const childrenWithGrandchildren = await prisma.category.findMany({
+              where: {
+                parentId: {
+                  in: selectedCategory?.children?.map(child => child?.id)
+                }
+              }
+            });
+            categoryIds = [...categoryIds, ...childrenWithGrandchildren?.map(child => child?.id)];
+          }
+        }
+
         where.categoryId = {
-          in: categoryIds,
+          in: categoryIds
         };
       }
     }
@@ -65,8 +91,8 @@ export async function GET(request: Request) {
     }
 
     if (features) {
-      const featureList = features.split(",").filter(Boolean);
-      if (featureList.length > 0) {
+      const featureList = features?.split(",")?.filter(Boolean);
+      if (featureList?.length > 0) {
         where.features = {
           hasSome: featureList,
         };
@@ -77,7 +103,11 @@ export async function GET(request: Request) {
       prisma.product.findMany({
         where,
         include: {
-          category: true,
+          category: {
+            include: {
+              parent: true,
+            },
+          },
         },
         orderBy,
         skip: (page - 1) * limit,

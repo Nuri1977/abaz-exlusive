@@ -7,11 +7,13 @@ import {
   type CreateCategoryFormValues,
 } from "@/schemas/category";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Category } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import { categoryKeys } from "@/lib/query/categories";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -34,13 +36,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/utils/uploadthing";
 
-export function CreateCategoryDialog() {
+interface CreateCategoryDialogProps {
+  categories?: (Category & {
+    children?: Category[];
+    parent?: Category | null;
+  })[];
+}
+
+export function CreateCategoryDialog({
+  categories,
+}: CreateCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { mutate: uploadImage } = useGalleryMutation();
+  const { mutate: deleteImage } = useDeleteGalleryMutation();
 
   const form = useForm<CreateCategoryFormValues>({
     resolver: zodResolver(createCategoryFormSchema),
@@ -48,10 +69,12 @@ export function CreateCategoryDialog() {
       name: "",
       description: "",
       image: null,
+      parentId: null,
+      isActive: true,
     },
   });
 
-  const mutation = useMutation({
+  const { mutate: createCategory, isPending } = useMutation({
     mutationFn: async (values: CreateCategoryFormValues) => {
       const response = await fetch("/api/admin/categories", {
         method: "POST",
@@ -65,32 +88,67 @@ export function CreateCategoryDialog() {
         throw new Error("Failed to create category");
       }
 
-      return response.json();
+      const newCategory = await response.json();
+
+      // Handle gallery item if there's an image
+      if (values.image?.key) {
+        // Create gallery item with reference
+        uploadImage({
+          name: values.image.name,
+          size: values.image.size,
+          key: values.image.key,
+          lastModified: Math.floor(
+            (values.image.lastModified || Date.now()) / 1000
+          ),
+          serverData: values.image.serverData || {},
+          url: values.image.url,
+          appUrl: values.image.url,
+          ufsUrl: values.image.url,
+          customId: null,
+          type: "image",
+          fileHash: values.image.key,
+          reference: newCategory.id,
+          metadata: {},
+          width: null,
+          height: null,
+          tags: ["category"],
+          uploadedBy: null,
+          usedIn: [],
+          isDeleted: false,
+        });
+      }
+
+      return newCategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      setOpen(false);
-      form.reset();
       toast({
         title: "Success",
         description: "Category created successfully",
       });
+      // Invalidate both admin and public category queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      setOpen(false);
+      form.reset();
     },
-    onError: (error) => {
-      console.error("Error creating category:", error);
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create category. Please try again.",
+        description: "Failed to create category",
         variant: "destructive",
       });
     },
   });
 
-  const { mutate: uploadImage } = useGalleryMutation();
-  const { mutate: deleteImage } = useDeleteGalleryMutation();
+  // Filter out categories based on level to prevent deep nesting
+  const availableParentCategories =
+    categories?.filter((category) => category.level < 2) || [];
 
   const onSubmit = (values: CreateCategoryFormValues) => {
-    mutation.mutate(values);
+    // If parentId is "none", set it to null
+    if (values.parentId === "none") {
+      values.parentId = null;
+    }
+    createCategory(values);
   };
 
   return (
@@ -138,6 +196,52 @@ export function CreateCategoryDialog() {
             />
             <FormField
               control={form.control}
+              name="parentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent Category (Optional)</FormLabel>
+                  <Select
+                    value={field.value ?? ""}
+                    onValueChange={(value) => field.onChange(value || null)}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a parent category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {availableParentCategories?.map((category) => (
+                        <SelectItem key={category?.id} value={category?.id}>
+                          {category?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active</FormLabel>
+                    <FormMessage />
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
@@ -147,7 +251,7 @@ export function CreateCategoryDialog() {
                       {field.value ? (
                         <div className="relative">
                           <Image
-                            src={field.value.url}
+                            src={field.value.ufsUrl}
                             alt="Category image"
                             width={100}
                             height={100}
@@ -180,7 +284,7 @@ export function CreateCategoryDialog() {
                                 name: res[0].name,
                                 size: res[0].size,
                                 key: res[0].key,
-                                url: res[0].url,
+                                url: res[0].ufsUrl,
                                 lastModified: Math.floor(Date.now() / 1000),
                                 serverData: {},
                                 metadata: {},
@@ -194,8 +298,8 @@ export function CreateCategoryDialog() {
                                 uploadedBy: null,
                                 usedIn: [],
                                 isDeleted: false,
-                                appUrl: res[0].url,
-                                ufsUrl: res[0].url,
+                                appUrl: res[0].ufsUrl,
+                                ufsUrl: res[0].ufsUrl,
                               };
                               uploadImage(galleryItem);
                             }
@@ -215,8 +319,8 @@ export function CreateCategoryDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={mutation.isPending}>
-              Create
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Creating..." : "Create"}
             </Button>
           </form>
         </Form>

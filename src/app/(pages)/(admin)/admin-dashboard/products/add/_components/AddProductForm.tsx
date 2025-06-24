@@ -13,6 +13,7 @@ import { ArrowLeft, Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import type { FileUploadThing } from "@/types/UploadThing";
+import { brandOptions, genderOptions } from "@/constants/options";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -339,9 +340,28 @@ export function AddProductForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {brandOptions
+                            .filter((opt) => opt.value !== "all")
+                            .map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -352,9 +372,28 @@ export function AddProductForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {genderOptions
+                            .filter((opt) => opt.value !== "all")
+                            .map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -392,7 +431,9 @@ export function AddProductForm() {
                       <SelectContent>
                         {categories?.map((category: any) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                            {category.parent
+                              ? `${category.parent.name} > ${category.name}`
+                              : category.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
