@@ -11,10 +11,13 @@ import {
 
 import { navLinks } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
+import { getSettingsSA } from "@/services/settings/settingsService";
 
 import Logo from "./Logo";
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getSettingsSA();
+
   return (
     <footer className="w-full backdrop-blur-sm">
       <div className="bg-primary py-8 text-primary-foreground">
@@ -34,9 +37,8 @@ export function Footer() {
                 </div>
               </div>
               <p className="text-sm text-white hover:text-white/90">
-                Discover premium women's shoes designed for style, comfort, and
-                confidence. Shop the latest collections and timeless classics at
-                Molini Shoes.
+                {settings?.aboutInfo ||
+                  "Discover premium women's shoes designed for style, comfort, and confidence. Shop the latest collections and timeless classics at Molini Shoes."}
               </p>
               <Button
                 asChild
@@ -61,11 +63,11 @@ export function Footer() {
               <nav className="grid grid-cols-2 gap-2">
                 {navLinks.map((link) => (
                   <Link
-                    key={link.name}
-                    href={link.href}
+                    key={link?.name}
+                    href={link?.href}
                     className="text-white transition-colors hover:text-white/90"
                   >
-                    {link.name}
+                    {link?.name}
                   </Link>
                 ))}
               </nav>
@@ -101,7 +103,9 @@ export function Footer() {
                     className="mr-2 mt-0.5 shrink-0 text-white hover:text-white/90"
                   />
                   <span className="text-white hover:text-white/90">
-                    Your Address, City, Country
+                    {settings?.address
+                      ? `${settings?.address}, ${settings?.city}, ${settings?.state}`
+                      : "Your Address, City, Country"}
                   </span>
                 </div>
                 <div className="flex items-center">
@@ -110,10 +114,10 @@ export function Footer() {
                     className="mr-2 shrink-0 text-white hover:text-white/90"
                   />
                   <Link
-                    href="tel:+0000000000"
+                    href={`tel:${settings?.telephone}`}
                     className="text-sm text-white hover:text-white/90"
                   >
-                    +00 000 000 0000
+                    {settings?.telephone || "+00 000 000 0000"}
                   </Link>
                 </div>
                 <div className="flex items-center">
@@ -122,10 +126,10 @@ export function Footer() {
                     className="mr-2 shrink-0 text-white hover:text-white/90"
                   />
                   <Link
-                    href="mailto:info@example.com"
+                    href={`mailto:${settings?.email}`}
                     className="text-sm text-white hover:text-white/90"
                   >
-                    info@example.com
+                    {settings?.email || "info@example.com"}
                   </Link>
                 </div>
               </div>
@@ -134,54 +138,50 @@ export function Footer() {
                 Follow Us
               </h3>
               <div className="flex space-x-4">
-                <Link
-                  href="#"
-                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
-                  aria-label="Facebook"
-                >
-                  <Facebook size={18} />
-                </Link>
-                <Link
-                  href="#"
-                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
-                  aria-label="Twitter"
-                >
-                  <Twitter size={18} />
-                </Link>
-                <Link
-                  href="#"
-                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
-                  aria-label="Instagram"
-                >
-                  <Instagram size={18} />
-                </Link>
-                <Link
-                  href="#"
-                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
-                  aria-label="YouTube"
-                >
-                  <Youtube size={18} />
-                </Link>
-                <Link
-                  href="#"
-                  className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
-                  aria-label="WhatsApp"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-white hover:text-white/80"
+                {settings?.facebook && (
+                  <Link
+                    href={settings.facebook}
+                    className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
+                    aria-label="Facebook"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                  </svg>
-                </Link>
+                    <Facebook size={18} />
+                  </Link>
+                )}
+                {settings?.twitter && (
+                  <Link
+                    href={settings.twitter}
+                    className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
+                    aria-label="Twitter"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Twitter size={18} />
+                  </Link>
+                )}
+                {settings?.instagram && (
+                  <Link
+                    href={settings.instagram}
+                    className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
+                    aria-label="Instagram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Instagram size={18} />
+                  </Link>
+                )}
+                {settings?.youtube && (
+                  <Link
+                    href={settings.youtube}
+                    className="rounded-full bg-transparent p-2 text-white transition-colors hover:text-white/80"
+                    aria-label="YouTube"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Youtube size={18} />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -204,8 +204,8 @@ export function Footer() {
               </Button>
             </div>
             <p className="mt-4 text-xs text-tertiary-foreground sm:mt-0">
-              &copy; {new Date().getFullYear()} Molini Shoes. All rights
-              reserved.
+              &copy; {new Date().getFullYear()}{" "}
+              {settings?.name || "Molini Shoes"}. All rights reserved.
             </p>
           </div>
         </div>

@@ -18,9 +18,26 @@ export async function GET(req: Request) {
     }
 
     const categories = await prisma.category.findMany({
-      orderBy: {
-        name: "asc",
+      include: {
+        parent: {
+          include: {
+            parent: true,
+          },
+        },
+        children: {
+          include: {
+            children: true,
+          },
+        },
       },
+      orderBy: [
+        {
+          level: "asc",
+        },
+        {
+          name: "asc",
+        },
+      ],
     });
 
     return NextResponse.json(categories);
@@ -45,12 +62,24 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, description, image, parentId } = body;
 
+    // Calculate level based on parent
+    let level = 0;
+    if (parentId) {
+      const parent = await prisma.category.findUnique({
+        where: { id: parentId },
+      });
+      if (parent) {
+        level = parent.level + 1;
+      }
+    }
+
     const category = await prisma.category.create({
       data: {
         name,
         slug: name.toLowerCase().replace(/\s+/g, "-"),
         description,
         image,
+        level,
         parent: parentId
           ? {
               connect: {
@@ -58,6 +87,9 @@ export async function POST(req: Request) {
               },
             }
           : undefined,
+      },
+      include: {
+        parent: true,
       },
     });
 

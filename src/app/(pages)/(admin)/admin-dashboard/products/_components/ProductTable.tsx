@@ -16,18 +16,14 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Loader2,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { ArrowUpDown, ChevronDown, Loader2, Pencil, Plus } from "lucide-react";
 
 import { FileUploadThing } from "@/types/UploadThing";
+import {
+  categoryKeys,
+  fetchAdminCategories,
+  type CategoryWithRelations,
+} from "@/lib/query/categories";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
@@ -81,122 +77,35 @@ export type ProductWithVariants = Product & {
   category: {
     id: string;
     name: string;
+    level: number;
+    parentId: string | null;
+    parent?: {
+      id: string;
+      name: string;
+      parentId: string | null;
+      parent?: {
+        id: string;
+        name: string;
+        parentId: string | null;
+      } | null;
+    } | null;
   } | null;
   images: FileUploadThing[] | null;
 };
 
-const columns: ColumnDef<ProductWithVariants>[] = [
-  {
-    accessorKey: "images",
-    header: "Image",
-    cell: ({ row }) => (
-      <div className="relative size-16">
-        <div>Data: J</div>
-        <Image
-          src={row.original.images?.[0]?.url || "/placeholder.png"}
-          alt={row.original.name}
-          fill
-          className="rounded-md object-cover"
-        />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
-    accessorKey: "price",
-    header: "Base Price",
-    cell: ({ row }) => {
-      const price = row.original.price;
-      return formatPrice(price ? Number(price) : 0);
-    },
-  },
-  {
-    accessorKey: "brand",
-    header: "Brand",
-  },
-  {
-    accessorKey: "gender",
-    header: "Gender",
-  },
-  {
-    accessorKey: "style",
-    header: "Style",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original.category;
-      return category ? category.name : "Uncategorized";
-    },
-  },
-  {
-    accessorKey: "variants",
-    header: "Variants",
-    cell: ({ row }) => {
-      const variants = row.original.variants;
-      if (!variants || variants.length === 0) {
-        return <span className="text-muted-foreground">No variants</span>;
-      }
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {variants.length} variants
-              <ChevronDown className="ml-2 size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[200px]">
-            {variants.map((variant: any) => (
-              <DropdownMenuItem key={variant.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{variant.sku}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {variant.options.map((opt: any) => (
-                      <span key={opt.optionValue.id}>
-                        {opt.optionValue.value}{" "}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-sm">
-                    {variant.price
-                      ? formatPrice(Number(variant.price))
-                      : formatPrice(Number(row.original.price))}
-                    {" • "}
-                    {variant.stock} in stock
-                  </span>
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const product = row.original;
-      return (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/admin-dashboard/products/${product.id}`}>
-              <Pencil className="size-4" />
-            </Link>
-          </Button>
-          <DeleteProductDialog product={product} />
-        </div>
-      );
-    },
-  },
-];
+type CategoryWithParent = {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string | null;
+  parent?: CategoryWithParent | null;
+  children?: CategoryWithParent[];
+};
 
 export function ProductTable() {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "updatedAt", desc: true }, // Default sort by latest modified
+  ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -208,33 +117,309 @@ export function ProductTable() {
     queryKey: ["products"],
     queryFn: async () => {
       const response = await fetch("/api/admin/products");
-      if (!response.ok) {
+      if (!response?.ok) {
         throw new Error("Failed to fetch products");
       }
-      const data = await response.json();
+      const data = await response?.json();
       // Convert Decimal to number
-      return data.map((product: any) => ({
+      return data?.map((product: any) => ({
         ...product,
-        price: product.price ? parseFloat(product.price.toString()) : null,
+        price: product?.price ? parseFloat(product?.price?.toString()) : null,
         variants:
-          product.variants?.map((variant: any) => ({
+          product?.variants?.map((variant: any) => ({
             ...variant,
-            price: variant.price ? parseFloat(variant.price.toString()) : null,
+            price: variant?.price
+              ? parseFloat(variant?.price?.toString())
+              : null,
           })) || [],
       }));
     },
   });
 
   const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response.json();
-    },
+    queryKey: categoryKeys.admin(),
+    queryFn: fetchAdminCategories,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  const categoryFilterFn = (
+    row: any,
+    columnId: string,
+    filterValue: string
+  ) => {
+    if (!filterValue) return true;
+    const category = row?.original?.category;
+    if (!category) return false;
+
+    // Find the selected category from the categories data
+    const selectedCategory = categories?.find((cat) => cat?.id === filterValue);
+    if (!selectedCategory) return false;
+
+    // Direct match
+    if (category?.id === filterValue) return true;
+
+    // If selected category is a parent (level 0 or 1), match children
+    if (selectedCategory?.level < 2) {
+      // Match direct children
+      if (category?.parentId === filterValue) return true;
+
+      // If it's a top-level category (level 0), also match grandchildren
+      if (selectedCategory?.level === 0) {
+        const parentCategory = category?.parent;
+        if (parentCategory?.parentId === filterValue) return true;
+      }
+    }
+
+    return false;
+  };
+
+  const columns: ColumnDef<ProductWithVariants>[] = [
+    {
+      accessorKey: "images",
+      header: "Image",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="relative size-16">
+          <div>Data: J</div>
+          <Image
+            src={row.original.images?.[0]?.url || "/placeholder.png"}
+            alt={row.original.name}
+            fill
+            className="rounded-md object-cover"
+          />
+        </div>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Name
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Base Price
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const price = row?.original?.price;
+        return formatPrice(price ? Number(price) : 0);
+      },
+    },
+    {
+      accessorKey: "brand",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Brand
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "gender",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Gender
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "style",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Style
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Category
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const category = row?.original?.category;
+        if (!category) return "Uncategorized";
+
+        // Build the category hierarchy string
+        const names = [];
+
+        // Start with grandparent if it exists
+        if (category?.parent?.parent) {
+          names?.push(category?.parent?.parent?.name);
+        }
+
+        // Add parent if it exists
+        if (category?.parent) {
+          names?.push(category?.parent?.name);
+        }
+
+        // Add current category
+        names?.push(category?.name);
+
+        // Join with " > " separator
+        return names?.join(" > ");
+      },
+      sortingFn: (rowA, rowB) => {
+        const catA = rowA?.original?.category;
+        const catB = rowB?.original?.category;
+
+        const getFullCategoryName = (cat: typeof catA) => {
+          if (!cat) return "Uncategorized";
+          const parts = [];
+          if (cat?.parent?.parent?.name) parts?.push(cat?.parent?.parent?.name);
+          if (cat?.parent?.name) parts?.push(cat?.parent?.name);
+          parts?.push(cat?.name);
+          return parts?.join(" > ");
+        };
+
+        return getFullCategoryName(catA)?.localeCompare(
+          getFullCategoryName(catB)
+        );
+      },
+      filterFn: categoryFilterFn,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Last Modified
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return new Date(row?.original?.updatedAt)?.toLocaleDateString();
+      },
+    },
+    {
+      accessorKey: "variants",
+      header: "Variants",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const variants = row.original.variants;
+        if (!variants || variants.length === 0) {
+          return <span className="text-muted-foreground">No variants</span>;
+        }
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {variants.length} variants
+                <ChevronDown className="ml-2 size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              {variants.map((variant: any) => (
+                <DropdownMenuItem key={variant.id}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{variant.sku}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {variant.options.map((opt: any) => (
+                        <span key={opt.optionValue.id}>
+                          {opt.optionValue.value}{" "}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="text-sm">
+                      {variant.price
+                        ? formatPrice(Number(variant.price))
+                        : formatPrice(Number(row.original.price))}
+                      {" • "}
+                      {variant.stock} in stock
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/admin-dashboard/products/${product.id}`}>
+                <Pencil className="size-4" />
+              </Link>
+            </Button>
+            <DeleteProductDialog product={product} />
+          </div>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data: products || [],
@@ -287,8 +472,10 @@ export function ProductTable() {
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((category: any) => (
-                <SelectItem key={category.id} value={category.name}>
-                  {category.name}
+                <SelectItem key={category?.id} value={category?.id}>
+                  {category?.parent
+                    ? `${category.parent.name} > ${category.name}`
+                    : category?.name}
                 </SelectItem>
               ))}
             </SelectContent>

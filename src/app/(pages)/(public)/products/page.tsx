@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 
+import { CategoryBreadcrumb } from "@/components/shared/CategoryBreadcrumb";
+
 import { CategoryNav } from "./_components/CategoryNav";
 import { ProductFilters } from "./_components/ProductFilters";
 import { ProductList } from "./_components/ProductList";
@@ -20,6 +22,9 @@ export default async function ProductsPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-4">
+        <CategoryBreadcrumb />
+      </div>
       <div className="mb-8 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
         <div className="flex-1">
           <CategoryNav />

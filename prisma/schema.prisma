@@ -84,7 +84,6 @@ model Verification {
 
 model Category {
   id          String     @id @default(uuid())
-  test        String?
   name        String
   slug        String     @unique
   description String?
@@ -93,9 +92,12 @@ model Category {
   parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
   children    Category[] @relation("CategoryToCategory")
   products    Product[]
+  level       Int        @default(0) // Track hierarchy level
+  isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  @@index([parentId])
   @@map("category")
 }
 
@@ -301,6 +303,25 @@ model MediaUsage {
 
   @@unique([mediaId, entityId, entityType])
   @@map("media_usage")
+}
+
+model Settings {
+  id        String   @id @default("default") // Using "default" as the only ID since this is a singleton
+  name      String
+  address   String
+  city      String
+  state     String
+  telephone String
+  email     String
+  facebook  String?
+  twitter   String? // X (formerly Twitter)
+  instagram String?
+  youtube   String?
+  aboutInfo String   @db.Text // Using Text type for longer content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }
 
 enum OrderStatus {
