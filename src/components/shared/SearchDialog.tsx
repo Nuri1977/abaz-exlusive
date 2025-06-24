@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,9 +14,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/useToast";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
-export function SearchDialog() {
+function SearchDialogContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -114,5 +115,13 @@ export function SearchDialog() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function SearchDialog() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <SearchDialogContent />
+    </Suspense>
   );
 }
