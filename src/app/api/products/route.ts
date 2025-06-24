@@ -78,6 +78,15 @@ export async function GET(request: Request) {
         where,
         include: {
           category: true,
+          variants: {
+            include: {
+              options: {
+                include: {
+                  optionValue: true,
+                },
+              },
+            },
+          },
         },
         orderBy,
         skip: (page - 1) * limit,

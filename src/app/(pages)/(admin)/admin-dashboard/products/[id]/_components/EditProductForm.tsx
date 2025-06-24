@@ -40,8 +40,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
 
-import { ProductWithVariants } from "../../_components/ProductTable";
-
 interface EditProductFormProps {
   product: ProductExt | null;
 }

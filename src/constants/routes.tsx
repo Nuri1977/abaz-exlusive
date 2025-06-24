@@ -9,6 +9,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  ShoppingCart,
   Tags,
   UserRoundPen,
   Users,
@@ -46,7 +47,7 @@ export const adminLinks = [
   {
     name: "Gallery",
     href: "/admin-dashboard/gallery",
-    icon: Image ,
+    icon: Image,
     value: "Manage",
     description: "Manage the image gallery",
   },
@@ -67,6 +68,7 @@ export const userLinks = [
     icon: KeyRound,
   },
   { name: "Likes", href: "/dashboard/likes", icon: Heart },
+  { name: "Cart", href: "/cart", icon: ShoppingCart },
 ];
 
 export const navLinks = [

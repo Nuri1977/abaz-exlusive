@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
-import { Category, Product } from "@prisma/client";
-import { Heart } from "lucide-react";
+import { Category } from "@prisma/client";
+import { Heart, ShoppingCart } from "lucide-react";
 
-import { formatPrice } from "@/lib/utils";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ProductExt } from "@/types/product";
+import { cn, formatPrice } from "@/lib/utils";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface ProductCardProps {
   product: ProductExt & {
@@ -18,14 +20,26 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { toggleLike, isLiked } = useUserAccountContext();
-
+  const { addItem, setOpen } = useCartContext();
   const liked = isLiked(product.id);
+
+  const handleAddToCart = () => {
+    addItem({
+      variantId: product.id, // using product ID as pseudo-variantId since variants aren't used here
+      quantity: 1,
+      price: Number(product.price),
+      productId: product.id,
+      title: product.name,
+      image: product.images?.[0]?.url ?? "",
+    });
+    setOpen(true);
+  };
 
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative aspect-square">
         <Image
-          src={product?.images?.[0]?.url || "/placeholder.png"}
+          src={product?.images?.[0]?.url || ""}
           alt={product.name}
           fill
           className="object-cover"
@@ -43,6 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
       </div>
+
       <CardContent className="p-4">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{product.brand}</p>
@@ -57,18 +72,36 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
         </div>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-4 p-4 pt-0">
+
+      <CardFooter className="flex w-full items-center justify-between px-4 pb-4 pt-0">
         <p className="font-semibold">{formatPrice(Number(product.price))}</p>
-        <button
-          onClick={() => {
-            if (product?.images) {
-              toggleLike({ ...product, images: product?.images ?? [] });
-            }
-          }}
-          className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
-        >
-          <Heart className={liked ? "fill-current" : ""} />
-        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleAddToCart}
+            aria-label="Add to cart"
+            className="text-black transition-colors hover:text-blue-600"
+          >
+            <ShoppingCart size={20} />
+          </button>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <button
+            onClick={() => {
+              if (product?.images) {
+                toggleLike({ ...product, images: product.images ?? [] });
+              }
+            }}
+            aria-label="Toggle like"
+            className={cn(
+              "transition-colors",
+              liked ? "text-red-500" : "text-black hover:text-red-500"
+            )}
+          >
+            <Heart size={20} className={liked ? "fill-current" : ""} />
+          </button>
+        </div>
       </CardFooter>
     </Card>
   );
