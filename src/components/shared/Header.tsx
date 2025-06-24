@@ -19,6 +19,14 @@ import { useToast } from "@/hooks/useToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -29,6 +37,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
+
+import { SearchDialog } from "./SearchDialog";
 
 export function Header() {
   const router = useRouter();
@@ -97,7 +107,6 @@ export function Header() {
     return nameParts?.[0]?.substring(0, 2)?.toUpperCase() ?? "U";
   };
 
-  // Rest of the component remains unchanged
   return (
     <header
       className={`sticky top-0 z-50 w-full shadow-sm backdrop-blur transition-all duration-300 ${
@@ -122,6 +131,9 @@ export function Header() {
               </Button>
             ))}
           </nav>
+
+          {/* Search Dialog */}
+          <SearchDialog />
 
           {/* Likes and Cart Icons */}
           {session ? (

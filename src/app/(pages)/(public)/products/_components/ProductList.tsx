@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
-import { Category, Product } from "@prisma/client";
+import { Suspense, useEffect } from "react";
+import { Category } from "@prisma/client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 
 import { ProductExt } from "@/types/product";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 import { ProductCard } from "./ProductCard";
 import { ProductSkeleton } from "./ProductSkeleton";
@@ -19,7 +20,7 @@ type ProductWithCategory = ProductExt & {
   category: Category;
 };
 
-export function ProductList({ searchParams }: ProductListProps) {
+function ProductListContent({ searchParams }: ProductListProps) {
   const { ref, inView } = useInView();
 
   const {
@@ -121,5 +122,13 @@ export function ProductList({ searchParams }: ProductListProps) {
         {isFetchingNextPage && <Loader2 className="size-8 animate-spin" />}
       </div>
     </div>
+  );
+}
+
+export function ProductList(props: ProductListProps) {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ProductListContent {...props} />
+    </Suspense>
   );
 }
