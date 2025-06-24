@@ -42,8 +42,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  // body: { productId, variantId, quantity, price, image, title }
   const { productId, variantId, quantity, price } = body;
+
+  if (!productId || !quantity || !price) {
+    return NextResponse.json(
+      { message: "Missing required fields" },
+      { status: 400 }
+    );
+  }
 
   let cart = await prisma.cart.upsert({
     where: { userId: session.user.id },
@@ -51,32 +57,70 @@ export async function POST(req: NextRequest) {
     create: { userId: session.user.id, total: 0 },
   });
 
-  const existing = await prisma.cartItem.findFirst({
-    where: {
-      cartId: cart.id,
-      variantId,
-    },
-  });
-
-  let item;
-  if (existing) {
-    item = await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: existing.quantity + quantity },
-    });
-  } else {
-    item = await prisma.cartItem.create({
-      data: {
+  try {
+    // If a variant is specified, look for that specific variant in the cart
+    const existingCartItem = await prisma.cartItem.findFirst({
+      where: {
         cartId: cart.id,
         productId,
-        variantId,
-        quantity,
-        price,
+        ...(variantId ? { variantId } : {}),
       },
     });
-  }
 
-  return Response.json(item);
+    let item;
+    if (existingCartItem) {
+      // Update existing cart item
+      item = await prisma.cartItem.update({
+        where: { id: existingCartItem.id },
+        data: { quantity: existingCartItem.quantity + quantity },
+      });
+    } else {
+      // Create new cart item
+      item = await prisma.cartItem.create({
+        data: {
+          cart: {
+            connect: { id: cart.id },
+          },
+          Product: {
+            connect: { id: productId },
+          },
+          ...(variantId
+            ? {
+                variant: {
+                  connect: { id: variantId },
+                },
+              }
+            : {
+                variant: {
+                  connect: {
+                    id: await getDefaultVariant(productId),
+                  },
+                },
+              }),
+          quantity,
+          price,
+        },
+      });
+    }
+
+    // Update cart total
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        total: {
+          increment: price * quantity,
+        },
+      },
+    });
+
+    return Response.json(item);
+  } catch (error) {
+    console.error("Cart operation failed:", error);
+    return NextResponse.json(
+      { message: "Failed to update cart" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -101,4 +145,18 @@ export async function DELETE(req: NextRequest) {
     }
     return new Response(null, { status: 204 });
   }
+}
+
+// Helper function to get default variant for a product
+async function getDefaultVariant(productId: string): Promise<string> {
+  const variant = await prisma.productVariant.findFirst({
+    where: { productId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!variant) {
+    throw new Error(`No variant found for product ${productId}`);
+  }
+
+  return variant.id;
 }

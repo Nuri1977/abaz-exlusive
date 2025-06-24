@@ -3,31 +3,32 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
-import { Category, Product } from "@prisma/client";
-import { Heart } from "lucide-react";
+import { Category } from "@prisma/client";
+import { Heart, ShoppingCart } from "lucide-react";
 
-import type { ProductExt } from "@/types/product";
-import { authClient } from "@/lib/auth-client";
+import { ProductExt } from "@/types/product";
 import { cn, formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface ProductCardProps {
   product: ProductExt & {
-    category?: Category | null;
+    category: Category;
   };
-  className?: string;
 }
 
-export function ProductCard({ product, className }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { toggleLike, isLiked } = useUserAccountContext();
-  const { data: session } = authClient.useSession();
-
+  const { addItem, setOpen } = useCartContext();
   const liked = isLiked(product?.id);
+
+  const hasVariants = product?.variants && product.variants.length > 0;
 
   const getImageUrl = (image: any) => {
     if (!image) return "/placeholder.png";
@@ -35,40 +36,31 @@ export function ProductCard({ product, className }: ProductCardProps) {
     return image?.url || image?.appUrl || "/placeholder.png";
   };
 
-  const handleLikeClick = () => {
-    if (!session) {
-      router.push("/login");
+  const handleAddToCart = () => {
+    if (hasVariants) {
+      // If product has variants, redirect to product page
+      router.push(`/product/${product?.slug}`);
       return;
     }
 
-    // Convert ProductExt to Product type for toggleLike
-    const productForLike: Product = {
-      ...product,
-      // Convert FileUploadThing[] to JsonValue[]
-      images:
-        product?.images?.map((img) => ({
-          url: getImageUrl(img),
-          key: typeof img === "string" ? img : img?.key,
-          size: typeof img === "string" ? 0 : img?.size,
-        })) || [],
-    };
-
-    toggleLike(productForLike);
-    toast({
-      title: liked ? "Removed from likes" : "Added to likes",
-      description: liked
-        ? "Product has been removed from your likes"
-        : "Product has been added to your likes",
+    // For products without variants, add directly to cart
+    addItem({
+      quantity: 1,
+      price: Number(product?.price),
+      productId: product?.id,
+      title: product?.name,
+      image: getImageUrl(product?.images?.[0]),
     });
+
+    toast({
+      title: "Added to cart",
+      description: "Item has been added to your cart",
+    });
+    setOpen(true);
   };
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden transition-shadow hover:shadow-lg",
-        className
-      )}
-    >
+    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       <div className="relative aspect-square">
         <Image
           src={getImageUrl(product?.images?.[0])}
@@ -89,12 +81,20 @@ export function ProductCard({ product, className }: ProductCardProps) {
             ))}
           </div>
         )}
+        {hasVariants && (
+          <div className="absolute left-2 top-2">
+            <span className="rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
+              {product?.variants?.length ?? 0} options
+            </span>
+          </div>
+        )}
       </div>
+
       <CardContent className="p-4">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{product?.brand}</p>
           <Link
-            href={`/product/${product?.slug}`}
+            href={`/product/${product?.id}`}
             className="line-clamp-2 font-semibold hover:underline"
           >
             {product?.name}
@@ -104,22 +104,40 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </p>
         </div>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-4 p-4 pt-0">
+
+      <CardFooter className="flex w-full items-center justify-between px-4 pb-4 pt-0">
         <p className="font-semibold">{formatPrice(Number(product?.price))}</p>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "rounded-full p-2 transition-colors",
-            liked && "text-red-500 hover:text-red-600"
-          )}
-          onClick={handleLikeClick}
-        >
-          <Heart className={cn("h-5 w-5", liked && "fill-current")} />
-          <span className="sr-only">
-            {liked ? "Remove from likes" : "Add to likes"}
-          </span>
-        </Button>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleAddToCart}
+            aria-label={hasVariants ? "View options" : "Add to cart"}
+            className="text-black transition-colors hover:text-blue-600"
+          >
+            <ShoppingCart size={20} />
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (product?.images) {
+                toggleLike({ ...product, images: product?.images ?? [] });
+              }
+            }}
+            aria-label="Toggle like"
+            className={cn(
+              "transition-colors",
+              liked ? "text-red-500" : "text-black hover:text-red-500"
+            )}
+          >
+            <Heart size={20} className={liked ? "fill-current" : ""} />
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
