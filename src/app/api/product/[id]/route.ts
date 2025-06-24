@@ -18,8 +18,15 @@ export async function GET(
       include: {
         category: true,
         options: {
+          include: { values: true },
+        },
+        variants: {
           include: {
-            values: true,
+            options: {
+              include: {
+                optionValue: true,
+              },
+            },
           },
         },
       },

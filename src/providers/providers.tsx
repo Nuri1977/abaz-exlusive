@@ -1,8 +1,13 @@
 "use client";
-// Since QueryClientProvider relies on useContext under the hood, we have to put 'use client' on top
 
+import { CartProvider } from "@/context/CartContext";
+// Since QueryClientProvider relies on useContext under the hood, we have to put 'use client' on top
 import { UserAccountProvider } from "@/context/UserAccountContext";
-import { isServer, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  isServer,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -41,7 +46,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserAccountProvider>{children}</UserAccountProvider>
+      <UserAccountProvider>
+        <CartProvider>{children}</CartProvider>
+      </UserAccountProvider>
     </QueryClientProvider>
   );
 }

@@ -46,23 +46,29 @@ export async function GET(request: Request) {
 
         // If it's a parent category (level 0 or 1), include all its children
         if (selectedCategory?.level < 2 && selectedCategory?.children) {
-          categoryIds = [...categoryIds, ...selectedCategory?.children?.map(child => child?.id)];
+          categoryIds = [
+            ...categoryIds,
+            ...selectedCategory?.children?.map((child) => child?.id),
+          ];
 
           // If it's a top-level category (level 0), also include grandchildren
           if (selectedCategory?.level === 0) {
             const childrenWithGrandchildren = await prisma.category.findMany({
               where: {
                 parentId: {
-                  in: selectedCategory?.children?.map(child => child?.id)
-                }
-              }
+                  in: selectedCategory?.children?.map((child) => child?.id),
+                },
+              },
             });
-            categoryIds = [...categoryIds, ...childrenWithGrandchildren?.map(child => child?.id)];
+            categoryIds = [
+              ...categoryIds,
+              ...childrenWithGrandchildren?.map((child) => child?.id),
+            ];
           }
         }
 
         where.categoryId = {
-          in: categoryIds
+          in: categoryIds,
         };
       }
     }
@@ -103,9 +109,14 @@ export async function GET(request: Request) {
       prisma.product.findMany({
         where,
         include: {
-          category: {
+          category: true,
+          variants: {
             include: {
-              parent: true,
+              options: {
+                include: {
+                  optionValue: true,
+                },
+              },
             },
           },
         },

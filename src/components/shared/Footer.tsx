@@ -134,7 +134,7 @@ export async function Footer() {
                 </div>
               </div>
 
-              <h3 className="mb-3 mt-6 text-base font-bold text-foreground">
+              <h3 className="mb-3 mt-6 text-base font-bold text-red-500">
                 Follow Us
               </h3>
               <div className="flex space-x-4">

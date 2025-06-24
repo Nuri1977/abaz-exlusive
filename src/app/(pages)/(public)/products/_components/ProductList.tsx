@@ -8,8 +8,8 @@ import { useInView } from "react-intersection-observer";
 
 import { ProductExt } from "@/types/product";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { ProductCard } from "@/components/shared/ProductCard";
 
-import { ProductCard } from "./ProductCard";
 import { ProductSkeleton } from "./ProductSkeleton";
 
 interface ProductListProps {

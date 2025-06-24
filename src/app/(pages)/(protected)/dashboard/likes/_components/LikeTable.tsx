@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/context/UserAccountContext";
-import type { FileUploadThing } from "@/types/UploadThing";
-import type ProductWithOptions from "@/types/product";
 
+import type { ProductWithOptionsAndVariants } from "@/types/product";
+import type { FileUploadThing } from "@/types/UploadThing";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -18,7 +18,7 @@ import {
 
 import LikeSkeleton from "./LikeSkeleton";
 
-interface LikedProduct extends Omit<ProductWithOptions, "images"> {
+interface LikedProduct extends Omit<ProductWithOptionsAndVariants, "images"> {
   images: FileUploadThing[];
 }
 

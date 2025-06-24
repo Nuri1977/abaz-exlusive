@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { ProductCard } from "@/app/(pages)/(public)/products/_components/ProductCard";
+import { ProductCard } from "@/components/shared/ProductCard";
 
 import { ProductSkeleton } from "./ProductSkeleton";
 

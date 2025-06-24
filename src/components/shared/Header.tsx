@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
 
+import { CartSheet } from "../cart/CartSheet";
 import { SearchDialog } from "./SearchDialog";
 
 export function Header() {
@@ -158,6 +159,8 @@ export function Header() {
               <span className="sr-only">Likes</span>
             </Link>
           )}
+
+          <CartSheet />
 
           {/* Auth Dropdown - Hidden on mobile */}
           <div className="hidden md:block">
