@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
 import { ShoppingCart } from "lucide-react";
 
-import { formatPrice } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,

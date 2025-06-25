@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
-import { ShoppingCart, X } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
