@@ -17,7 +17,7 @@ import ProductImageGallery from "./ProductImageGallery";
 import ProductPageSkeleton from "./ProductPageSkeleton";
 
 export default function ProductPageClient({ id }: { id: string }) {
-  const { addItem } = useCartContext();
+  const { addItem, setOpen } = useCartContext();
   const { toggleLike, isLiked } = useUserAccountContext();
 
   const [quantity, setQuantity] = useState(1);
@@ -93,6 +93,7 @@ export default function ProductPageClient({ id }: { id: string }) {
   // const effectiveStock = matchedVariant?.stock ?? (hasVariants ? 0 : 1);
 
   const handleAddToCart = () => {
+    // For products with variants, require a selected variant
     if (hasVariants && !matchedVariant) return;
 
     addItem({
@@ -105,6 +106,7 @@ export default function ProductPageClient({ id }: { id: string }) {
       color: selectedColor ?? undefined,
       size: selectedSize ?? undefined,
     });
+    setOpen(true);
   };
 
   return (
@@ -179,7 +181,7 @@ export default function ProductPageClient({ id }: { id: string }) {
               max={99}
               onChange={(e) => setQuantity(Number(e.target.value))}
               className="w-20 rounded border px-2 py-1"
-              // disabled={!hasVariants && !matchedVariant}
+              disabled={hasVariants && !matchedVariant}
             />
           </div>
 

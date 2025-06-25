@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return Response.json(cart?.items ?? []);
+  return NextResponse.json({ data: cart?.items ?? [] }, { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
@@ -58,12 +58,12 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    // If a variant is specified, look for that specific variant in the cart
+    // Find existing cart item by cartId, productId, and variantId (can be null)
     const existingCartItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
         productId,
-        ...(variantId ? { variantId } : {}),
+        variantId: variantId ?? null,
       },
     });
 
@@ -90,13 +90,7 @@ export async function POST(req: NextRequest) {
                   connect: { id: variantId },
                 },
               }
-            : {
-                variant: {
-                  connect: {
-                    id: await getDefaultVariant(productId),
-                  },
-                },
-              }),
+            : {}),
           quantity,
           price,
         },
@@ -131,32 +125,31 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const itemId = searchParams.get("itemId");
+  const productId = searchParams.get("productId");
+  const variantId = searchParams.get("variantId");
 
-  if (itemId) {
-    await prisma.cartItem.delete({ where: { id: itemId } });
-    return new Response(null, { status: 204 });
+  if (productId) {
+    // Remove by productId and (optional) variantId
+    const cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id },
+    });
+    if (!cart) return new NextResponse(null, { status: 204 });
+    const where: any = { cartId: cart.id, productId };
+    if (variantId) {
+      where.variantId = variantId;
+    } else {
+      where.variantId = null;
+    }
+    await prisma.cartItem.deleteMany({ where });
+    return new NextResponse(null, { status: 204 });
   } else {
+    // Remove all items from cart
     const cart = await prisma.cart.findUnique({
       where: { userId: session.user.id },
     });
     if (cart) {
       await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     }
-    return new Response(null, { status: 204 });
+    return new NextResponse(null, { status: 204 });
   }
-}
-
-// Helper function to get default variant for a product
-async function getDefaultVariant(productId: string): Promise<string> {
-  const variant = await prisma.productVariant.findFirst({
-    where: { productId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  if (!variant) {
-    throw new Error(`No variant found for product ${productId}`);
-  }
-
-  return variant.id;
 }

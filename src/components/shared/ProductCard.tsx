@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = () => {
     if (hasVariants) {
       // If product has variants, redirect to product page
-      router.push(`/product/${product?.slug}`);
+      router.push(`/product/${product?.id}`);
       return;
     }
 

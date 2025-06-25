@@ -59,11 +59,56 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addMutation = useMutation({
     mutationFn: addToCart,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
+    onMutate: async (newItem: CartItem) => {
+      if (!session?.user) return;
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
+      const previousItems =
+        queryClient.getQueryData<CartItem[]>(cartKeys.all) ?? [];
+      const key = getKey(newItem);
+      const updated = previousItems.some((i) => getKey(i) === key)
+        ? previousItems.map((i) =>
+            getKey(i) === key
+              ? { ...i, quantity: i.quantity + newItem.quantity }
+              : i
+          )
+        : [...previousItems, newItem];
+      queryClient.setQueryData(cartKeys.all, updated);
+      return { previousItems };
+    },
+    onError: (_err, _newItem, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartKeys.all, context.previousItems);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    },
   });
   const removeMutation = useMutation({
-    mutationFn: removeFromCart,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
+    mutationFn: ({ id, variantId }: { id: string; variantId?: string }) =>
+      removeFromCart(id, variantId),
+    onMutate: async ({ id, variantId }) => {
+      if (!session?.user) return;
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
+      const previousItems =
+        queryClient.getQueryData<CartItem[]>(cartKeys.all) ?? [];
+      const updated = previousItems.filter((i) => {
+        if (variantId) {
+          return !(i.productId === id && i.variantId === variantId);
+        }
+        return i.productId !== id;
+      });
+      queryClient.setQueryData(cartKeys.all, updated);
+      return { previousItems };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartKeys.all, context.previousItems);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    },
   });
   const clearMutation = useMutation({
     mutationFn: clearCartApi,
@@ -98,6 +143,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (item: CartItem) => {
       if (session?.user) {
+        // Always merge by key for logged-in users (optimistic update handled in mutation)
         addMutation.mutate(item);
       } else {
         setGuestItems((prev) => {
@@ -119,9 +165,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const removeItem = useCallback(
-    (id: string) => {
+    (id: string, variantId?: string) => {
       if (session?.user) {
-        removeMutation.mutate(id);
+        removeMutation.mutate({ id, variantId });
       } else {
         setGuestItems((prev) =>
           prev.filter((i) => (i.variantId ?? i.productId) !== id)
@@ -139,7 +185,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user, clearMutation]);
 
-  const items = session?.user ? userItems : guestItems;
+  // Normalize userItems for logged-in users (API returns CartItem with Product)
+  const normalizedUserItems = userItems.map((item: any) => {
+    return {
+      quantity: Number(item?.quantity) || 1,
+      price: Number(item?.price) || 0,
+      productId: item?.productId ?? item?.Product?.id ?? "",
+      image:
+        item?.image ??
+        item?.Product?.images?.[0]?.url ??
+        item?.Product?.images?.[0]?.key ??
+        "/placeholder.jpg",
+      title: item?.title ?? item?.Product?.name ?? "",
+      variantId:
+        typeof item?.variantId === "string" && item?.variantId !== "null"
+          ? item?.variantId
+          : undefined,
+      color: item?.color ?? undefined,
+      size: item?.size ?? undefined,
+    };
+  });
+
+  const items = session?.user ? normalizedUserItems : guestItems;
 
   const value = {
     items,
