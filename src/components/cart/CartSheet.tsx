@@ -17,6 +17,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+import CheckoutLink from "./CheckoutLink";
+
 export function CartSheet() {
   const { open, setOpen, items, removeItem } = useCartContext();
 
@@ -88,9 +90,7 @@ export function CartSheet() {
             <div className="text-right font-semibold">
               Total: {formatPrice(+total.toFixed(2))}
             </div>
-            <Link href="/checkout" className={buttonVariants()}>
-              Proceed to Checkout
-            </Link>
+            <CheckoutLink isOpen={open} setOpen={setOpen} />
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center space-y-1 px-6">
