@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
@@ -8,6 +7,13 @@ import { ShoppingCart, X } from "lucide-react";
 
 import { cn, formatPrice } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -20,11 +26,21 @@ import {
 import CheckoutLink from "./CheckoutLink";
 
 export function CartSheet() {
-  const { open, setOpen, items, removeItem } = useCartContext();
+  const {
+    open,
+    setOpen,
+    items,
+    removeItem,
+    currency,
+    setCurrency,
+    convertPrice,
+    currencySymbol,
+  } = useCartContext();
 
   const itemCount = items.length;
   const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum + convertPrice(item.price * item.quantity, "MKD", currency),
     0
   );
 
@@ -47,6 +63,19 @@ export function CartSheet() {
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
         <SheetHeader className="space-y-2.5 pr-6">
           <SheetTitle>Your Cart</SheetTitle>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Currency:</span>
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger className="w-30 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MKD">MKD (ден)</SelectItem>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Separator />
         </SheetHeader>
 
@@ -75,7 +104,12 @@ export function CartSheet() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold">
-                    {formatPrice(item.price * item.quantity)}
+                    {currencySymbol}{" "}
+                    {convertPrice(
+                      item.price * item.quantity,
+                      "MKD",
+                      currency
+                    ).toFixed(2)}
                   </p>
                   <Button
                     variant="destructive"
@@ -88,9 +122,24 @@ export function CartSheet() {
             ))}
             <Separator />
             <div className="text-right font-semibold">
-              Total: {formatPrice(+total.toFixed(2))}
+              Total: {currencySymbol} {total.toFixed(2)}
             </div>
-            <CheckoutLink isOpen={open} setOpen={setOpen} />
+            <div className="flex w-full justify-between">
+              <Link
+                href="/cart"
+                aria-label="View Cart"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    className: "text-muted-foreground",
+                  })
+                )}
+              >
+                View Cart
+              </Link>
+              <CheckoutLink isOpen={open} setOpen={setOpen} />
+            </div>
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center space-y-1 px-6">

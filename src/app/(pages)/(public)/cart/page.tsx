@@ -8,13 +8,28 @@ import { ShoppingCart } from "lucide-react";
 
 import { formatPrice } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
 export default function CartPage() {
-  const { items, removeItem } = useCartContext();
+  const {
+    items,
+    removeItem,
+    currency,
+    setCurrency,
+    convertPrice,
+    currencySymbol,
+  } = useCartContext();
 
   const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum + convertPrice(item.price * item.quantity, "MKD", currency),
     0
   );
 
@@ -30,11 +45,24 @@ export default function CartPage() {
     );
   }
 
-  console.log("items: ", items);
-
   return (
-    <div className="container py-12">
-      <h1 className="mb-6 text-center text-2xl font-semibold">Your Cart</h1>
+    <div className="py-12">
+      <div className="mx-20 mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Your Cart</h1>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Currency:</span>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger className="w-30 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MKD">MKD (ден)</SelectItem>
+              <SelectItem value="USD">USD ($)</SelectItem>
+              <SelectItem value="EUR">EUR (€)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <Separator className="mb-6" />
       <ul className="mx-auto max-w-3xl space-y-6">
         {items.map((item, index) => (
@@ -61,7 +89,12 @@ export default function CartPage() {
 
             <div className="w-full text-right md:w-1/3">
               <p className="font-semibold">
-                {formatPrice(item.price * item.quantity)}
+                {currencySymbol}{" "}
+                {convertPrice(
+                  item.price * item.quantity,
+                  "MKD",
+                  currency
+                ).toFixed(2)}
               </p>
               <Button
                 variant="destructive"
@@ -83,7 +116,7 @@ export default function CartPage() {
       <Separator className="mx-auto my-6 max-w-3xl" />
 
       <div className="mx-auto max-w-3xl text-right text-lg font-semibold">
-        Total: {formatPrice(+total.toFixed(2))}
+        Total: {currencySymbol} {total.toFixed(2)}
       </div>
 
       <div className="mx-auto mt-6 flex max-w-3xl justify-end">
