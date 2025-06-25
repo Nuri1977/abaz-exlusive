@@ -12,8 +12,12 @@ export const addToCart = async (item: CartItem) => {
   return res.data;
 };
 
-export const removeFromCart = async (itemId: string) => {
-  await api.delete(`/cart?itemId=${itemId}`);
+export const removeFromCart = async (id: string, variantId?: string) => {
+  if (variantId) {
+    await api.delete(`/cart?productId=${id}&variantId=${variantId}`);
+  } else {
+    await api.delete(`/cart?productId=${id}`);
+  }
 };
 
 export const clearCart = async () => {
