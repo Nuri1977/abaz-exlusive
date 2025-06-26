@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { useCartContext } from "@/context/CartContext";
 
 const materialOptions = [
   "Leather",
@@ -50,18 +51,36 @@ const featureOptions = [
 export function ProductFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const { currency, convertPrice, currencySymbol } = useCartContext();
 
+  // Set slider min/max based on currency
+  const sliderMax = currency === "MKD" ? 60000 : 1000;
+  const sliderMin = 0;
+
+  // Helper to convert MKD to selected currency
+  const mkdToCurrency = (mkd: number) => convertPrice(mkd, "MKD", currency);
+  // Helper to convert selected currency to MKD
+  const currencyToMKD = (val: number) => convertPrice(val, currency, "MKD");
+
+  // State is always in selected currency
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    sliderMin,
+    sliderMax,
+  ]);
+
+  // On mount or when searchParams/currency changes, update slider value to reflect search params in selected currency
   useEffect(() => {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    if (minPrice || maxPrice) {
-      setPriceRange([
-        minPrice ? parseInt(minPrice) : 0,
-        maxPrice ? parseInt(maxPrice) : 1000,
-      ]);
-    }
-  }, [searchParams]);
+    let min = sliderMin;
+    let max = sliderMax;
+    if (minPrice) min = Math.round(mkdToCurrency(parseInt(minPrice)));
+    if (maxPrice) max = Math.round(mkdToCurrency(parseInt(maxPrice)));
+    // Clamp to slider range
+    min = Math.max(sliderMin, Math.min(min, sliderMax));
+    max = Math.max(sliderMin, Math.min(max, sliderMax));
+    setPriceRange([min, max]);
+  }, [searchParams, currency]);
 
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -91,15 +110,20 @@ export function ProductFilters() {
   };
 
   const handlePriceChange = (value: number[]) => {
-    if (value[0] && value[1]) {
-      setPriceRange([value[0], value[1]]);
-    }
+    const min = typeof value[0] === "number" ? value[0] : sliderMin;
+    const max = typeof value[1] === "number" ? value[1] : sliderMax;
+    setPriceRange([min, max]);
   };
 
+  // When user finishes sliding, convert selected currency range to MKD for API
   const handlePriceChangeEnd = (value: number[]) => {
+    const min = typeof value[0] === "number" ? value[0] : sliderMin;
+    const max = typeof value[1] === "number" ? value[1] : sliderMax;
+    const minMKD = Math.round(currencyToMKD(min));
+    const maxMKD = Math.round(currencyToMKD(max));
     const params = new URLSearchParams(searchParams.toString());
-    params.set("minPrice", value?.[0]?.toString() ?? "0");
-    params.set("maxPrice", value?.[1]?.toString() ?? "1000");
+    params.set("minPrice", minMKD.toString());
+    params.set("maxPrice", maxMKD.toString());
     router.push(`/products?${params.toString()}`);
   };
 
@@ -109,17 +133,21 @@ export function ProductFilters() {
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
           <Slider
-            min={0}
-            max={1000}
-            step={10}
+            min={sliderMin}
+            max={sliderMax}
+            step={currency === "MKD" ? 100 : 10}
             value={priceRange}
             onValueChange={handlePriceChange}
             onValueCommit={handlePriceChangeEnd}
             className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:border-2 [&_[role=slider]]:bg-white"
           />
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>${priceRange[0]}</span>
-            <span>${priceRange[1]}</span>
+            <span>
+              {currencySymbol} {priceRange[0].toLocaleString()}
+            </span>
+            <span>
+              {currencySymbol} {priceRange[1].toLocaleString()}
+            </span>
           </div>
         </div>
       </div>
