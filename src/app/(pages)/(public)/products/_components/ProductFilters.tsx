@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCartContext } from "@/context/CartContext";
 
 import { brandOptions, genderOptions } from "@/constants/options";
 import { Card } from "@/components/ui/card";
@@ -15,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { useCartContext } from "@/context/CartContext";
 
 const materialOptions = [
   "Leather",
