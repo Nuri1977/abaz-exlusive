@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Search,
   Settings,
   User,
 } from "lucide-react";
@@ -47,7 +48,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { SearchDialog } from "./SearchDialog";
 
 export function Header() {
   const router = useRouter();
@@ -142,10 +142,22 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Search Dialog */}
-          <SearchDialog />
+          {/* Search Icon - Hidden on mobile */}
+          <div className="hidden md:block">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="text-primary-foreground"
+            >
+              <Link href="/search">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Link>
+            </Button>
+          </div>
 
-          {/* Likes and Cart Icons */}
+          {/* Likes and Cart Icons - Visible on all devices */}
           {session ? (
             <Link
               href="/dashboard/likes"
@@ -171,7 +183,8 @@ export function Header() {
 
           <CartSheet />
 
-          <div className="flex items-center gap-2">
+          {/* Currency Selector - Hidden on mobile */}
+          <div className="hidden items-center gap-2 md:flex">
             <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger className="w-30 h-8 text-xs">
                 <SelectValue />
@@ -275,87 +288,152 @@ export function Header() {
                 <div className="flex items-center justify-start border-b p-4">
                   <Logo size={200} />
                 </div>
-                <nav className="flex flex-col gap-1 p-4">
-                  {navLinks.map((link) => {
-                    const Icon = link.icon;
-                    return (
-                      <Button
-                        asChild
-                        key={link.name}
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href={link.href} className="flex items-center">
-                          <Icon className="mr-2 h-4 w-4" />
-                          {link.name}
-                        </Link>
-                      </Button>
-                    );
-                  })}
 
-                  {/* Auth buttons for mobile menu */}
-                  {!isPending && session ? (
-                    <>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/dashboard" className="flex items-center">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Dashboard
-                        </Link>
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className="justify-start py-6 text-primary hover:bg-primary/10"
-                          onClick={() => setOpen(false)}
-                        >
-                          <Link
-                            href="/admin-dashboard"
-                            className="flex items-center"
+                {/* Search Input in mobile menu */}
+                <div className="border-b p-4">
+                  <form
+                    className="relative"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const searchQuery =
+                        formData.get("search")?.toString() || "";
+                      router.push(
+                        `/search?q=${encodeURIComponent(searchQuery)}`
+                      );
+                      setOpen(false);
+                    }}
+                  >
+                    <input
+                      type="search"
+                      name="search"
+                      placeholder="Search products..."
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 pr-24 text-lg shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                    >
+                      <Search className="h-4 w-4" />
+                      <span className="sr-only">Search</span>
+                    </Button>
+                    <kbd className="pointer-events-none absolute right-14 top-1/2 hidden h-5 -translate-y-1/2 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                      press ↵ to search
+                    </kbd>
+                  </form>
+                </div>
+
+                <nav className="flex flex-col">
+                  {/* Main Navigation Links */}
+                  <div className="border-b">
+                    <div className="flex flex-col p-4">
+                      {navLinks.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                          <Button
+                            asChild
+                            key={link.name}
+                            variant="ghost"
+                            className="justify-start py-6 text-primary hover:bg-primary/10"
+                            onClick={() => setOpen(false)}
                           >
-                            <Settings className="mr-2 h-4 w-4" />
-                            Admin Dashboard
-                          </Link>
-                        </Button>
+                            <Link
+                              href={link.href}
+                              className="flex items-center"
+                            >
+                              <Icon className="mr-2 h-4 w-4" />
+                              {link.name}
+                            </Link>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Auth Buttons */}
+                  <div className="border-b">
+                    <div className="flex flex-col p-4">
+                      {!isPending && session ? (
+                        <>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="justify-start py-6 text-primary hover:bg-primary/10"
+                            onClick={() => setOpen(false)}
+                          >
+                            <Link
+                              href="/dashboard"
+                              className="flex items-center"
+                            >
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              Dashboard
+                            </Link>
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              asChild
+                              variant="ghost"
+                              className="justify-start py-6 text-primary hover:bg-primary/10"
+                              onClick={() => setOpen(false)}
+                            >
+                              <Link
+                                href="/admin-dashboard"
+                                className="flex items-center"
+                              >
+                                <Settings className="mr-2 h-4 w-4" />
+                                Admin Dashboard
+                              </Link>
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            className="justify-start py-6 text-primary hover:bg-primary/10"
+                            onClick={() => {
+                              handleSignOut();
+                              setOpen(false);
+                            }}
+                          >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sign out
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="justify-start py-6 text-primary hover:bg-primary/10"
+                            onClick={() => setOpen(false)}
+                          >
+                            <Link href="/login">Sign in</Link>
+                          </Button>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="justify-start py-6 text-primary hover:bg-primary/10"
+                            onClick={() => setOpen(false)}
+                          >
+                            <Link href="/register">Create account</Link>
+                          </Button>
+                        </>
                       )}
-                      <Button
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => {
-                          handleSignOut();
-                          setOpen(false);
-                        }}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign out
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/login">Sign in</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/register">Create account</Link>
-                      </Button>
-                    </>
-                  )}
+                    </div>
+                  </div>
+
+                  {/* Currency Selector */}
+                  <div className="p-4">
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MKD">MKD (ден)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </nav>
               </div>
             </SheetContent>
