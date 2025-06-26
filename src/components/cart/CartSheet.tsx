@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
-import { ShoppingCart } from "lucide-react";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,7 +27,14 @@ export function CartSheet() {
     currency,
     convertPrice,
     currencySymbol,
+    addItem,
   } = useCartContext();
+
+  const handleQuantityChange = (item: any, delta: any) => {
+    const newQty = item.quantity + delta;
+    if (newQty < 1) return;
+    addItem({ ...item, quantity: delta }); // addItem merges by key and adds delta
+  };
 
   const itemCount = items.length;
   const total = items.reduce(
@@ -76,9 +83,30 @@ export function CartSheet() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Quantity: {item.quantity}
-                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 border p-0"
+                        onClick={() => handleQuantityChange(item, -1)}
+                        disabled={item.quantity === 1}
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-6 select-none text-center">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7 border p-0"
+                        onClick={() => handleQuantityChange(item, 1)}
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
