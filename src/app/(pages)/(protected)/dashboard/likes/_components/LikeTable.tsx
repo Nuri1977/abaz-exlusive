@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 
 import type { ProductWithOptionsAndVariants } from "@/types/product";
@@ -26,6 +27,7 @@ export default function LikeTable() {
   const router = useRouter();
   const { likedProducts, unlike, areLikedProductsLoading } =
     useUserAccountContext();
+  const { currency, convertPrice, currencySymbol } = useCartContext();
 
   if (areLikedProductsLoading) return <LikeSkeleton />;
 
@@ -40,13 +42,20 @@ export default function LikeTable() {
           <TableRow>
             <TableHead className="w-[50px]">#</TableHead>
             <TableHead className="w-[150px]">Product</TableHead>
-            <TableHead>Image</TableHead>
+            <TableHead className="w-[200px]">Image</TableHead>
+            <TableHead>Price</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {(likedProducts as LikedProduct[]).map((product, index) => {
             if (!product) return null;
+
+            const price = convertPrice?.(
+              Number(product?.price ?? 0),
+              "MKD",
+              currency
+            );
 
             return (
               <TableRow key={product.id}>
@@ -61,6 +70,11 @@ export default function LikeTable() {
                     width={100}
                     height={100}
                   />
+                </TableCell>
+                <TableCell>
+                  <span>
+                    {currencySymbol} {price?.toFixed(2)}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button

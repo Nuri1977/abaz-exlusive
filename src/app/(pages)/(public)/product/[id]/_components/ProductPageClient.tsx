@@ -17,7 +17,8 @@ import ProductImageGallery from "./ProductImageGallery";
 import ProductPageSkeleton from "./ProductPageSkeleton";
 
 export default function ProductPageClient({ id }: { id: string }) {
-  const { addItem, setOpen } = useCartContext();
+  const { addItem, setOpen, currency, convertPrice, currencySymbol } =
+    useCartContext();
   const { toggleLike, isLiked } = useUserAccountContext();
 
   const [quantity, setQuantity] = useState(1);
@@ -120,7 +121,10 @@ export default function ProductPageClient({ id }: { id: string }) {
           <h1 className="text-4xl font-bold">{product.name}</h1>
 
           <div className="flex items-center space-x-2">
-            <span className="text-3xl font-semibold">${+effectivePrice}</span>
+            <span className="text-3xl font-semibold">
+              {currencySymbol}{" "}
+              {convertPrice(Number(effectivePrice), "MKD", currency).toFixed(2)}
+            </span>
           </div>
 
           <div className="prose max-w-none">

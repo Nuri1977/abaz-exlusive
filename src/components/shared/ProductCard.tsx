@@ -9,7 +9,7 @@ import { Category } from "@prisma/client";
 import { Heart, ShoppingCart } from "lucide-react";
 
 import { ProductExt } from "@/types/product";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -25,7 +25,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { toggleLike, isLiked } = useUserAccountContext();
-  const { addItem, setOpen } = useCartContext();
+  const { addItem, setOpen, currency, convertPrice, currencySymbol } = useCartContext();
   const liked = isLiked(product?.id);
 
   const hasVariants = product?.variants && product.variants.length > 0;
@@ -106,7 +106,9 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardContent>
 
       <CardFooter className="flex w-full items-center justify-between px-4 pb-4 pt-0">
-        <p className="font-semibold">{formatPrice(Number(product?.price))}</p>
+        <p className="font-semibold">
+          {currencySymbol} {convertPrice(Number(product?.price), "MKD", currency).toFixed(2)}
+        </p>
 
         <div className="flex items-center gap-3">
           <Button

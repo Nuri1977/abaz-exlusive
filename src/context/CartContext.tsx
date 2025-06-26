@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 import { cartKeys } from "@/config/tanstackConfig";
 import { authClient } from "@/lib/auth-client";
@@ -17,7 +18,13 @@ import {
   clearCart as clearCartApi,
   fetchCart,
   removeFromCart,
-} from "@/lib/queries/cart";
+} from "@/lib/query/cart";
+import {
+  Currency,
+  ExchangeRates,
+  fetchExchangeRates,
+  getCurrencySymbol,
+} from "@/lib/query/currency";
 
 export type CartItem = {
   quantity: number;
@@ -37,6 +44,11 @@ type CartContextType = {
   clearCart: () => void;
   open: boolean;
   setOpen: (value: boolean) => void;
+  currency: Currency;
+  setCurrency: (currency: Currency) => void;
+  exchangeRates: ExchangeRates;
+  convertPrice: (price: number, from?: Currency, to?: Currency) => number;
+  currencySymbol: string;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -44,14 +56,71 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [guestItems, setGuestItems] = useState<CartItem[]>([]);
+  const [currency, setCurrencyState] = useState<Currency>("MKD");
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
+    MKD: 1,
+    USD: 1,
+    EUR: 1,
+  });
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
 
-  const {
-    data: userItems = [],
-    refetch: refetchCart,
-    isFetching: isCartLoading,
-  } = useQuery({
+  // Fetch exchange rates when currency changes
+  useEffect(() => {
+    fetchExchangeRates("MKD")
+      .then(setExchangeRates)
+      .catch(() => setExchangeRates({ MKD: 1, USD: 1, EUR: 1 }));
+  }, []);
+
+  // Load currency from localStorage or user cart
+  useEffect(() => {
+    if (session?.user) {
+      // Fetch user cart currency from API
+      axios.get("/api/cart").then((res) => {
+        const userCurrency = res?.data?.currency as Currency;
+        if (userCurrency && ["MKD", "USD", "EUR"].includes(userCurrency)) {
+          setCurrencyState(userCurrency);
+        }
+      });
+    } else {
+      const stored = localStorage.getItem("cartCurrency");
+      if (stored && ["MKD", "USD", "EUR"].includes(stored)) {
+        setCurrencyState(stored as Currency);
+      }
+    }
+  }, [session?.user]);
+
+  // Persist currency to localStorage or PATCH to API
+  const setCurrency = useCallback(
+    (cur: Currency) => {
+      setCurrencyState(cur);
+      if (session?.user) {
+        axios.patch("/api/cart", { currency: cur });
+      } else {
+        localStorage.setItem("cartCurrency", cur);
+      }
+    },
+    [session?.user]
+  );
+
+  // Convert price from MKD to selected currency
+  const convertPrice = useCallback(
+    (price: number, from: Currency = "MKD", to: Currency = currency) => {
+      if (from === to) return price;
+      // All prices are stored in MKD, so convert MKD -> to
+      if (from === "MKD") {
+        return price * (exchangeRates?.[to] ?? 1);
+      }
+      // If price is in another currency, convert to MKD then to target
+      const priceInMKD = price / (exchangeRates?.[from] ?? 1);
+      return priceInMKD * (exchangeRates?.[to] ?? 1);
+    },
+    [currency, exchangeRates]
+  );
+
+  const currencySymbol = getCurrencySymbol(currency);
+
+  const { data: userItems = [] } = useQuery({
     queryKey: cartKeys.all,
     queryFn: fetchCart,
     enabled: !!session?.user,
@@ -215,6 +284,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     clearCart,
     open,
     setOpen,
+    currency,
+    setCurrency,
+    exchangeRates,
+    convertPrice,
+    currencySymbol,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

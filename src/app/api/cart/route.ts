@@ -15,23 +15,39 @@ export async function GET(req: NextRequest) {
     include: {
       items: {
         include: {
-          variant: {
-            include: {
-              options: {
-                include: {
-                  optionValue: true,
-                },
-              },
-              product: true,
-            },
-          },
           Product: true,
+          variant: true,
         },
       },
     },
   });
 
-  return NextResponse.json({ data: cart?.items ?? [] }, { status: 200 });
+  const items = (cart?.items ?? []).map((item) => {
+    // Extract image from Product.images (array of string or object)
+    let image = "/placeholder.jpg";
+    const images = item.Product?.images ?? [];
+    if (Array.isArray(images) && images.length > 0) {
+      const first = images[0];
+      if (typeof first === "string") {
+        image = first;
+      } else if (typeof first === "object" && first !== null) {
+        image = (first as any).url || (first as any).key || image;
+      }
+    }
+    return {
+      quantity: item.quantity,
+      price: Number(item.price),
+      productId: item.productId ?? item.Product?.id ?? "",
+      image,
+      title: item.Product?.name ?? "",
+      variantId:
+        typeof item.variantId === "string" && item.variantId !== "null"
+          ? item.variantId
+          : undefined,
+    };
+  });
+
+  return NextResponse.json({ data: items }, { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
@@ -115,6 +131,26 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getSessionServer();
+  if (!session) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { currency } = await req.json();
+
+  if (!["MKD", "USD", "EUR"].includes(currency)) {
+    return NextResponse.json({ message: "Invalid currency" }, { status: 400 });
+  }
+
+  const cart = await prisma.cart.upsert({
+    where: { userId: session.user.id },
+    update: { currency },
+    create: { userId: session.user.id, total: 0, currency },
+  });
+  return NextResponse.json({ currency: cart }, { status: 200 });
 }
 
 export async function DELETE(req: NextRequest) {

@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 import {
   Heart,
   LayoutDashboard,
   LogOut,
   Menu,
+  Search,
   Settings,
   User,
 } from "lucide-react";
@@ -39,7 +41,14 @@ import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
 
 import { CartSheet } from "../cart/CartSheet";
-import { SearchDialog } from "./SearchDialog";
+import { MobileSidebar } from "../Header/MobileSidebar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export function Header() {
   const router = useRouter();
@@ -49,6 +58,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { likedProducts } = useUserAccountContext();
+  const { currency, setCurrency } = useCartContext();
   const likedCount = likedProducts.length;
 
   // Use Better Auth's useSession hook for proper session management
@@ -120,7 +130,7 @@ export function Header() {
         </Link>
         <div className="flex items-center gap-3">
           {/* Desktop Navigation */}
-          <nav className="hidden gap-2 md:flex">
+          <nav className="hidden gap-2 lg:flex">
             {navLinks.map((link) => (
               <Button
                 asChild
@@ -133,10 +143,22 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Search Dialog */}
-          <SearchDialog />
+          {/* Search Icon - Hidden on mobile/tablet */}
+          <div className="hidden lg:block">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="text-primary-foreground"
+            >
+              <Link href="/search">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Link>
+            </Button>
+          </div>
 
-          {/* Likes and Cart Icons */}
+          {/* Likes and Cart Icons - Visible on all devices */}
           {session ? (
             <Link
               href="/dashboard/likes"
@@ -162,8 +184,22 @@ export function Header() {
 
           <CartSheet />
 
-          {/* Auth Dropdown - Hidden on mobile */}
-          <div className="hidden md:block">
+          {/* Currency Selector - Hidden on mobile/tablet */}
+          <div className="hidden items-center gap-2 lg:flex">
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger className="w-30 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MKD">MKD (ден)</SelectItem>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Auth Dropdown - Hidden on mobile/tablet */}
+          <div className="hidden lg:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -240,104 +276,14 @@ export function Header() {
             </DropdownMenu>
           </div>
 
-          {/* Mobile Menu Trigger */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" className="h-auto p-3 md:hidden">
-                <Menu className="h-10 w-10" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[80%] p-0 sm:w-[350px]">
-              <div className="flex h-full flex-col">
-                <div className="flex items-center justify-start border-b p-4">
-                  <Logo size={200} />
-                </div>
-                <nav className="flex flex-col gap-1 p-4">
-                  {navLinks.map((link) => {
-                    const Icon = link.icon;
-                    return (
-                      <Button
-                        asChild
-                        key={link.name}
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href={link.href} className="flex items-center">
-                          <Icon className="mr-2 h-4 w-4" />
-                          {link.name}
-                        </Link>
-                      </Button>
-                    );
-                  })}
-
-                  {/* Auth buttons for mobile menu */}
-                  {!isPending && session ? (
-                    <>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/dashboard" className="flex items-center">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Dashboard
-                        </Link>
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className="justify-start py-6 text-primary hover:bg-primary/10"
-                          onClick={() => setOpen(false)}
-                        >
-                          <Link
-                            href="/admin-dashboard"
-                            className="flex items-center"
-                          >
-                            <Settings className="mr-2 h-4 w-4" />
-                            Admin Dashboard
-                          </Link>
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => {
-                          handleSignOut();
-                          setOpen(false);
-                        }}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign out
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/login">Sign in</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="justify-start py-6 text-primary hover:bg-primary/10"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Link href="/register">Create account</Link>
-                      </Button>
-                    </>
-                  )}
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Mobile Sidebar */}
+          <MobileSidebar
+            open={open}
+            setOpen={setOpen}
+            session={session}
+            isPending={isPending}
+            handleSignOut={handleSignOut}
+          />
         </div>
       </div>
     </header>
