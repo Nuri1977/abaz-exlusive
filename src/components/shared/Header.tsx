@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 import {
   Heart,
@@ -39,6 +40,13 @@ import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
 
 import { CartSheet } from "../cart/CartSheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { SearchDialog } from "./SearchDialog";
 
 export function Header() {
@@ -49,6 +57,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { likedProducts } = useUserAccountContext();
+  const { currency, setCurrency } = useCartContext();
   const likedCount = likedProducts.length;
 
   // Use Better Auth's useSession hook for proper session management
@@ -161,6 +170,19 @@ export function Header() {
           )}
 
           <CartSheet />
+
+          <div className="flex items-center gap-2">
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger className="w-30 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MKD">MKD (ден)</SelectItem>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Auth Dropdown - Hidden on mobile */}
           <div className="hidden md:block">

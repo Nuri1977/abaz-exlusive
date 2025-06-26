@@ -7,13 +7,6 @@ import { ShoppingCart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -32,7 +25,6 @@ export function CartSheet() {
     items,
     removeItem,
     currency,
-    setCurrency,
     convertPrice,
     currencySymbol,
   } = useCartContext();
@@ -63,19 +55,6 @@ export function CartSheet() {
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
         <SheetHeader className="space-y-2.5 pr-6">
           <SheetTitle>Your Cart</SheetTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Currency:</span>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="w-30 h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MKD">MKD (ден)</SelectItem>
-                <SelectItem value="USD">USD ($)</SelectItem>
-                <SelectItem value="EUR">EUR (€)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <Separator />
         </SheetHeader>
 

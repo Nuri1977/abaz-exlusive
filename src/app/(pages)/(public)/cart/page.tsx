@@ -7,24 +7,11 @@ import { useCartContext } from "@/context/CartContext";
 import { ShoppingCart } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
 export default function CartPage() {
-  const {
-    items,
-    removeItem,
-    currency,
-    setCurrency,
-    convertPrice,
-    currencySymbol,
-  } = useCartContext();
+  const { items, removeItem, currency, convertPrice, currencySymbol } =
+    useCartContext();
 
   const total = items.reduce(
     (sum, item) =>
@@ -48,19 +35,6 @@ export default function CartPage() {
     <div className="py-12">
       <div className="mx-20 mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Your Cart</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Currency:</span>
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="w-30 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MKD">MKD (ден)</SelectItem>
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
       <Separator className="mb-6" />
       <ul className="mx-auto max-w-3xl space-y-6">
