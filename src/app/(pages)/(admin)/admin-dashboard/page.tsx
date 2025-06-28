@@ -1,35 +1,9 @@
 import Link from "next/link";
 
 import { adminLinks } from "@/constants/routes";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { isAdminServer } from "@/helpers/isAdminServer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminDashboardPage = async () => {
-  const isAdmin = await isAdminServer();
-
-  if (!isAdmin) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl text-destructive">
-              Access Denied
-            </CardTitle>
-            <CardDescription>
-              You do not have permission to view this page.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>

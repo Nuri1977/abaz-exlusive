@@ -1,5 +1,4 @@
 import React from "react";
-import { redirect } from "next/navigation";
 
 import { getSettingsSA } from "@/services/settings/settingsService";
 import { getSessionServer } from "@/helpers/getSessionServer";
@@ -7,9 +6,6 @@ import { getSessionServer } from "@/helpers/getSessionServer";
 import SettingsForm from "./_components/SettingsForm";
 
 const AdminSettingsPage = async () => {
-  const session = await getSessionServer();
-  if (!session?.user?.isAdmin) redirect("/");
-
   const breadcrumbItems = [
     { title: "Settings", link: "/admin-dashboard/settings" },
   ];
