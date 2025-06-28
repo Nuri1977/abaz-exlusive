@@ -115,6 +115,8 @@ model Product {
   cartItems   CartItem[]
   orderItems  OrderItem[]
   likes       Like[]
+  newArrivals NewArrivals[]
+  bestSellers BestSellers[]
   // Shoe specific details
   brand       String?
   material    String?
@@ -322,6 +324,26 @@ model Settings {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+model NewArrivals {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("new_arrivals")
+}
+
+model BestSellers {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("best_sellers")
 }
 
 enum OrderStatus {
