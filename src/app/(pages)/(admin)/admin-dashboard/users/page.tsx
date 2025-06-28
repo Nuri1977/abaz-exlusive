@@ -1,9 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isAdminServer } from "@/helpers/isAdminServer";
-
 import { UserTable } from "./_components/UserTable";
 
 export const metadata: Metadata = {
@@ -12,25 +9,6 @@ export const metadata: Metadata = {
 };
 
 const AdminUsersPage = async () => {
-  const isAdmin = await isAdminServer();
-
-  if (!isAdmin) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl text-destructive">
-              Access Denied
-            </CardTitle>
-            <CardContent>
-              You do not have permission to view this page.
-            </CardContent>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>

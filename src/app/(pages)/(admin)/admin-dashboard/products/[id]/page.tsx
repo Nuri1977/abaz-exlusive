@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 
 import { ProductExt } from "@/types/product";
 import { prisma } from "@/lib/prisma";
-import { isAdminServer } from "@/helpers/isAdminServer";
 
 import { EditProductForm } from "./_components/EditProductForm";
 
@@ -27,22 +26,6 @@ export default async function EditProductPage({
   params,
 }: EditProductPageProps) {
   const { id } = await params;
-  const isAdmin = await isAdminServer();
-
-  if (!isAdmin) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-xl font-semibold text-destructive">
-            Access Denied
-          </h1>
-          <p className="text-muted-foreground">
-            You do not have permission to view this page.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Fetch the product with all related data
   const product = await prisma.product.findUnique({

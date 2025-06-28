@@ -52,6 +52,13 @@ export const adminLinks = [
     description: "Manage the image gallery",
   },
   {
+    name: "Orders",
+    href: "/admin-dashboard/orders",
+    icon: ShoppingCart,
+    value: "Manage",
+    description: "View and manage customer orders",
+  },
+  {
     name: "Settings",
     href: "/admin-dashboard/settings",
     icon: Settings,
