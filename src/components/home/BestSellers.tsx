@@ -1,14 +1,14 @@
 import React from "react";
 
-import getNewArrivalsSSG from "@/services/new-arrivals/newArrivalsService";
+import getBestSellersSSG from "@/services/best-sellers/bestSellersService";
 
 import ProductCardScroller from "../shared/ProductCardScroller";
 
-const NewArrivals = async () => {
-  const newArrivals = await getNewArrivalsSSG();
+const BestSellers = async () => {
+  const bestSellers = await getBestSellersSSG();
 
   // Transform the data to match the Product interface
-  const products = newArrivals.map((item: any) => ({
+  const products = bestSellers.map((item: any) => ({
     id: item.product?.id,
     name: item.product?.name,
     slug: item.product?.slug,
@@ -20,14 +20,14 @@ const NewArrivals = async () => {
   }));
 
   return (
-    <section id="new-arrivals" className="py-24">
+    <section id="best-sellers" className="py-24">
       <ProductCardScroller
         products={products}
-        title="New Arrivals"
-        iconName="sparkles"
+        title="Best Sellers"
+        iconName="award"
       />
     </section>
   );
 };
 
-export default NewArrivals;
+export default BestSellers;

@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
-export const getNewArrivalsSSG = async () => {
+export const getBestSellersSSG = async () => {
   let products: any[] = [];
   try {
-    const response = await prisma.newArrivals.findMany({
+    const response = await prisma.bestSellers.findMany({
       orderBy: [
         {
           createdAt: "desc",
@@ -27,4 +27,4 @@ export const getNewArrivalsSSG = async () => {
 };
 
 // Also export as default for compatibility
-export default getNewArrivalsSSG;
+export default getBestSellersSSG;
