@@ -2,8 +2,8 @@ import { Order } from "@/types/Order";
 import api from "@/lib/axios";
 
 export const fetchOrders = async (): Promise<Order[]> => {
-  const { data } = await api.get<{ data: Order[] }>("/admin/orders");
-  return data?.data ?? [];
+  const { data } = await api.get<Order[]>("/admin/orders");
+  return data ?? [];
 };
 
 export const updateOrderStatus = async (

@@ -222,6 +222,8 @@ model Order {
   user            User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
   phone           String?
+  customerName    String?
+  customerEmail   String?
 
   @@map("order")
 }

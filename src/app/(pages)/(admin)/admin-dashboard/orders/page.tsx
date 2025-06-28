@@ -85,11 +85,18 @@ export default function AdminOrdersPage() {
                   {order?.id?.slice(0, 8)}
                 </td>
                 <td className="px-3 py-2">
-                  {order?.user?.name || "Guest"}
+                  {/* Show checkout-provided name/email, fallback to user, fallback to Guest */}
+                  {order?.customerName || order?.user?.name || "Guest"}
                   <br />
                   <span className="text-xs text-muted-foreground">
-                    {order?.user?.email || "-"}
+                    {order?.customerEmail || order?.user?.email || "-"}
                   </span>
+                  {/* If user is present, show original account info for admins */}
+                  {order?.user && (
+                    <span className="block text-xs text-muted-foreground">
+                      (Account: {order?.user?.name} / {order?.user?.email})
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-2">{order?.phone || "-"}</td>
                 <td className="px-3 py-2 font-semibold">{order?.status}</td>

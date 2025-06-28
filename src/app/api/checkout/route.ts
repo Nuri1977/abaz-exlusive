@@ -68,6 +68,8 @@ export async function POST(req: NextRequest) {
       billingAddress: form.address, // No separate billing for now
       paymentStatus: "PENDING",
       phone: form.phone,
+      customerName: form.name,
+      customerEmail: form.email,
       items: {
         create: cartItems.map((item: any) => {
           const orderItem: any = {

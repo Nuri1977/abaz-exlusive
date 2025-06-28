@@ -7,7 +7,6 @@ export interface OrderItem {
   quantity: number;
   price: number;
 }
-
 export interface Order {
   id: string;
   userId?: string;
@@ -15,10 +14,12 @@ export interface Order {
   items: OrderItem[];
   status: string;
   total: number;
-  phone: number;
+  phone?: string;
   shippingAddress: string;
   billingAddress: string;
   paymentStatus: string;
   createdAt: string;
   updatedAt: string;
+  customerName?: string;
+  customerEmail?: string;
 }

@@ -76,30 +76,3 @@ export async function PATCH(request: Request) {
     );
   }
 }
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const isAdmin = await isAdminServer();
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Unauthorized access" },
-        { status: 403 }
-      );
-    }
-    const orderId = params.id;
-    if (!orderId) {
-      return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
-    }
-    await prisma.order.delete({ where: { id: orderId } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete order:", error);
-    return NextResponse.json(
-      { error: "Failed to delete order" },
-      { status: 500 }
-    );
-  }
-}
