@@ -1,20 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  // Using the default output location for Prisma Client
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// Better Auth Core Schema
 
 model User {
   id            String    @id @default(uuid())
@@ -26,11 +17,11 @@ model User {
   isAdmin       Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
   accounts      Account[]
   cart          Cart?
-  orders        Order[]
   likes         Like[]
+  orders        Order[]
+  sessions      Session[]
 
   @@map("user")
 }
@@ -38,13 +29,13 @@ model User {
 model Session {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
@@ -52,7 +43,6 @@ model Session {
 model Account {
   id                    String    @id @default(uuid())
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId             String
   providerId            String
   accessToken           String?
@@ -64,6 +54,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@map("account")
@@ -80,22 +71,20 @@ model Verification {
   @@map("verification")
 }
 
-// E-commerce Models
-
 model Category {
   id          String     @id @default(uuid())
   name        String
   slug        String     @unique
   description String?
-  image       Json?      @default("null")
   parentId    String?
-  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Category[] @relation("CategoryToCategory")
-  products    Product[]
-  level       Int        @default(0) // Track hierarchy level
-  isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  image       Json?      @default("null")
+  isActive    Boolean    @default(true)
+  level       Int        @default(0)
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
 
   @@index([parentId])
   @@map("category")
@@ -107,46 +96,45 @@ model Product {
   slug        String           @unique
   description String?
   price       Decimal          @db.Decimal(10, 2)
-  images      Json[]
   categoryId  String
+  brand       String?
+  material    String?
+  gender      String?
+  style       String?
+  features    String[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  images      Json[]
+  cartItems   CartItem[]
+  likes       Like[]
+  orderItems  OrderItem[]
   category    Category         @relation(fields: [categoryId], references: [id])
   options     ProductOption[]
   variants    ProductVariant[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  likes       Like[]
-  // Shoe specific details
-  brand       String?
-  material    String?
-  gender      String? // men, women, unisex
-  style       String? // casual, formal, sports, etc.
-  features    String[] // array of features like "waterproof", "breathable", etc.
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
 
   @@map("product")
 }
 
 model ProductOption {
   id        String               @id @default(uuid())
-  name      String // e.g., "Size", "Color"
+  name      String
   productId String
-  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
-  values    ProductOptionValue[]
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values    ProductOptionValue[]
 
   @@map("product_option")
 }
 
 model ProductOptionValue {
   id        String                 @id @default(uuid())
-  value     String // e.g., "US 7", "Red"
+  value     String
   optionId  String
-  option    ProductOption          @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  variants  ProductVariantOption[]
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
+  option    ProductOption          @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  variants  ProductVariantOption[]
 
   @@map("product_option_value")
 }
@@ -154,16 +142,16 @@ model ProductOptionValue {
 model ProductVariant {
   id         String                 @id @default(uuid())
   productId  String
-  product    Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku        String                 @unique
-  price      Decimal?               @db.Decimal(10, 2) // Optional override of product price
+  price      Decimal?               @db.Decimal(10, 2)
   stock      Int                    @default(0)
-  options    ProductVariantOption[]
-  inventory  InventoryItem?
-  cartItems  CartItem[]
-  orderItems OrderItem[]
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
+  cartItems  CartItem[]
+  inventory  InventoryItem?
+  orderItems OrderItem[]
+  product    Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options    ProductVariantOption[]
 
   @@map("product_variant")
 }
@@ -171,8 +159,8 @@ model ProductVariant {
 model ProductVariantOption {
   variantId     String
   optionValueId String
-  variant       ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
   optionValue   ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+  variant       ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@id([variantId, optionValueId])
   @@map("product_variant_option")
@@ -184,9 +172,9 @@ model InventoryItem {
   quantity  Int            @default(0)
   reserved  Int            @default(0)
   variantId String         @unique
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@map("inventory_item")
 }
@@ -194,12 +182,12 @@ model InventoryItem {
 model Cart {
   id        String     @id @default(uuid())
   userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
   total     Decimal    @db.Decimal(10, 2)
-  currency  String     @default("MKD")
+  currency  String     @default("USD")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
 
   @@map("cart")
 }
@@ -207,15 +195,15 @@ model Cart {
 model CartItem {
   id        String          @id @default(uuid())
   cartId    String
-  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
   variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
   quantity  Int             @default(1)
   price     Decimal         @db.Decimal(10, 2)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
-  Product   Product?        @relation(fields: [productId], references: [id])
   productId String?
+  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  Product   Product?        @relation(fields: [productId], references: [id])
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@unique([cartId, variantId])
   @@map("cart_item")
@@ -223,9 +211,7 @@ model CartItem {
 
 model Order {
   id              String        @id @default(uuid())
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
-  items           OrderItem[]
+  userId          String?
   status          OrderStatus   @default(PENDING)
   total           Decimal       @db.Decimal(10, 2)
   shippingAddress String
@@ -233,22 +219,25 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+  phone           String?
 
   @@map("order")
 }
 
 model OrderItem {
-  id        String         @id @default(uuid())
+  id        String          @id @default(uuid())
   orderId   String
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variantId String?
   quantity  Int
-  price     Decimal        @db.Decimal(10, 2)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  Product   Product?       @relation(fields: [productId], references: [id])
+  price     Decimal         @db.Decimal(10, 2)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   productId String?
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Product   Product?        @relation(fields: [productId], references: [id])
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
   @@map("order_item")
 }
@@ -256,11 +245,11 @@ model OrderItem {
 model Like {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("like")
@@ -283,12 +272,12 @@ model Gallery {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   metadata     Json
-  width        Int?
   height       Int?
+  isDeleted    Boolean  @default(false)
   tags         String[]
   uploadedBy   String?
   usedIn       Json[]
-  isDeleted    Boolean  @default(false)
+  width        Int?
 
   @@map("gallery")
 }
@@ -297,7 +286,7 @@ model MediaUsage {
   id         String   @id @default(cuid())
   mediaId    String
   entityId   String
-  entityType String // e.g., "product", "banner", "blog"
+  entityType String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -306,7 +295,7 @@ model MediaUsage {
 }
 
 model Settings {
-  id        String   @id @default("default") // Using "default" as the only ID since this is a singleton
+  id        String   @id @default("default")
   name      String
   address   String
   city      String
@@ -314,10 +303,10 @@ model Settings {
   telephone String
   email     String
   facebook  String?
-  twitter   String? // X (formerly Twitter)
+  twitter   String?
   instagram String?
   youtube   String?
-  aboutInfo String   @db.Text // Using Text type for longer content
+  aboutInfo String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

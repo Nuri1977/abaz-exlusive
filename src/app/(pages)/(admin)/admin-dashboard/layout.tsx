@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
+import { Toaster } from "@/components/ui/toaster";
+import { isAdminServer } from "@/helpers/isAdminServer";
 
 import AdminSidebar from "./_components/AdminSidebar";
-import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description: "Administrative dashboard of the Shopping App",
 };
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isAdmin = await isAdminServer();
+  if (!isAdmin) redirect("/");
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <AdminSidebar />
