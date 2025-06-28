@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { placeholderShoeImages } from "@/constants/images";
 import { Button } from "@/components/ui/button";
+import HeroSection from "@/components/home/HeroSection";
 
 const placeholderShoes = [
   {
@@ -63,24 +64,7 @@ export default function HomePage() {
   return (
     <div className="font-sans">
       {/* Hero Banner */}
-      <section className="relative mb-16 flex h-screen w-full items-center justify-center bg-black text-white">
-        <img
-          src="https://images.unsplash.com/photo-1524553879936-2ff074ae5816?q=80&w=2952&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-          alt="Hero Shoe"
-          className="absolute inset-0 size-full object-cover opacity-60"
-        />
-        <div className="relative z-10 text-center">
-          <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-6xl">
-            Discover the New Collection
-          </h1>
-          <p className="mb-8 text-lg md:text-2xl">
-            Premium women's shoes for every occasion
-          </p>
-          <Button asChild size="lg" variant="secondary">
-            <Link href="#new-arrivals">Shop New Arrivals</Link>
-          </Button>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* New Arrivals */}
       <section id="new-arrivals" className="mb-20">
