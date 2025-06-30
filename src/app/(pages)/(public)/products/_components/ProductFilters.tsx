@@ -7,6 +7,7 @@ import { useCartContext } from "@/context/CartContext";
 import { brandOptions, genderOptions } from "@/constants/options";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DualRangeSlider } from "@/components/ui/dual-range-slider";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 
 const materialOptions = [
   "Leather",
@@ -132,7 +132,7 @@ export function ProductFilters() {
       <div className="space-y-4">
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
-          <Slider
+          <DualRangeSlider
             min={sliderMin}
             max={sliderMax}
             step={currency === "MKD" ? 100 : 10}

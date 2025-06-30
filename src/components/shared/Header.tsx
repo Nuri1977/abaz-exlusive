@@ -17,17 +17,10 @@ import {
 
 import { navLinks } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/components/shared/Logo";
 import { useIsAdmin } from "@/helpers/isAdminClient";
@@ -144,18 +136,16 @@ export function Header() {
           </nav>
 
           {/* Search Icon - Hidden on mobile/tablet */}
-          <div className="hidden lg:block">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="text-primary-foreground"
+          <div className="hidden p-2 lg:block">
+            <Link
+              href="/search"
+              className={cn(
+                "text-primary-foreground transition-colors hover:text-primary-foreground/90"
+              )}
             >
-              <Link href="/search">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Search</span>
-              </Link>
-            </Button>
+              <Search size={24} />
+              <span className="sr-only">Search</span>
+            </Link>
           </div>
 
           {/* Likes and Cart Icons - Visible on all devices */}
