@@ -3,6 +3,7 @@ import { Geist_Mono, Montserrat } from "next/font/google";
 
 import "./globals.css";
 
+import CookieConsent from "@/components/ui/cookie-consent";
 import { Toaster } from "@/components/ui/toaster";
 import { Footer } from "@/components/shared/Footer";
 import { Header } from "@/components/shared/Header";
@@ -48,6 +49,7 @@ export default function RootLayout({
           <Footer />
           <Toaster />
         </Providers>
+        <CookieConsent />
       </body>
     </html>
   );
