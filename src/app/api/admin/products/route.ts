@@ -5,41 +5,20 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminServer } from "@/helpers/isAdminServer";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const isAdmin = await isAdminServer();
-    if (!isAdmin) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const products = await prisma.product.findMany({
       include: {
         category: true,
-        options: {
-          include: {
-            values: true,
-          },
-        },
-        variants: {
-          include: {
-            options: {
-              include: {
-                optionValue: true,
-              },
-            },
-          },
-        },
+      },
+      orderBy: {
+        name: "asc",
       },
     });
 
     return NextResponse.json(products);
   } catch (error) {
-    console.error("[PRODUCTS_GET]", error);
+    console.error("[ADMIN_PRODUCTS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

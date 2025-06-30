@@ -59,6 +59,20 @@ export const adminLinks = [
     description: "View and manage customer orders",
   },
   {
+    name: "New Arrivals",
+    href: "/admin-dashboard/new-arrivals",
+    icon: Package,
+    value: "Manage",
+    description: "View and manage new arrivals",
+  },
+  {
+    name: "Best Sellers",
+    href: "/admin-dashboard/best-sellers",
+    icon: ShoppingBag,
+    value: "Manage",
+    description: "View and manage best sellers",
+  },
+  {
     name: "Settings",
     href: "/admin-dashboard/settings",
     icon: Settings,
