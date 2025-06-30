@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 
 const PromoBanner = () => {
   return (
-    <section className="relative h-[500px] overflow-hidden">
+    <section className="relative h-[650px] overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
