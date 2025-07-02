@@ -79,6 +79,13 @@ export const adminLinks = [
     value: "System",
     description: "Configure system settings and preferences",
   },
+  {
+    name: "About Us",
+    href: "/admin-dashboard/about",
+    icon: Info,
+    value: "Manage",
+    description: "Manage the About Us page content",
+  },
 ];
 
 export const userLinks = [
