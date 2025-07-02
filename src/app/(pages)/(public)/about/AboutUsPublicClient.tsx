@@ -1,23 +1,17 @@
-"use client";
-
 import dynamic from "next/dynamic";
-import { SerializedEditorState } from "lexical";
+import type { SerializedEditorState } from "lexical";
 
-const LexicalHtmlRenderer = dynamic(() => import("./LexicalHtmlRenderer"), {
-  ssr: false,
-});
+const Renderer = dynamic(() => import("./LexicalHtmlRenderer"), { ssr: false });
 
-interface AboutUsPublicClientProps {
+interface Props {
   aboutUs: SerializedEditorState | null;
 }
 
-function isValidLexicalState(state: any): state is SerializedEditorState {
-  return !!state?.root && Array.isArray(state?.root?.children);
-}
-
-export default function AboutUsPublicClient({ aboutUs }: AboutUsPublicClientProps) {
-  if (!isValidLexicalState(aboutUs)) {
-    return <p className="text-muted-foreground">No About Us content available.</p>;
+export default function AboutUsPublicClient({ aboutUs }: Props) {
+  if (!aboutUs?.root?.children?.length) {
+    return (
+      <p className="text-muted-foreground">No About Us content available.</p>
+    );
   }
-  return <LexicalHtmlRenderer aboutUs={aboutUs} />;
+  return <Renderer aboutUs={aboutUs} />;
 }
