@@ -20,7 +20,7 @@ const BestSellers = async () => {
   }));
 
   return (
-    <section id="best-sellers" className="py-24">
+    <section id="best-sellers" className="py-14">
       <ProductCardScroller
         products={products}
         title="Best Sellers"
