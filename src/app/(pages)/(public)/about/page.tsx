@@ -13,13 +13,14 @@ export default function AboutPage() {
       const result = await res.json();
       const data = result?.data?.data ? result.data.data : result.data;
       setAboutUs(data);
-      console.log("data: ", data);
     };
     fetchAbout();
   }, []);
   return (
-    <main className="w-full px-0 py-0">
-      <AboutUsPublicClient aboutUs={aboutUs} />
+    <main className="w-full">
+      <div className="container mx-auto px-4 py-8 min-h-[60vh]">
+        <AboutUsPublicClient aboutUs={aboutUs} />
+      </div>
     </main>
   );
 }

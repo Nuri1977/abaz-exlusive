@@ -1,0 +1,153 @@
+I'll write the complete task plan into the empty file using a single replacement patch appropriate for empty files. Then I'll mark the Prisma model verification as completed in the TODOs.
+
+
+
+Here’s the complete content to put into:
+[docs/ai-context/tasks/001-Update-about-page-with-rich-text-editor](cci:7://file:///Users/nuri/Documents/Projects/personal/molini-shoes/docs/ai-context/tasks/001-Update-about-page-with-rich-text-editor:0:0-0:0)
+
+```markdown
+# Task 001 — About page: dynamic content with Lexical editor
+
+This task completes the About page so content is stored in the DB, rendered publicly, and editable by admins via Facebook Lexical.
+
+---
+
+## Summary
+
+- Persist About content in Prisma `Settings.aboutUs` (JSON).
+- Public page renders a read-only Lexical state.
+- Admin page edits and saves via Lexical editor and TanStack Query.
+
+---
+
+## Current state
+
+- Public page: `src/app/(pages)/(public)/about/page.tsx`
+  - Fetches `GET /api/about` and renders [AboutUsPublicClient](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/AboutUsPublicClient.tsx:9:0-16:1).
+  - [AboutUsPublicClient](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/AboutUsPublicClient.tsx:9:0-16:1) expects `SerializedEditorState` and uses [LexicalHtmlRenderer](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/LexicalHtmlRenderer.tsx:11:0-33:1) for read-only rendering.
+  - Renderer: `src/app/(pages)/(public)/about/LexicalHtmlRenderer.tsx` loads serialized state into a non-editable `LexicalComposer`.
+- Admin page: `src/app/(pages)/(admin)/admin-dashboard/about/page.tsx`
+  - Renders [AboutUsClient](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28admin%29/admin-dashboard/about/_components/AboutUsClient.tsx:11:0-75:1): `src/app/(pages)/(admin)/admin-dashboard/about/_components/AboutUsClient.tsx`
+  - Uses `Editor` (`src/components/blocks/editor-00/editor`) and TanStack Query (`fetchAboutUs`, `updateAboutUs`) to edit/save serialized state.
+- Admin API: [src/app/api/admin/about/route.ts](cci:7://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:0:0-0:0)
+  - [GET](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:5:0-25:1) returns `{ data: settings?.aboutUs }` (admin-only).
+  - [PUT](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:27:0-84:1) upserts `settings.aboutUs` with serialized Lexical state (admin-only).
+
+Gaps:
+- Public API `GET /api/about` is missing.
+- `@/lib/query/about` helpers referenced by the admin client may be missing/incomplete.
+- Ensure Prisma model supports `aboutUs Json?` and a `Settings` row with `id = "default"` exists (admin PUT handler can create if missing).
+
+---
+
+## Requirements
+
+1) Data model
+- [prisma/schema.prisma](cci:7://file:///Users/nuri/Documents/Projects/personal/molini-shoes/prisma/schema.prisma:0:0-0:0) `model Settings` must include:
+  - A unique `id` (resolvable with `where: { id: "default" }`)
+  - `aboutUs Json?` to store Lexical `SerializedEditorState`.
+
+2) API routes
+- Public: `src/app/api/about/route.ts` with [GET](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:5:0-25:1) returning `{ data: <SerializedEditorState | null> }`.
+- Admin: `GET/PUT src/app/api/admin/about/route.ts` (already present) guarded by `isAdminServer()`.
+
+3) Public rendering
+- [AboutUsPublicClient](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/AboutUsPublicClient.tsx:9:0-16:1) should:
+  - Show “No About Us content available.” when empty.
+  - Render read-only Lexical with [LexicalHtmlRenderer](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/LexicalHtmlRenderer.tsx:11:0-33:1) when content exists.
+
+4) Admin editing
+- [AboutUsClient](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28admin%29/admin-dashboard/about/_components/AboutUsClient.tsx:11:0-75:1) should:
+  - Load initial state via `fetchAboutUs`.
+  - Initialize a valid empty Lexical state if none exists (root with one empty paragraph).
+  - Save via `updateAboutUs` using TanStack Query mutation and show toasts.
+
+5) Security
+- Public [GET](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:5:0-25:1) is unauthenticated.
+- Admin routes require admin check and robust error handling.
+
+---
+
+## Implementation steps
+
+1) Prisma (verify)
+- Ensure `Settings` includes `aboutUs Json?`.
+- Run a migration if missing.
+
+2) Public API route
+- Create `src/app/api/about/route.ts`:
+  - [GET](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about/route.ts:5:0-25:1):
+    - `const settings = await prisma.settings.findUnique({ where: { id: "default" } });`
+    - Return `NextResponse.json({ data: settings?.aboutUs ?? null }, { status: 200 })`.
+    - On error: `500` with `{ error: "Failed to fetch About Us" }`.
+
+3) Query helpers
+- Create `src/lib/query/about.ts`:
+  - `export async function fetchAboutUs()`:
+    - `GET /api/admin/about`
+    - Return the serialized state or `{}`.
+  - `export async function updateAboutUs(state: SerializedEditorState | null)`:
+    - `PUT /api/admin/about` with body `{ aboutUs: state }`
+    - Return updated serialized state.
+  - Throw on non-OK responses.
+
+4) Admin editor client
+- File: `src/app/(pages)/(admin)/admin-dashboard/about/_components/AboutUsClient.tsx`
+  - Ensure it imports from `@/lib/query/about`.
+  - Pass `editorSerializedState` to `Editor`.
+  - On Save, `mutation.mutate(editorState)`; disable while pending.
+  - Keep valid empty-state initialization (root with empty paragraph).
+
+5) Public page
+- File: `src/app/(pages)/(public)/about/page.tsx`
+  - Keep the fetch pattern; ensure the response shape is `{ data }` so:
+    - `const result = await res.json();`
+    - `const data = result?.data?.data ? result.data.data : result.data;`
+    - `setAboutUs(data);`
+  - Prefer having the public API return `{ data }` directly.
+
+---
+
+## API contracts
+
+- Public GET `/api/about` → 200
+  - `{ "data": <SerializedEditorState | null> }`
+
+- Admin GET [/api/admin/about](cci:7://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about:0:0-0:0) → 200 (admin only)
+  - `{ "data": <SerializedEditorState | null> }`
+
+- Admin PUT [/api/admin/about](cci:7://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/api/admin/about:0:0-0:0) → 200 (admin only)
+  - Request: `{ "aboutUs": <SerializedEditorState> }`
+  - Response: `{ "aboutUs": <SerializedEditorState> }`
+
+- Error responses: `{ "error": string }` with appropriate status codes.
+
+---
+
+## UX details
+
+- Public renderer is non-editable and styled with `prose` in [LexicalHtmlRenderer](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/LexicalHtmlRenderer.tsx:11:0-33:1).
+- Admin editor uses shared `Editor` with rich text features (headings, lists, links, bold/italic).
+- Use `useToast` to show success/error toasts.
+
+---
+
+## Testing checklist
+
+- Ensure a `Settings` row with `id = "default"` exists or is created on first admin save.
+- Public page shows “No About Us content available.” when empty.
+- After admin save, public page renders the saved content.
+- Public and admin API endpoints return expected shapes/status codes.
+- Unauthorized admin requests return 403.
+
+---
+
+## Done criteria
+
+- Public `GET /api/about` implemented and consumed by the public page without errors.
+- Admin can load, edit, and save content; data persists in `Settings.aboutUs` as serialized Lexical state.
+- Public page renders the saved state via [LexicalHtmlRenderer](cci:1://file:///Users/nuri/Documents/Projects/personal/molini-shoes/src/app/%28pages%29/%28public%29/about/LexicalHtmlRenderer.tsx:11:0-33:1) in read-only mode.
+- This document accurately reflects the implementation and contracts.
+```
+
+Summary: I provided the full content for the task document. Say “Save it” when you’ve added it, and I can proceed to the implementation steps if/when you’re ready.
