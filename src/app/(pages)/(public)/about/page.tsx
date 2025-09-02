@@ -1,24 +1,32 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
 import AboutUsPublicClient from "./AboutUsPublicClient";
 
-export default function AboutPage() {
-  const [aboutUs, setAboutUs] = useState(null);
-  useEffect(() => {
-    const fetchAbout = async () => {
-      const res = await fetch("/api/about", { cache: "no-store" });
-      if (!res.ok) return setAboutUs(null);
-      const result = await res.json();
-      const data = result?.data?.data ? result.data.data : result.data;
-      setAboutUs(data);
-    };
-    fetchAbout();
-  }, []);
+async function fetchAboutUsPublic() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/about`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const result = await res.json();
+    return result?.data ?? null;
+  } catch (error) {
+    console.error("Failed to fetch about us:", error);
+    return null;
+  }
+}
+
+export default async function AboutPage() {
+  const aboutUs = await fetchAboutUsPublic();
+
   return (
     <main className="w-full">
-      <div className="container mx-auto px-4 py-8 min-h-[60vh]">
+      <div className="container mx-auto min-h-[60vh] px-4 py-8">
         <AboutUsPublicClient aboutUs={aboutUs} />
       </div>
     </main>

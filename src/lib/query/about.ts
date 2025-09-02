@@ -32,3 +32,14 @@ export const updateAboutUs = async (
   return isSerializedEditorState(payload) ? payload : null;
 };
 
+// Fetch About Us (public)
+export const fetchAboutUsPublic = async (): Promise<SerializedEditorState | null> => {
+  const response = await api.get<{ data: SerializedEditorState | null }>("/about");
+  const candidate = (response as any)?.data;
+  const payload = (candidate && "data" in candidate
+    ? (candidate as any).data
+    : candidate) as SerializedEditorState | null;
+  if (payload === null) return null;
+  return isSerializedEditorState(payload) ? payload : null;
+};
+
