@@ -6,9 +6,9 @@ import type {
   ProductOption,
   ProductVariant,
 } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import type { Decimal } from "@prisma/client/runtime/library";
 
-import { FileUploadThing } from "./UploadThing";
+import type { FileUploadThing } from "./UploadThing";
 
 export interface ProductExt extends Omit<Product, "images"> {
   images: FileUploadThing[] | null;

@@ -5,24 +5,34 @@ export const deleteImage = async (imageId: string) => {
     });
 
     if (!response.ok) {
-      const data = await response.json();
+      const data: unknown = await response.json();
+      const message =
+        typeof data === "object" && data !== null && "error" in data &&
+        typeof (data as { error?: unknown }).error === "string"
+          ? (data as { error?: string }).error
+          : "Failed to delete image";
       return {
         success: false,
-        message: data.error || "Failed to delete image",
+        message,
       };
     }
 
-    const data = await response.json();
+    const data: unknown = await response.json();
+    const deletedCount =
+      typeof data === "object" && data !== null &&
+      typeof (data as { deletedCount?: unknown }).deletedCount === "number"
+        ? (data as { deletedCount: number }).deletedCount
+        : undefined;
     return {
       success: true,
       message: "Image deleted successfully",
-      deletedCount: data.deletedCount,
+      deletedCount,
     };
-  } catch (error: any) {
-    console.error("Error deleting image:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to delete image";
     return {
       success: false,
-      message: error?.message || "Failed to delete image",
+      message,
     };
   }
 };

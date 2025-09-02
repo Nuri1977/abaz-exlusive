@@ -1,9 +1,11 @@
+import type { Product, ProductVariant } from "@prisma/client";
+
 export interface OrderItem {
   id: string;
   productId?: string;
-  Product?: any;
+  Product?: Product;
   variantId?: string;
-  variant?: any;
+  variant?: ProductVariant;
   quantity: number;
   price: number;
 }

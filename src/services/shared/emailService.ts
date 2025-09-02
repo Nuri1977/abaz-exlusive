@@ -1,6 +1,12 @@
 import * as nodemailer from "nodemailer";
+import type Mail from "nodemailer/lib/mailer";
 
-import { EmailConfig, EmailData } from "@/types/Email";
+import { type EmailConfig, type EmailData } from "@/types/Email";
+
+// Precise result type for email sending operations
+export type EmailSendResult =
+  | { success: true; data: nodemailer.SentMessageInfo }
+  | { success: false; error: string };
 
 /**
  * Email Service using Nodemailer with SMTP
@@ -15,19 +21,15 @@ export class EmailService {
   /**
    * Send an email using SMTP
    */
-  async sendEmail(
-    emailData: EmailData
-  ): Promise<{ success: boolean; data?: any; error?: any }> {
+  async sendEmail(emailData: EmailData): Promise<EmailSendResult> {
     try {
       return await this.sendWithNodemailer(emailData);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to send email:", error);
       return {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown error sending email",
+        error: error instanceof Error ? error.message : "Unknown error sending email",
       };
     }
   }
@@ -35,16 +37,8 @@ export class EmailService {
   /**
    * Send email using Nodemailer with SMTP
    */
-  private async sendWithNodemailer(emailData: EmailData) {
-    const {
-      fromEmail,
-      fromName,
-      toEmail,
-      toName,
-      subject,
-      htmlContent,
-      replyTo,
-    } = emailData;
+  private async sendWithNodemailer(emailData: EmailData): Promise<EmailSendResult> {
+    const { fromEmail, fromName, toEmail, toName, subject, htmlContent, replyTo } = emailData;
 
     try {
       // Check for required SMTP configuration
@@ -64,27 +58,26 @@ export class EmailService {
       });
 
       // Set up email options
-      const mailOptions = {
+      const mailOptions: Mail.Options = {
         from: fromName ? `"${fromName}" <${fromEmail}>` : fromEmail,
         to: toName ? `"${toName}" <${toEmail}>` : toEmail,
         subject,
         html: htmlContent,
         ...(replyTo?.email && {
-          replyTo: replyTo.name
-            ? `"${replyTo.name}" <${replyTo.email}>`
-            : replyTo.email,
+          replyTo: replyTo.name ? `"${replyTo.name}" <${replyTo.email}>` : replyTo.email,
         }),
       };
 
       // Send mail
       const info = await transporter.sendMail(mailOptions);
-      console.log(
-        `Email sent successfully via SMTP to ${toEmail} (Message ID: ${info?.messageId})`
-      );
       return { success: true, data: info };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("SMTP email error:", error);
-      return { success: false, error };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "SMTP email error",
+      };
     }
   }
 }
