@@ -8,6 +8,12 @@ A production-ready Next.js template with authentication, UI components, and esse
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.1-38bdf8)
 ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-latest-black)
 
+## For AI Assistants
+
+- Read and follow [AI_GUIDELINES.md](./AI_GUIDELINES.md) for repo-wide rules and patterns.
+- Key points: full runnable code (no placeholders), strict optional chaining, keep pages server-side (use `_components/` with "use client" when needed), use `Link`, use shadcn/ui toasts, include all Prisma fields in CRUD, follow UploadThing + Better Auth patterns.
+- Extended docs: [docs/ai-context/](./docs/ai-context/)
+
 ## Features
 
 - 🔒 **Authentication System** - Complete authentication with Better Auth, including login, registration, password reset, and email verification

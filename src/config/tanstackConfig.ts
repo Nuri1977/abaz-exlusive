@@ -8,3 +8,7 @@ export const queryKeys = {
 export const cartKeys = {
   all: ["cart"] as const,
 };
+export const aboutKeys = {
+  all: ["aboutUs"] as const,
+  admin: ["aboutUs", "admin"] as const,
+};

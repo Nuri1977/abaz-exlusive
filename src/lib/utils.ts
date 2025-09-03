@@ -23,6 +23,7 @@ export function slugify(text: string): string {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^\w\-]+/g, "")
+    // eslint-disable-next-line no-useless-escape
     .replace(/\-\-+/g, "-");
 }
 

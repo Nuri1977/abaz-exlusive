@@ -312,6 +312,7 @@ model Settings {
   instagram String?
   youtube   String?
   aboutInfo String
+  aboutUs   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

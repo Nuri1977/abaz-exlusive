@@ -13,7 +13,7 @@ const config = {
     "plugin:tailwindcss/recommended"
   ],
   rules: {
-    "no-console": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
 
     "unused-imports/no-unused-imports": "error",
     
