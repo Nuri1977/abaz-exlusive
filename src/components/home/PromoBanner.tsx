@@ -8,7 +8,7 @@ const PromoBanner = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1605732440685-d0654d81aa30?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`, // To make it changeable by Admin in Admin Dashboard
+          backgroundImage: `url('/images/blue.jpg')`, // To make it changeable by Admin in Admin Dashboard
           backgroundAttachment: "fixed",
           backgroundPosition: "center",
           backgroundSize: "cover",
@@ -23,7 +23,7 @@ const PromoBanner = () => {
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
             <svg
-              className="h-8 w-8 text-white"
+              className="size-8 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -45,8 +45,8 @@ const PromoBanner = () => {
 
         {/* Subtitle */}
         <p className="mx-auto mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
-          Enjoy free express shipping on all orders. Shop the latest in women's
-          footwear and get your favorites delivered fast!
+          Enjoy free express shipping on all orders. Shop the latest in
+          women&apos;s footwear and get your favorites delivered fast!
         </p>
 
         {/* CTA Buttons */}
@@ -55,7 +55,7 @@ const PromoBanner = () => {
             asChild
             size="lg"
             variant="secondary"
-            className="transform bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            className="bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
           >
             <Link href="/products">Shop Now</Link>
           </Button>
@@ -64,7 +64,7 @@ const PromoBanner = () => {
             asChild
             size="lg"
             variant="secondary"
-            className="transform bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            className="bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
           >
             <Link href="/about">Learn More</Link>
           </Button>
@@ -75,11 +75,7 @@ const PromoBanner = () => {
           {["Fast Delivery", "Free Returns", "Premium Quality"].map(
             (text, i) => (
               <div className="flex items-center gap-2" key={i}>
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+                <svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"

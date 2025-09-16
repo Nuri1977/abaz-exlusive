@@ -1,4 +1,4 @@
-# AI Guidelines for Molini Shoes
+# AI Guidelines for Abaz Exclusive
 
 This document consolidates essential guidance for AI assistants working on this repository. It summarizes the core rules and conventions from:
 
@@ -8,6 +8,7 @@ This document consolidates essential guidance for AI assistants working on this 
 - `.github/copilot-instructions.md`
 
 For deeper detail, see `docs/ai-context/`:
+
 - `docs/ai-context/01-tech-stack.md`
 - `docs/ai-context/02-authentication.md`
 - `docs/ai-context/03-ui-components.md`
@@ -44,6 +45,7 @@ For deeper detail, see `docs/ai-context/`:
 - Use shadcn/ui toast system (with `useToast`) and ensure a global `<Toaster />` is present in the root layout.
 
 Next.js 15 specifics:
+
 - Request APIs like `cookies()`/`headers()` are async.
 - Route Handler dynamic params are Promises and must be awaited:
 
@@ -69,6 +71,7 @@ export async function GET(
 - `public/` – static assets
 
 Conventions:
+
 - Default to server components; client components live in `_components/` and include `"use client"`.
 - Follow shadcn/ui composition patterns; use `cn()` from `@/lib/utils` for class merging.
 
@@ -82,6 +85,7 @@ Conventions:
 - Always implement loading and error states; use optimistic updates when suitable.
 
 Example query usage (pattern):
+
 ```tsx
 const { data, isLoading, error } = useQuery({
   queryKey: someKeys.detail(id),
@@ -113,25 +117,30 @@ const { data, isLoading, error } = useQuery({
 ## 7) Database Conventions (Prisma + Postgres)
 
 IDs & timestamps:
+
 - UUID primary keys for all models.
 - `createdAt` uses `@default(now())`; `updatedAt` uses `@updatedAt`.
 
 Relations & constraints:
+
 - Use `onDelete: Cascade` for required child records; `onDelete: SetNull` for optional.
 - Define unique constraints appropriately; model relations explicitly.
 
 Field types:
+
 - Prices: `Decimal` with `@db.Decimal(10, 2)`.
 - Complex structures: `Json`.
 - Arrays: `String[]`.
 - Flags: `Boolean` with `@default(false)`.
 
 Operations:
+
 - Always use Prisma Client.
 - Include all fields and handle relations in transactions when needed.
 - Add validation and robust error handling.
 
 Core models (guide level):
+
 - User Management: `User`, `Session`, `Account`, `Verification`.
 - E‑commerce: `Product`, `Category`, `ProductOption`, `ProductVariant`, `InventoryItem`.
 - Shopping: `Cart`, `CartItem`, `Order`, `OrderItem`, `Like`.

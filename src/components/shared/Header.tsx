@@ -9,7 +9,6 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
-  Menu,
   Search,
   Settings,
   User,
@@ -118,7 +117,7 @@ export function Header() {
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex cursor-pointer items-center gap-2">
-          <Logo size={160} />
+          <Logo size={70} />
         </Link>
         <div className="flex items-center gap-3">
           {/* Desktop Navigation */}
@@ -157,7 +156,7 @@ export function Header() {
               <Heart size={24} />
               <span className="sr-only">Likes</span>
               {likedCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
                   {likedCount > 99 ? "99+" : likedCount}
                 </span>
               )}
@@ -195,16 +194,16 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full border p-0"
+                  className="size-9 rounded-full border p-0"
                 >
                   {isPending ? (
-                    <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
+                    <Skeleton className="size-8 rounded-full bg-muted-foreground/20" />
                   ) : session ? (
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="size-8">
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   ) : (
-                    <User className="h-5 w-5" />
+                    <User className="size-5" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -225,7 +224,7 @@ export function Header() {
                         href="/dashboard"
                         className="flex w-full cursor-pointer items-center"
                       >
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <LayoutDashboard className="mr-2 size-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
@@ -235,7 +234,7 @@ export function Header() {
                           href="/admin-dashboard"
                           className="flex w-full cursor-pointer items-center"
                         >
-                          <Settings className="mr-2 h-4 w-4" />
+                          <Settings className="mr-2 size-4" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
@@ -244,7 +243,7 @@ export function Header() {
                       onClick={handleSignOut}
                       className="cursor-pointer"
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogOut className="mr-2 size-4" />
                       Sign out
                     </DropdownMenuItem>
                   </>

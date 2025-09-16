@@ -6,7 +6,7 @@ alwaysApply: true
 # Repository Custom Instructions for GitHub Copilot
 
 - As a programming agent, I assist with code editing, generation, and problem-solving in this project. I provide complete code implementation rather than partial snippets.
-- This project is an e-commerce web application for Molini Shoes, built using Next.js and TypeScript.
+- This project is an e-commerce web application for Abaz Exclusive, built using Next.js and TypeScript.
 - The project uses Tailwind CSS for styling, with custom configurations defined in `tailwind.config.ts`.
 - PostgreSQL is the database, hosted on Neon.tech, and connects via SSL. The connection string is stored in the `DATABASE_URL` environment variable.
 - Prisma is used as the ORM, with the schema defined in `prisma/schema.prisma`.

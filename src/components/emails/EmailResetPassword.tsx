@@ -38,7 +38,7 @@ const PropDefaults: EmailResetPasswordProps = {
 
 // Email content constants
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
+const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Abaz Exclusive";
 
 export const EmailResetPassword = ({
   user,
@@ -71,7 +71,7 @@ export const EmailResetPassword = ({
           <Section style={logo}>
             <Img
               width={146}
-              src={`${baseUrl}/logo/logo.png`}
+              src={`${baseUrl}/logo/logo.jpg`}
               alt={`${organizationName} Logo`}
             />
           </Section>
@@ -133,7 +133,7 @@ export const EmailResetPassword = ({
 
           <Img
             width={111}
-            src={`${baseUrl}/logo/logo.png`}
+            src={`${baseUrl}/logo/logo.jpg`}
             alt={`${organizationName} Logo`}
           />
           <Text style={footerAddress}>

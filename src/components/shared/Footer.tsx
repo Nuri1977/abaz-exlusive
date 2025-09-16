@@ -38,7 +38,7 @@ export async function Footer() {
               </div>
               <p className="text-sm text-white hover:text-white/90">
                 {settings?.aboutInfo ||
-                  "Discover premium women's shoes designed for style, comfort, and confidence. Shop the latest collections and timeless classics at Molini Shoes."}
+                  "Discover premium women's shoes designed for style, comfort, and confidence. Shop the latest collections and timeless classics at Abaz Exclusive."}
               </p>
               <Button
                 asChild
@@ -205,7 +205,7 @@ export async function Footer() {
             </div>
             <p className="mt-4 text-xs text-tertiary-foreground sm:mt-0">
               &copy; {new Date().getFullYear()}{" "}
-              {settings?.name || "Molini Shoes"}. All rights reserved.
+              {settings?.name || "Abaz Exclusive"}. All rights reserved.
             </p>
           </div>
         </div>

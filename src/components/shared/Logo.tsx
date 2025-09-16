@@ -9,13 +9,13 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({
   size = 56,
-  label = "Molini Shoes",
+  label = "Abaz Exclusive",
   className,
 }) => {
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`.trim()}>
       <Image
-        src="/logo/logo.png"
+        src="/logo/logo.jpg"
         alt={label}
         width={size}
         height={size}

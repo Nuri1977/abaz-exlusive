@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Molini Shoes application uses React Email for building responsive email templates and Nodemailer for sending emails via SMTP. The system supports authentication flows, contact forms, and transactional emails.
+The Abaz Exclusive application uses React Email for building responsive email templates and Nodemailer for sending emails via SMTP. The system supports authentication flows, contact forms, and transactional emails.
 
 ## Email Infrastructure
 
@@ -94,7 +94,7 @@ export function createEmailService(): EmailService {
       },
     },
     defaultFromEmail: process.env.ADMIN_EMAIL || "noreply@example.com",
-    defaultFromName: process.env.EMAIL_FROM_NAME || "Molini Shoes",
+    defaultFromName: process.env.EMAIL_FROM_NAME || "Abaz Exclusive",
   };
 
   return new EmailService(config);
@@ -115,7 +115,7 @@ interface EmailResetPasswordProps {
 }
 
 export const EmailResetPassword = ({ user, url, token }: EmailResetPasswordProps) => {
-  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
+  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Abaz Exclusive";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const emailTitle = `Reset Your Password for ${organizationName}`;
@@ -130,7 +130,7 @@ export const EmailResetPassword = ({ user, url, token }: EmailResetPasswordProps
           <Section style={logo}>
             <Img
               width={146}
-              src={`${baseUrl}/logo/logo.png`}
+              src={`${baseUrl}/logo/logo.jpg`}
               alt={`${organizationName} Logo`}
             />
           </Section>
@@ -190,7 +190,7 @@ interface EmailConfirmTemProps {
 }
 
 export const EmailConfirmTem = ({ user, url, token }: EmailConfirmTemProps) => {
-  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
+  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Abaz Exclusive";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const emailTitle = `Confirm Your Email for ${organizationName}`;
@@ -205,7 +205,7 @@ export const EmailConfirmTem = ({ user, url, token }: EmailConfirmTemProps) => {
           <Section style={logo}>
             <Img
               width={146}
-              src={`${baseUrl}/logo/logo.png`}
+              src={`${baseUrl}/logo/logo.jpg`}
               alt={`${organizationName} Logo`}
             />
           </Section>
@@ -257,7 +257,7 @@ interface EmailContactTemplateProps {
 }
 
 export const EmailContactTemplate = ({ name, email, message }: EmailContactTemplateProps) => {
-  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
+  const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Abaz Exclusive";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const emailTitle = "New Contact Form Submission";
@@ -271,7 +271,7 @@ export const EmailContactTemplate = ({ name, email, message }: EmailContactTempl
           <Section style={logo}>
             <Img
               width={146}
-              src={`${baseUrl}/logo/logo.png`}
+              src={`${baseUrl}/logo/logo.jpg`}
               alt={`${organizationName} Logo`}
             />
           </Section>
@@ -329,7 +329,7 @@ export async function POST(req: NextRequest) {
 
     const result = await emailService.sendEmail({
       fromEmail: process.env.ADMIN_EMAIL || "noreply@example.com",
-      fromName: process.env.EMAIL_FROM_NAME || "Molini Shoes",
+      fromName: process.env.EMAIL_FROM_NAME || "Abaz Exclusive",
       toEmail: user?.email,
       toName: user?.name,
       subject: "Reset Your Password",
@@ -379,7 +379,7 @@ export async function POST(req: NextRequest) {
 
     const result = await emailService.sendEmail({
       fromEmail: process.env.ADMIN_EMAIL || "noreply@example.com",
-      fromName: process.env.EMAIL_FROM_NAME || "Molini Shoes",
+      fromName: process.env.EMAIL_FROM_NAME || "Abaz Exclusive",
       toEmail: user?.email,
       toName: user?.name,
       subject: "Confirm your email address",
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest) {
 
     const emailResult = await emailService.sendEmail({
       fromEmail: process.env.ADMIN_EMAIL || "noreply@example.com",
-      fromName: process.env.EMAIL_FROM_NAME || "Molini Shoes",
+      fromName: process.env.EMAIL_FROM_NAME || "Abaz Exclusive",
       toEmail: process.env.ADMIN_EMAIL || "admin@example.com",
       toName: "Admin",
       subject: "New Contact Form Submission",
@@ -715,11 +715,11 @@ SMTP_PASSWORD=your-smtp-password
 
 # Email Defaults
 ADMIN_EMAIL=admin@molinishoes.com
-EMAIL_FROM_NAME=Molini Shoes
+EMAIL_FROM_NAME=Abaz Exclusive
 
 # App Configuration (for email links)
 NEXT_PUBLIC_APP_URL=https://molinishoes.com
-NEXT_PUBLIC_ORG_NAME=Molini Shoes
+NEXT_PUBLIC_ORG_NAME=Abaz Exclusive
 ```
 
 ## Error Handling and Logging

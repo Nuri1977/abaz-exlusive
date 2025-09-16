@@ -1,4 +1,4 @@
-# Molini Shoes E-commerce Implementation Plan
+# Abaz Exclusive E-commerce Implementation Plan
 
 ## Phase 1: Project Setup and Core Infrastructure (Week 1)
 

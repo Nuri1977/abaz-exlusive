@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Molini Shoes application uses UploadThing v7 for comprehensive file upload and management, with a dedicated gallery system for organizing and tracking uploaded assets.
+The Abaz Exclusive application uses UploadThing v7 for comprehensive file upload and management, with a dedicated gallery system for organizing and tracking uploaded assets.
 
 ## UploadThing Configuration
 

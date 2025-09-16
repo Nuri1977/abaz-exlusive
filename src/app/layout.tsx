@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Molini Shoes",
+  title: "Abaz Exclusive",
   description: "Premium women's shoes for every occasion",
   keywords: [
     "shoes",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "fashion",
     "accessories",
   ],
-  authors: [{ name: "Molini Shoes" }],
+  authors: [{ name: "Abaz Exclusive" }],
   robots: "index, follow",
 };
 

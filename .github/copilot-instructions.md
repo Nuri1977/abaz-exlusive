@@ -1,6 +1,6 @@
-# Molini Shoes E-commerce Application - AI Instructions
+# Abaz Exclusive E-commerce Application - AI Instructions
 
-This file provides comprehensive instructions for AI assistance in the Molini Shoes e-commerce application. For detailed technical documentation, refer to the helper documentation files in `/docs/ai-context/`.
+This file provides comprehensive instructions for AI assistance in the Abaz Exclusive e-commerce application. For detailed technical documentation, refer to the helper documentation files in `/docs/ai-context/`.
 
 ## 📚 Documentation Structure
 
@@ -20,7 +20,7 @@ This repository uses a modular documentation approach with comprehensive helper 
 
 ## 🎯 Project Overview
 
-**Molini Shoes** is a modern e-commerce web application built with Next.js 15.2.3 and TypeScript, featuring:
+**Abaz Exclusive** is a modern e-commerce web application built with Next.js 15.2.3 and TypeScript, featuring:
 
 - Complete authentication system with Better Auth
 - Shopping cart and checkout functionality  

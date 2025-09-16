@@ -1,4 +1,3 @@
-import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -64,8 +63,8 @@ const nextConfig: NextConfig = {
         hostname: "files.uploadthing.com",
         port: "",
         pathname: "/**",
-      }
-    ]
+      },
+    ],
   },
   allowedDevOrigins: [
     "9004-idx-studio-1744504031934.cluster-blu4edcrfnajktuztkjzgyxzek.cloudworkstations.dev",

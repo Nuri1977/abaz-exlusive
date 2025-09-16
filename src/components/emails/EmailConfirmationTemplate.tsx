@@ -14,7 +14,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { User } from "better-auth/types";
+import { type User } from "better-auth/types";
 
 interface EmailConfirmTemProps {
   user: User;
@@ -38,7 +38,7 @@ const PropDefaults: EmailConfirmTemProps = {
 
 // Email content constants
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Molini Shoes";
+const organizationName = process.env.NEXT_PUBLIC_ORG_NAME || "Abaz Exclusive";
 
 export const EmailConfirmTem = ({ user, url, token }: EmailConfirmTemProps) => {
   // Email content
@@ -64,7 +64,7 @@ export const EmailConfirmTem = ({ user, url, token }: EmailConfirmTemProps) => {
           <Section style={logo}>
             <Img
               width={146}
-              src={`${baseUrl}/logo/logo.png`}
+              src={`${baseUrl}/logo/logo.jpg`}
               alt={`${organizationName} Logo`}
             />
           </Section>
@@ -115,7 +115,7 @@ export const EmailConfirmTem = ({ user, url, token }: EmailConfirmTemProps) => {
 
           <Img
             width={111}
-            src={`${baseUrl}/logo/logo.png`}
+            src={`${baseUrl}/logo/logo.jpg`}
             alt={`${organizationName} Logo`}
           />
           <Text style={footerAddress}>

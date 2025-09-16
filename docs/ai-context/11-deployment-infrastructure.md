@@ -75,7 +75,7 @@ EMAIL_PORT=587
 EMAIL_USER=your-brevo-email
 EMAIL_PASS=your-brevo-password
 ADMIN_EMAIL=admin@molini-shoes.com
-EMAIL_FROM_NAME=Molini Shoes
+EMAIL_FROM_NAME=Abaz Exclusive
 ```
 
 ### Build Configuration

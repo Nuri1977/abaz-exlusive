@@ -9,7 +9,7 @@ import { ProductSkeleton } from "./_components/ProductSkeleton";
 import { ProductSort } from "./_components/ProductSort";
 
 export const metadata = {
-  title: "Products | Molini Shoes",
+  title: "Products | Abaz Exclusive",
   description: "Browse our collection of high-quality shoes",
 };
 

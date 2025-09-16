@@ -110,11 +110,11 @@ export default function PrivacyPage() {
           <p>
             <strong>Website</strong> refers to E-commerce Shop, accessible from{" "}
             <a
-              href="https://molini-shoes.vercel.app/"
+              href="https://molini-shoes.vercel.app/" // change this
               rel="external nofollow noopener"
               target="_blank"
             >
-              https://molini-shoes.vercel.app/
+              {"https://molini-shoes.vercel.app/"}
             </a>
           </p>
         </li>

@@ -91,8 +91,8 @@ export default function CheckoutPage() {
     return (
       <div className="container mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center py-20">
         <Image
-          src="/logo/logo.png"
-          alt="Molini Shoes Logo"
+          src="/logo/logo.jpg"
+          alt="Abaz Exclusive Logo"
           width={80}
           height={80}
           className="mb-6 opacity-80"

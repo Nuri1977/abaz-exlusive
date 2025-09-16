@@ -53,7 +53,10 @@ export async function GET() {
       return NextResponse.json({ data: fallback }, { status: 200 });
     }
     console.log("settings?.aboutUs", settings?.aboutUs);
-    return NextResponse.json({ data: settings?.aboutUs ?? null }, { status: 200 });
+    return NextResponse.json(
+      { data: settings?.aboutUs ?? null },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Failed to fetch About Us:", error);
     return NextResponse.json(
@@ -94,7 +97,7 @@ export async function PUT(request: Request) {
         updated = await prisma.settings.create({
           data: {
             id: "default",
-            name: existing?.name ?? "Molini Shoes",
+            name: existing?.name ?? "Abaz Exclusive",
             address: existing?.address ?? "",
             city: existing?.city ?? "",
             state: existing?.state ?? "",
