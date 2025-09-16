@@ -83,7 +83,7 @@ export function Header() {
               duration: 3000,
             });
           },
-          onError: (error) => {
+          onError: () => {
             toast({
               title: "Error",
               description: "Failed to sign out. Please try again.",
@@ -112,8 +112,8 @@ export function Header() {
   return (
     <header
       className={`sticky top-0 z-50 w-full shadow-sm backdrop-blur transition-all duration-300 ${
-        scrolled ? "bg-black/80" : "bg-black"
-      } text-white`}
+        scrolled ? "bg-white" : "bg-white" // was bg-white/80 while scrolling
+      } text-black`}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex cursor-pointer items-center gap-2">
@@ -127,7 +127,7 @@ export function Header() {
                 asChild
                 key={link.name}
                 variant="ghost"
-                className="text-primary-foreground hover:bg-[#6c7280]/10 hover:text-primary-foreground/90"
+                className="text-primary hover:bg-[#6c7280]/10 hover:text-primary/90"
               >
                 <Link href={link.href}>{link.name}</Link>
               </Button>
@@ -139,7 +139,7 @@ export function Header() {
             <Link
               href="/search"
               className={cn(
-                "text-primary-foreground transition-colors hover:text-primary-foreground/90"
+                "text-primary transition-colors hover:text-primary/90"
               )}
             >
               <Search size={24} />
@@ -151,7 +151,7 @@ export function Header() {
           {session ? (
             <Link
               href="/dashboard/likes"
-              className="relative p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+              className="relative p-2 transition-colors hover:text-primary/90"
             >
               <Heart size={24} />
               <span className="sr-only">Likes</span>
@@ -164,7 +164,7 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+              className="p-2 transition-colors hover:text-primary/90"
             >
               <Heart size={24} />
               <span className="sr-only">Likes</span>
@@ -176,7 +176,7 @@ export function Header() {
           {/* Currency Selector - Hidden on mobile/tablet */}
           <div className="hidden items-center gap-2 lg:flex">
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="w-30 h-8 text-xs">
+              <SelectTrigger className="h-8 w-32 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +197,7 @@ export function Header() {
                   className="size-9 rounded-full border p-0"
                 >
                   {isPending ? (
-                    <Skeleton className="size-8 rounded-full bg-muted-foreground/20" />
+                    <Skeleton className="size-8 rounded-full bg-muted/20" />
                   ) : session ? (
                     <Avatar className="size-8">
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
@@ -214,7 +214,7 @@ export function Header() {
                       <p className="font-medium">
                         {session?.user?.name || "User"}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted">
                         {session?.user?.email || "No email"}
                       </p>
                     </div>

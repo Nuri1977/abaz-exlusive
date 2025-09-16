@@ -48,11 +48,11 @@ export function CartSheet() {
       <SheetTrigger asChild>
         <button
           aria-label="Open cart"
-          className="relative p-2 text-primary-foreground transition-colors hover:text-primary-foreground/90"
+          className="relative p-2 text-primary transition-colors hover:text-primary/90"
         >
           <ShoppingCart size={24} />
           {itemCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white">
               {itemCount > 99 ? "99+" : itemCount}
             </span>
           )}
@@ -73,7 +73,7 @@ export function CartSheet() {
                 className="flex items-center justify-between gap-4 border-b pb-4"
               >
                 <div className="flex items-center gap-4">
-                  <div className="relative h-16 w-16">
+                  <div className="relative size-16">
                     <Image
                       src={item.image}
                       alt={item.title}
@@ -87,12 +87,12 @@ export function CartSheet() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 border p-0"
+                        className="size-7 border p-0"
                         onClick={() => handleQuantityChange(item, -1)}
                         disabled={item.quantity === 1}
                         aria-label="Decrease quantity"
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="size-4" />
                       </Button>
                       <span className="w-6 select-none text-center">
                         {item.quantity}
@@ -100,11 +100,11 @@ export function CartSheet() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 border p-0"
+                        className="size-7 border p-0"
                         onClick={() => handleQuantityChange(item, 1)}
                         aria-label="Increase quantity"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="size-4" />
                       </Button>
                     </div>
                   </div>
