@@ -1,55 +1,35 @@
-import "server-only";
-import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
-// model Category {
-//     id          String     @id @default(uuid())
-//     name        String
-//     slug        String     @unique
-//     description String?
-//     image       Json?      @default("null")
-//     parentId    String?
-//     parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
-//     children    Category[] @relation("CategoryToCategory")
-//     products    Product[]
-//     level       Int        @default(0) // Track hierarchy level
-//     isActive    Boolean    @default(true)
-//     createdAt   DateTime   @default(now())
-//     updatedAt   DateTime   @updatedAt
-  
-//     @@index([parentId])
-//     @@map("category")
-//   }
-
-export const getCategoriesSA = unstable_cache(
-  async () => {
-let categories = null;
-    try {
-      categories = await prisma.category.findMany({
-        include: {
-            parent: {
-                include: {
-                    parent: true,
-                },
-            },
-            children: {
-                include: {
-                    children: true,
-                },
-            },
+export const getCategoriesSSG = async () => {
+  let categories: any[] = [];
+  try {
+    const response = await prisma.category.findMany({
+      where: {
+        isActive: true,
+        parentId: null, // Only get top-level categories for the homepage
+      },
+      orderBy: [
+        {
+          name: "asc",
         },
-        orderBy: [
-          { level: "asc" },
-          { name: "asc" },
-        ],
-        });   
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+      ],
+      include: {
+        children: true,
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
+    });
+    if (response) {
+      categories = response;
     }
-    return categories;
-  },
-  ["categories"],
-  {
-    tags: ["categories"],
+  } catch (error) {
+    console.log(error);
   }
-);
+  return categories;
+};
+
+// Also export as default for compatibility
+export default getCategoriesSSG;
