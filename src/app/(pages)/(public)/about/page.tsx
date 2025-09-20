@@ -1,5 +1,10 @@
 import AboutUsPublicClient from "./AboutUsPublicClient";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+export const dynamic = "force-dynamic";
+
 async function fetchAboutUsPublic() {
   try {
     const res = await fetch(
@@ -13,6 +18,7 @@ async function fetchAboutUsPublic() {
       return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = await res.json();
     return result?.data ?? null;
   } catch (error) {
@@ -22,6 +28,7 @@ async function fetchAboutUsPublic() {
 }
 
 export default async function AboutPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const aboutUs = await fetchAboutUsPublic();
 
   return (

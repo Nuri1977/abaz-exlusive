@@ -714,11 +714,11 @@ SMTP_USER=your-smtp-user
 SMTP_PASSWORD=your-smtp-password
 
 # Email Defaults
-ADMIN_EMAIL=admin@molinishoes.com
+ADMIN_EMAIL=aritonarm@gmail.com
 EMAIL_FROM_NAME=Abaz Exclusive
 
 # App Configuration (for email links)
-NEXT_PUBLIC_APP_URL=https://molinishoes.com
+NEXT_PUBLIC_APP_URL=https://abaz-exclusive.vercel.app
 NEXT_PUBLIC_ORG_NAME=Abaz Exclusive
 ```
 
