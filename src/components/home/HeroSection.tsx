@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Autoplay from "embla-carousel-autoplay";
+import useEmblaCarousel from "embla-carousel-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,9 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  useCarousel,
 } from "@/components/ui/carousel";
 
+// Hero slides data
 const carouselSlides = [
   {
     image: "/images/brown.jpg",
@@ -47,102 +48,90 @@ const carouselSlides = [
   },
 ];
 
-const CarouselDots = () => {
-  const { api } = useCarousel();
+const HeroSection = () => {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "start",
+    },
+    [
+      Autoplay({
+        delay: 5000,
+        stopOnInteraction: true,
+        stopOnMouseEnter: true,
+        stopOnFocusIn: true,
+      }),
+    ]
+  );
+
+  const onSelect = React.useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
 
   React.useEffect(() => {
-    if (!api) {
-      return;
-    }
-
-    const onSelect = () => {
-      setSelectedIndex(api.selectedScrollSnap());
-    };
-
-    api.on("select", onSelect);
-    onSelect(); // Set initial state
-
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
     return () => {
-      api.off("select", onSelect);
+      emblaApi.off("select", onSelect);
     };
-  }, [api]);
-
-  const scrollTo = (index: number) => {
-    api?.scrollTo(index);
-  };
+  }, [emblaApi, onSelect]);
 
   return (
-    <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-      <div className="flex items-center justify-center space-x-2">
-        {carouselSlides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => scrollTo(index)}
-            className={cn(
-              "size-2 rounded-full transition-all duration-300",
-              selectedIndex === index
-                ? "bg-white"
-                : "border border-white bg-transparent"
-            )}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const HeroSection = () => {
-  const plugin = React.useRef(
-    Autoplay({
-      delay: 5000,
-      stopOnInteraction: true,
-      stopOnMouseEnter: true,
-      stopOnFocusIn: true,
-    })
-  );
-
-  return (
-    <section className="relative h-[calc(100vh-80px)] w-full">
-      <Carousel
-        plugins={[plugin.current]}
-        className="size-full"
-        onMouseEnter={plugin.current.stop}
-        onMouseLeave={plugin.current.reset}
-        opts={{
-          loop: true,
-          align: "start",
-          skipSnaps: false,
-        }}
-      >
-        <CarouselContent className="-ml-0 h-full">
+    <section className="relative h-[100svh] w-full">
+      <div ref={emblaRef} className="size-full overflow-hidden">
+        <div className="flex h-full">
           {carouselSlides.map((slide, index) => (
-            <CarouselItem key={index} className="relative h-screen w-full p-0">
+            <div key={index} className="relative size-full flex-[0_0_100%]">
               <div className="relative flex size-full items-center justify-center overflow-hidden bg-black text-white">
                 <Image
                   src={slide?.image}
                   alt={slide?.title}
                   fill
+                  priority={index === 0}
                   quality={100}
-                  className="absolute inset-0 h-screen w-full object-cover object-center opacity-60"
+                  className="absolute inset-0 size-full object-cover object-center opacity-60"
                 />
-                <div className="relative z-10 text-center">
-                  <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-6xl">
+                <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
+                  <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl">
                     {slide?.title}
                   </h1>
-                  <p className="mb-8 text-lg md:text-2xl">
+                  <p className="mb-8 text-lg md:text-xl lg:text-2xl">
                     {slide?.description}
                   </p>
-                  <Button asChild size="lg" variant="secondary">
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="secondary"
+                    className="border-2 border-white bg-transparent px-8 text-white hover:bg-white hover:text-primary"
+                  >
                     <Link href={slide?.href ?? "/"}>Shop Now</Link>
                   </Button>
                 </div>
               </div>
-            </CarouselItem>
+            </div>
           ))}
-        </CarouselContent>
-        <CarouselDots />
-      </Carousel>
+        </div>
+        <div className="absolute bottom-8 left-0 right-0 z-50">
+          <div className="flex justify-center gap-2">
+            {carouselSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => emblaApi?.scrollTo(index)}
+                className={cn(
+                  "size-2 rounded-full transition-all duration-300",
+                  selectedIndex === index
+                    ? "bg-white"
+                    : "border border-white bg-transparent"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 };

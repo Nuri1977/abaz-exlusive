@@ -45,7 +45,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <Providers>
           <Header />
-          <main>{children}</main>
+          <main className="min-h-screen">{children}</main>
           <Footer />
           <Toaster />
         </Providers>
