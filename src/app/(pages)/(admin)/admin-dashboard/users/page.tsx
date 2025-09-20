@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { UserTable } from "./_components/UserTable";
 
 export const metadata: Metadata = {
-  title: "User Management | Shalom Radio Admin",
-  description: "Manage users of Shalom Radio",
+  title: "User Management | Abaz Exclusive Admin",
+  description: "Manage users of Abaz Exclusive",
 };
 
 const AdminUsersPage = async () => {

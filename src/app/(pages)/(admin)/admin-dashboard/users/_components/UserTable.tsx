@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User } from "@prisma/client";
+import { type User } from "@prisma/client";
 import { format } from "date-fns";
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 
-import { useToast } from "@/hooks/useToast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,19 +72,19 @@ export function UserTable() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleUserSaved = () => {
+  const handleUserSaved = async () => {
     setIsDialogOpen(false);
-    refetch(); // Refresh the router to invalidate cache
+    await refetch(); // Refresh the router to invalidate cache
   };
 
-  const handleUserDeleted = () => {
+  const handleUserDeleted = async () => {
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
-    refetch(); // Refresh the router to invalidate cache
+    await refetch(); // Refresh the router to invalidate cache
   };
 
-  const handleRefresh = () => {
-    refetch(); // Refresh the router to invalidate cache
+  const handleRefresh = async () => {
+    await refetch(); // Refresh the router to invalidate cache
   };
 
   if (isError) {
@@ -122,7 +121,7 @@ export function UserTable() {
             </div>
           </div>
           <CardDescription>
-            Manage user accounts for the Shalom Radio platform.
+            Manage user accounts for the Abaz Exclusive platform.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">

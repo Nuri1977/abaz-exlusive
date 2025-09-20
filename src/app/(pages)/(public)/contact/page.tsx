@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ContactForm from "./_components/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact | Shalom Radio",
+  title: "Contact | Abaz Exclusive",
 };
 
 export default function ContactPage() {

@@ -3,8 +3,8 @@ import React, { Suspense } from "react";
 import ResetPassword from "./_components/ResetPassword";
 
 export const metadata = {
-  title: "Reset Password | Shalom Radio",
-  description: "Create a new password for your Shalom Radio account",
+  title: "Reset Password | Abaz Exclusive",
+  description: "Create a new password for your Abaz Exclusive account",
 };
 
 const ResetPasswordPage = () => {

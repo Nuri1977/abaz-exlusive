@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions | Shalom Radio",
+  title: "Terms & Conditions | Abaz Exclusive",
 };
 
 export default function TermsPage() {
@@ -9,9 +9,9 @@ export default function TermsPage() {
     <div className="prose container mx-auto max-w-2xl py-12">
       <h1>Terms & Conditions</h1>
       <p>
-        Welcome to Shalom Radio. By accessing or using our website, you agree to
-        comply with and be bound by the following terms and conditions. Please
-        read them carefully.
+        Welcome to Abaz Exclusive. By accessing or using our website, you agree
+        to comply with and be bound by the following terms and conditions.
+        Please read them carefully.
       </p>
       <h2>Use of Site</h2>
       <p>
@@ -22,7 +22,7 @@ export default function TermsPage() {
       <h2>Intellectual Property</h2>
       <p>
         All content on this site, including text, graphics, logos, and images,
-        is the property of Shalom Radio or its content suppliers and is
+        is the property of Abaz Exclusive or its content suppliers and is
         protected by copyright laws.
       </p>
       <h2>Changes to Terms</h2>

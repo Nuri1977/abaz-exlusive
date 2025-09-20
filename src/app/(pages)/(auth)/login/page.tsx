@@ -7,8 +7,8 @@ import { auth } from "@/lib/auth";
 import LoginForm from "./_components/LoginForm";
 
 export const metadata = {
-  title: "Login | Shalom Radio",
-  description: "Sign in to your Shalom Radio account",
+  title: "Login | Abaz Exclusive",
+  description: "Sign in to your Abaz Exclusive account",
 };
 
 const LoginPage = async () => {

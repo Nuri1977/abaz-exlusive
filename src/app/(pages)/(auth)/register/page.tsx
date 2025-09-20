@@ -7,8 +7,8 @@ import { auth } from "@/lib/auth";
 import RegisterForm from "./_components/RegisterForm";
 
 export const metadata = {
-  title: "Register | Shalom Radio",
-  description: "Create a new account for Shalom Radio",
+  title: "Register | Abaz Exclusive",
+  description: "Create a new account for Abaz Exclusive",
 };
 
 const RegisterPage = async () => {
