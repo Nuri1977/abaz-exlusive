@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
 import {
@@ -43,29 +43,25 @@ import {
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const isAdmin = useIsAdmin();
+  const hasHeroSection = pathname === "/";
   const { toast } = useToast();
-
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { likedProducts } = useUserAccountContext();
   const { currency, setCurrency } = useCartContext();
-  const likedCount = likedProducts.length;
-
-  // Use Better Auth's useSession hook for proper session management
+  const likedCount = likedProducts?.length || 0;
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
+      setScrolled(window.scrollY > 20);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [scrolled]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -103,22 +99,25 @@ export function Header() {
     if (!session?.user?.name) return "U";
 
     const nameParts = session.user.name.split(" ");
-    if (nameParts.length > 1) {
-      return `${nameParts?.[0]?.[0] ?? ""}${nameParts?.[1]?.[0] ?? ""}`.toUpperCase();
-    }
     return nameParts?.[0]?.substring(0, 2)?.toUpperCase() ?? "U";
   };
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full shadow-sm backdrop-blur transition-all duration-300 ${
-        scrolled ? "bg-white" : "bg-white" // was bg-white/80 while scrolling
-      } text-black`}
+      className={cn(
+        "top-0 z-50 w-full transition-all duration-300",
+        hasHeroSection ? "fixed left-0 right-0" : "sticky border-b",
+        hasHeroSection && !scrolled
+          ? "bg-transparent"
+          : "bg-background/70 shadow-sm supports-[backdrop-filter]:backdrop-blur-md"
+      )}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
+        {/* Logo */}
         <Link href="/" className="flex cursor-pointer items-center gap-2">
           <Logo size={70} />
         </Link>
+
         <div className="flex items-center gap-3">
           {/* Desktop Navigation */}
           <nav className="hidden gap-2 lg:flex">
@@ -127,7 +126,12 @@ export function Header() {
                 asChild
                 key={link.name}
                 variant="ghost"
-                className="text-primary hover:bg-[#6c7280]/10 hover:text-primary/90"
+                className={cn(
+                  "transition-colors",
+                  hasHeroSection && !scrolled
+                    ? "text-white hover:bg-white/20"
+                    : "text-primary hover:bg-primary/20"
+                )}
               >
                 <Link href={link.href}>{link.name}</Link>
               </Button>
@@ -139,7 +143,10 @@ export function Header() {
             <Link
               href="/search"
               className={cn(
-                "text-primary transition-colors hover:text-primary/90"
+                "transition-colors",
+                hasHeroSection && !scrolled
+                  ? "text-white hover:text-white/90"
+                  : "text-primary hover:text-primary/90"
               )}
             >
               <Search size={24} />
@@ -147,11 +154,16 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Likes and Cart Icons - Visible on all devices */}
+          {/* Likes and Cart Icons */}
           {session ? (
             <Link
               href="/dashboard/likes"
-              className="relative p-2 transition-colors hover:text-primary/90"
+              className={cn(
+                "relative p-2 transition-colors",
+                hasHeroSection && !scrolled
+                  ? "text-white hover:text-white/90"
+                  : "text-primary hover:text-primary/90"
+              )}
             >
               <Heart size={24} />
               <span className="sr-only">Likes</span>
@@ -164,7 +176,12 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="p-2 transition-colors hover:text-primary/90"
+              className={cn(
+                "p-2 transition-colors",
+                hasHeroSection && !scrolled
+                  ? "text-white hover:text-white/90"
+                  : "text-primary hover:text-primary/90"
+              )}
             >
               <Heart size={24} />
               <span className="sr-only">Likes</span>
@@ -173,10 +190,17 @@ export function Header() {
 
           <CartSheet />
 
-          {/* Currency Selector - Hidden on mobile/tablet */}
+          {/* Currency Selector */}
           <div className="hidden items-center gap-2 lg:flex">
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="h-8 w-32 text-xs">
+              <SelectTrigger
+                className={cn(
+                  "h-8 w-32 border text-xs",
+                  hasHeroSection && !scrolled
+                    ? "border-white/20 text-white hover:bg-white/10"
+                    : "border-input text-primary"
+                )}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -194,7 +218,12 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-9 rounded-full border p-0"
+                  className={cn(
+                    "size-9 rounded-full p-0",
+                    hasHeroSection && !scrolled
+                      ? "border-white/20 hover:bg-white/10"
+                      : "border hover:bg-primary/10"
+                  )}
                 >
                   {isPending ? (
                     <Skeleton className="size-8 rounded-full bg-muted/20" />
