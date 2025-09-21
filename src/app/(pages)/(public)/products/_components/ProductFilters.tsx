@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartContext } from "@/context/CartContext";
 
-import { brandOptions, genderOptions } from "@/constants/options";
+import {
+  brandOptions,
+  genderOptions,
+  materialOptions,
+  styleOptions,
+} from "@/constants/options";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DualRangeSlider } from "@/components/ui/dual-range-slider";
@@ -16,27 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const materialOptions = [
-  "Leather",
-  "Synthetic",
-  "Mesh",
-  "Canvas",
-  "Suede",
-  "Rubber",
-  "Textile",
-];
-
-const styleOptions = [
-  "Casual",
-  "Formal",
-  "Sports",
-  "Running",
-  "Sneakers",
-  "Boots",
-  "Sandals",
-  "Loafers",
-];
 
 const featureOptions = [
   "Waterproof",
@@ -54,7 +38,7 @@ export function ProductFilters() {
   const { currency, convertPrice, currencySymbol } = useCartContext();
 
   // Set slider min/max based on currency
-  const sliderMax = currency === "MKD" ? 60000 : 1000;
+  const sliderMax = currency === "MKD" ? 300000 : 5000;
   const sliderMin = 0;
 
   // Helper to convert MKD to selected currency
@@ -162,7 +146,6 @@ export function ProductFilters() {
             <SelectValue placeholder="Select brand" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
             {brandOptions.map((brand) => (
               <SelectItem key={brand.value} value={brand.value}>
                 {brand.label}
@@ -182,7 +165,6 @@ export function ProductFilters() {
             <SelectValue placeholder="Select gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
             {genderOptions.map((gender) => (
               <SelectItem key={gender.value} value={gender.value}>
                 {gender.label}
@@ -192,7 +174,7 @@ export function ProductFilters() {
         </Select>
       </div>
 
-      <div className="space-y-4">
+      <div className="hidden space-y-4">
         <h3 className="font-semibold">Material</h3>
         <Select
           value={searchParams.get("material") || ""}
@@ -212,7 +194,7 @@ export function ProductFilters() {
         </Select>
       </div>
 
-      <div className="space-y-4">
+      <div className="hidden space-y-4">
         <h3 className="font-semibold">Style</h3>
         <Select
           value={searchParams.get("style") || ""}
@@ -232,7 +214,7 @@ export function ProductFilters() {
         </Select>
       </div>
 
-      <div className="space-y-4">
+      <div className="hidden space-y-4">
         <h3 className="font-semibold">Features</h3>
         <div className="space-y-2">
           {featureOptions.map((feature) => (

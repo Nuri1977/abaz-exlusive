@@ -25,7 +25,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { toggleLike, isLiked } = useUserAccountContext();
-  const { addItem, setOpen, currency, convertPrice, currencySymbol } = useCartContext();
+  const { addItem, setOpen, currency, convertPrice, currencySymbol } =
+    useCartContext();
   const liked = isLiked(product?.id);
 
   const hasVariants = product?.variants && product.variants.length > 0;
@@ -60,13 +61,19 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+    <Card className="group relative overflow-hidden transition-shadow hover:shadow-lg">
+      {/* Main clickable area - entire card */}
+      <Link
+        href={`/product/${product?.id}`}
+        className="absolute inset-0 z-10"
+      />
+
       <div className="relative aspect-square">
         <Image
           src={getImageUrl(product?.images?.[0])}
           alt={product?.name || ""}
           fill
-          className="object-cover"
+          className="object-cover transition-transform group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
         {product?.features?.length > 0 && (
@@ -93,12 +100,9 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{product?.brand}</p>
-          <Link
-            href={`/product/${product?.id}`}
-            className="line-clamp-2 font-semibold hover:underline"
-          >
+          <h3 className="line-clamp-2 font-semibold transition-colors group-hover:text-primary">
             {product?.name}
-          </Link>
+          </h3>
           <p className="text-sm text-muted-foreground">
             {product?.category?.name}
           </p>
@@ -107,14 +111,25 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <CardFooter className="flex w-full items-center justify-between px-4 pb-4 pt-0">
         <p className="font-semibold">
-          {currencySymbol} {convertPrice(Number(product?.price), "MKD", currency).toFixed(2)}
+          {currencySymbol}{" "}
+          {convertPrice(Number(product?.price), "MKD", currency).toLocaleString(
+            "de-DE",
+            {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }
+          )}
         </p>
 
-        <div className="flex items-center gap-3">
+        <div className="relative z-20 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleAddToCart}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAddToCart();
+            }}
             aria-label={hasVariants ? "View options" : "Add to cart"}
             className="text-black transition-colors hover:text-blue-600"
           >
@@ -126,7 +141,9 @@ export function ProductCard({ product }: ProductCardProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (product?.images) {
                 toggleLike({ ...product, images: product?.images ?? [] });
               }
