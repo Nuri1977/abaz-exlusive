@@ -18,7 +18,15 @@ import {
 
 import CheckoutLink from "./CheckoutLink";
 
-export function CartSheet() {
+interface CartSheetProps {
+  hasHeroSection?: boolean;
+  scrolled?: boolean;
+}
+
+export function CartSheet({
+  hasHeroSection = false,
+  scrolled = false,
+}: CartSheetProps) {
   const {
     open,
     setOpen,
@@ -48,7 +56,12 @@ export function CartSheet() {
       <SheetTrigger asChild>
         <button
           aria-label="Open cart"
-          className="relative p-2 text-primary transition-colors hover:text-primary/90"
+          className={cn(
+            "relative p-2 transition-colors",
+            hasHeroSection && !scrolled
+              ? "text-white hover:text-white/90"
+              : "text-primary hover:text-primary/90"
+          )}
         >
           <ShoppingCart size={24} />
           {itemCount > 0 && (
