@@ -60,7 +60,7 @@ export function MobileSidebar({
       <SheetContent side="right" className="w-[80%] p-0 sm:w-[350px]">
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-start border-b p-4">
-            <Logo size={200} />
+            <Logo size={100} />
           </div>
 
           {/* Search Input in mobile menu */}
@@ -79,7 +79,9 @@ export function MobileSidebar({
                 type="search"
                 name="search"
                 placeholder="Search products..."
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 pr-24 text-lg shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                autoFocus={false}
+                tabIndex={-1}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 pr-24 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
               <Button
                 type="submit"

@@ -188,7 +188,7 @@ export function Header() {
             </Link>
           )}
 
-          <CartSheet />
+          <CartSheet hasHeroSection={hasHeroSection} scrolled={scrolled} />
 
           {/* Currency Selector */}
           <div className="hidden items-center gap-2 lg:flex">
@@ -226,13 +226,35 @@ export function Header() {
                   )}
                 >
                   {isPending ? (
-                    <Skeleton className="size-8 rounded-full bg-muted/20" />
+                    <Skeleton
+                      className={cn(
+                        "size-8 rounded-full",
+                        hasHeroSection && !scrolled
+                          ? "bg-white/20"
+                          : "bg-muted/20"
+                      )}
+                    />
                   ) : session ? (
                     <Avatar className="size-8">
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback
+                        className={cn(
+                          hasHeroSection && !scrolled
+                            ? "bg-white/20 text-white"
+                            : "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        {getUserInitials()}
+                      </AvatarFallback>
                     </Avatar>
                   ) : (
-                    <User className="size-5" />
+                    <User
+                      className={cn(
+                        "size-5",
+                        hasHeroSection && !scrolled
+                          ? "text-white"
+                          : "text-primary"
+                      )}
+                    />
                   )}
                 </Button>
               </DropdownMenuTrigger>

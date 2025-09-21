@@ -32,7 +32,7 @@ const ShopByCategory = async () => {
       <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-6">
         {categoriesWithImages.map((category) => (
           <Link
-            href={`/categories/${category?.slug}`}
+            href={`/products?category=${category?.id}`}
             key={category?.id}
             className="group flex flex-col items-center"
           >
