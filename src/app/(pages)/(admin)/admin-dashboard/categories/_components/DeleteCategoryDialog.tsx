@@ -26,9 +26,13 @@ interface DeleteCategoryDialogProps {
     image: FileUploadThing | null;
     children?: Category[];
   };
+  children?: React.ReactNode;
 }
 
-export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
+export function DeleteCategoryDialog({
+  category,
+  children,
+}: DeleteCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -66,9 +70,11 @@ export function DeleteCategoryDialog({ category }: DeleteCategoryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Trash2 className="size-4" />
-        </Button>
+        {children || (
+          <Button variant="ghost" size="icon">
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

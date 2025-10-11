@@ -167,7 +167,7 @@ const AddBestSeller = ({ isOpen, setIsOpen, editBestSeller }: Props) => {
         <SelectContent>
           {products.map((product) => (
             <SelectItem key={product.id} value={product.id}>
-              {product.name} - ${product.price.toString()}
+              {product.name} - {product.price.toString()} MKD
             </SelectItem>
           ))}
         </SelectContent>

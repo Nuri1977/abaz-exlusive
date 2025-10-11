@@ -1,5 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Copy, Trash2 } from "lucide-react";
+
+import { useDeleteGalleryMutation } from "@/hooks/useGallery";
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,13 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useDeleteGalleryMutation } from "@/hooks/useGallery";
-import { useToast } from "@/hooks/useToast";
-import { ArrowLeft, Copy, Trash2 } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 interface ImageDetail {
   id: string;
@@ -33,19 +34,32 @@ interface ImageDetail {
 export default function ImageDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const [image, setImage] = useState<ImageDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [imageId, setImageId] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
-  const { mutate: deleteGalleryItem, isPending: isDeleting } = useDeleteGalleryMutation();
+  const { mutate: deleteGalleryItem, isPending: isDeleting } =
+    useDeleteGalleryMutation();
 
   useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setImageId(resolvedParams.id);
+    };
+
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!imageId) return;
+
     const fetchImage = async () => {
       try {
-        const response = await fetch(`/api/admin/gallery/${params.id}`);
+        const response = await fetch(`/api/admin/gallery/${imageId}`);
         if (!response.ok) throw new Error("Failed to fetch image");
         const data = await response.json();
         setImage(data);
@@ -62,11 +76,11 @@ export default function ImageDetailPage({
     };
 
     fetchImage();
-  }, [params.id, toast]);
+  }, [imageId, toast]);
 
   const handleDelete = async () => {
     if (!image?.id) return;
-    
+
     deleteGalleryItem(image.id, {
       onSuccess: () => {
         toast({
@@ -103,11 +117,11 @@ export default function ImageDetailPage({
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="py-8 text-center">Loading...</div>;
   }
 
   if (!image) {
-    return <div className="text-center py-8">Image not found</div>;
+    return <div className="py-8 text-center">Image not found</div>;
   }
 
   return (
@@ -121,8 +135,8 @@ export default function ImageDetailPage({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="relative aspect-square rounded-lg overflow-hidden">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="relative aspect-square overflow-hidden rounded-lg">
           <Image
             src={image.url}
             alt={image.name}
@@ -134,7 +148,7 @@ export default function ImageDetailPage({
 
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold mb-2">{image.name}</h1>
+            <h1 className="mb-2 text-2xl font-bold">{image.name}</h1>
             <p className="text-sm text-gray-500">
               Uploaded on {new Date(image.createdAt).toLocaleString()}
             </p>
@@ -142,7 +156,7 @@ export default function ImageDetailPage({
 
           <div className="space-y-4">
             <div>
-              <h2 className="text-sm font-medium mb-2">File Information</h2>
+              <h2 className="mb-2 text-sm font-medium">File Information</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Size</p>
@@ -165,8 +179,8 @@ export default function ImageDetailPage({
 
             {image.metadata && Object.keys(image.metadata).length > 0 && (
               <div>
-                <h2 className="text-sm font-medium mb-2">Metadata</h2>
-                <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-auto">
+                <h2 className="mb-2 text-sm font-medium">Metadata</h2>
+                <pre className="overflow-auto rounded-lg bg-gray-100 p-4 text-sm">
                   {JSON.stringify(image.metadata, null, 2)}
                 </pre>
               </div>
@@ -178,7 +192,7 @@ export default function ImageDetailPage({
                 className="w-full"
                 onClick={handleCopyUrl}
               >
-                <Copy className="h-4 w-4 mr-2" />
+                <Copy className="mr-2 h-4 w-4" />
                 Copy URL
               </Button>
 
@@ -188,7 +202,7 @@ export default function ImageDetailPage({
               >
                 <DialogTrigger asChild>
                   <Button variant="destructive" className="w-full">
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Delete Image
                   </Button>
                 </DialogTrigger>
@@ -207,8 +221,8 @@ export default function ImageDetailPage({
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      variant="destructive" 
+                    <Button
+                      variant="destructive"
                       onClick={handleDelete}
                       disabled={isDeleting}
                     >

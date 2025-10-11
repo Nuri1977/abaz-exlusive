@@ -60,9 +60,15 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface EditCategoryDialogProps {
   category: CategoryWithRelations;
+  categories?: CategoryWithRelations[];
+  children?: React.ReactNode;
 }
 
-export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
+export function EditCategoryDialog({
+  category,
+  categories,
+  children,
+}: EditCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,15 +76,18 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const { mutate: deleteImage } = useDeleteGalleryMutation();
 
   // Fetch all categories for parent selection
-  const { data: categories } = useQuery({
+  const { data: allCategories } = useQuery({
     queryKey: categoryKeys.admin(),
     queryFn: fetchAdminCategories,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Use prop categories if provided, otherwise use fetched categories
+  const categoriesData = categories || allCategories;
+
   // Filter out categories based on level and prevent self-selection
   const availableParentCategories =
-    categories?.filter(
+    categoriesData?.filter(
       (cat: Category) => cat.level < 2 && cat.id !== category.id
     ) || [];
 
@@ -191,10 +200,12 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Pencil className="size-4" />
-          <span className="sr-only">Edit category</span>
-        </Button>
+        {children || (
+          <Button variant="outline" size="icon">
+            <Pencil className="size-4" />
+            <span className="sr-only">Edit category</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

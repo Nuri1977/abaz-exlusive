@@ -16,58 +16,143 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface DeleteProductDialogProps {
   product: Product;
+  trigger?: React.ReactNode;
+  asMenuItem?: boolean;
 }
 
-export function DeleteProductDialog({ product }: DeleteProductDialogProps) {
+export function DeleteProductDialog({
+  product,
+  trigger,
+  asMenuItem = false,
+}: DeleteProductDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { mutate: deleteProduct, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/admin/products/${product.id}`, {
+      console.log("Starting delete request for product:", product?.id);
+
+      const response = await fetch(`/api/admin/products/${product?.id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
+      console.log("Delete response status:", response?.status);
+      console.log("Delete response ok:", response?.ok);
+
+      if (!response?.ok) {
+        const errorData = await response?.text();
+        console.error("Delete error response:", errorData);
+
+        let errorMessage = "Failed to delete product";
+
+        try {
+          const parsedError = JSON.parse(errorData);
+          errorMessage = parsedError?.message || errorMessage;
+        } catch {
+          // If it's not JSON, use the text as error message
+          errorMessage = errorData || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
 
-      return response.json();
+      const result = await response?.json();
+      console.log("Delete success response:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Delete mutation success:", data);
       toast({
         title: "Success",
-        description: "Product deleted successfully",
+        description: data?.message || "Product deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setOpen(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Delete product error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete product",
+        description: error?.message || "Failed to delete product",
         variant: "destructive",
       });
     },
   });
 
+  if (asMenuItem) {
+    return (
+      <>
+        <DropdownMenuItem
+          className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+          onClick={(e) => {
+            e.preventDefault();
+            setOpen(true);
+          }}
+        >
+          <Trash2 className="mr-2 size-4" />
+          Delete Product
+        </DropdownMenuItem>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Product</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{product?.name}"? This action
+                cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  console.log(
+                    "Attempting to delete product:",
+                    product?.id,
+                    product?.name
+                  );
+                  deleteProduct();
+                }}
+                disabled={isPending}
+              >
+                {isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Trash2 className="size-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon">
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Product</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this product? This action cannot be
-            undone.
+            Are you sure you want to delete "{product?.name}"? This action
+            cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -80,7 +165,14 @@ export function DeleteProductDialog({ product }: DeleteProductDialogProps) {
           </Button>
           <Button
             variant="destructive"
-            onClick={() => deleteProduct()}
+            onClick={() => {
+              console.log(
+                "Attempting to delete product:",
+                product?.id,
+                product?.name
+              );
+              deleteProduct();
+            }}
             disabled={isPending}
           >
             {isPending ? "Deleting..." : "Delete"}

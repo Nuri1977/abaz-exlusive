@@ -1,5 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, RefreshCw } from "lucide-react";
+
+import type { GalleryImage } from "@/lib/query/gallery";
+import { useGalleryMutation, useGalleryQuery } from "@/hooks/useGallery";
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,15 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useToast } from "@/hooks/useToast";
-import { useGalleryQuery, useGalleryMutation } from "@/hooks/useGallery";
 import { UploadButton } from "@/utils/uploadthing";
-import { Eye, RefreshCw } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
-import type { GalleryImage } from "@/lib/query/gallery";
 
 export default function GalleryClient() {
   const { toast } = useToast();
@@ -29,7 +30,10 @@ export default function GalleryClient() {
   const currentPage = parseInt(searchParams?.get("page") || "1");
   const limit = 12;
 
-  const { data, isLoading, error, refetch, isPending } = useGalleryQuery(currentPage, limit);
+  const { data, isLoading, error, refetch, isPending } = useGalleryQuery(
+    currentPage,
+    limit
+  );
   const { mutate: createGalleryItem } = useGalleryMutation();
   const images = data?.items ?? [];
   const pagination = data?.pagination;
@@ -102,7 +106,9 @@ export default function GalleryClient() {
             handlePageChange(pagination.page - 1);
           }}
           className={
-            pagination.page === 1 || isPending ? "pointer-events-none opacity-50" : ""
+            pagination.page === 1 || isPending
+              ? "pointer-events-none opacity-50"
+              : ""
           }
         />
       </PaginationItem>
@@ -184,7 +190,7 @@ export default function GalleryClient() {
             handlePageChange(pagination.page + 1);
           }}
           className={
-            (pagination.page === pagination.totalPages || isPending)
+            pagination.page === pagination.totalPages || isPending
               ? "pointer-events-none opacity-50"
               : ""
           }
@@ -196,10 +202,15 @@ export default function GalleryClient() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Gallery</h1>
-        <div className="flex gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold md:text-3xl">Gallery</h1>
+          <p className="text-sm text-muted-foreground md:text-base">
+            Manage your image gallery and uploads.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
           <Button
             onClick={handleSync}
             disabled={syncing}
@@ -207,54 +218,61 @@ export default function GalleryClient() {
             className="flex items-center gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Syncing..." : "Sync Gallery"}
+            <span className="hidden sm:inline">
+              {syncing ? "Syncing..." : "Sync Gallery"}
+            </span>
+            <span className="sm:hidden">{syncing ? "Syncing..." : "Sync"}</span>
           </Button>
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
               if (!res?.[0]) return;
-              
-              const uploadedFile = res[0];
-              const mainUrl = uploadedFile.url;
 
-              createGalleryItem({
-                name: uploadedFile.name,
-                size: uploadedFile.size,
-                key: uploadedFile.key,
-                lastModified: Math.floor((uploadedFile.lastModified || Date.now()) / 1000),
-                serverData: uploadedFile.serverData || { uploadedBy: null },
-                url: mainUrl,
-                appUrl: mainUrl,
-                ufsUrl: mainUrl,
-                customId: null,
-                type: uploadedFile.type,
-                fileHash: uploadedFile.key,
-                reference: null,
-                metadata: {},
-                width: null,
-                height: null,
-                tags: [],
-                uploadedBy: uploadedFile.serverData?.uploadedBy || null,
-                usedIn: [],
-                isDeleted: false
-              },
-              {
+              const uploadedFile = res[0];
+              const mainUrl = uploadedFile?.url;
+
+              createGalleryItem(
+                {
+                  name: uploadedFile?.name,
+                  size: uploadedFile?.size,
+                  key: uploadedFile?.key,
+                  lastModified: Math.floor(
+                    (uploadedFile?.lastModified || Date.now()) / 1000
+                  ),
+                  serverData: uploadedFile?.serverData || { uploadedBy: null },
+                  url: mainUrl,
+                  appUrl: mainUrl,
+                  ufsUrl: mainUrl,
+                  customId: null,
+                  type: uploadedFile?.type,
+                  fileHash: uploadedFile?.key,
+                  reference: null,
+                  metadata: {},
+                  width: null,
+                  height: null,
+                  tags: [],
+                  uploadedBy: uploadedFile?.serverData?.uploadedBy || null,
+                  usedIn: [],
+                  isDeleted: false,
+                },
+                {
                   onSuccess: () => {
                     refetch();
                   },
                   onError: (error) => {
                     toast({
                       title: "Upload Error",
-                      description: error.message,
+                      description: error?.message,
                       variant: "destructive",
                     });
                   },
-              });
+                }
+              );
             }}
             onUploadError={(error: Error) => {
               toast({
                 title: "Error",
-                description: error.message,
+                description: error?.message,
                 variant: "destructive",
               });
             }}
@@ -263,36 +281,45 @@ export default function GalleryClient() {
       </div>
 
       {isLoading ? (
-        <div className="text-center">Loading...</div>
-      ) : images.length === 0 ? (
-        <div className="text-center text-gray-500">No images found</div>
+        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+      ) : images?.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">
+          No images found
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {images.map((image: GalleryImage) => (
-              <Card key={image.id} className="overflow-hidden">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            {images?.map((image: GalleryImage) => (
+              <Card
+                key={image?.id}
+                className="overflow-hidden transition-shadow hover:shadow-md"
+              >
                 <CardContent className="p-0">
                   <div className="relative aspect-square">
                     <Image
-                      src={image.url}
-                      alt={image.name}
+                      src={image?.url}
+                      alt={image?.name}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     />
                   </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {image.name}
+                  <div className="p-3 sm:p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {image?.name}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {(image.size / 1024).toFixed(1)} KB
+                        <p className="text-xs text-muted-foreground">
+                          {(image?.size / 1024)?.toFixed(1)} KB
                         </p>
                       </div>
-                      <Link href={`/admin-dashboard/gallery/${image.id}`}>
-                        <Button variant="ghost" size="icon">
+                      <Link href={`/admin-dashboard/gallery/${image?.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="ml-2 shrink-0"
+                        >
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View details</span>
                         </Button>

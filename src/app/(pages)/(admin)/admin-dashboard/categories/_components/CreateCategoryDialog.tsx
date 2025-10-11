@@ -52,10 +52,12 @@ interface CreateCategoryDialogProps {
     children?: Category[];
     parent?: Category | null;
   })[];
+  children?: React.ReactNode;
 }
 
 export function CreateCategoryDialog({
   categories,
+  children,
 }: CreateCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -154,9 +156,11 @@ export function CreateCategoryDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 size-4" /> Add Category
-        </Button>
+        {children || (
+          <Button>
+            <Plus className="mr-2 size-4" /> Add Category
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

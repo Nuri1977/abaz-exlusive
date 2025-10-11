@@ -16,7 +16,19 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Loader2, Pencil, Plus } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Eye,
+  Filter,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  X,
+} from "lucide-react";
 
 import { FileUploadThing } from "@/types/UploadThing";
 import {
@@ -24,13 +36,23 @@ import {
   fetchAdminCategories,
   type CategoryWithRelations,
 } from "@/lib/query/categories";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -60,6 +82,7 @@ import {
 } from "@/components/ui/table";
 
 import { DeleteProductDialog } from "./DeleteProductDialog";
+import { ProductPreviewDialog } from "./ProductPreviewDialog";
 
 export type ProductWithVariants = Product & {
   variants: Array<{
@@ -111,9 +134,14 @@ export function ProductTable() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const { toast } = useToast();
 
-  const { data: products, isLoading } = useQuery({
+  const {
+    data: products,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const response = await fetch("/api/admin/products");
@@ -179,14 +207,20 @@ export function ProductTable() {
       header: "Image",
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="relative size-16">
-          <div>Data: J</div>
-          <Image
-            src={row.original.images?.[0]?.url || "/placeholder.png"}
-            alt={row.original.name}
-            fill
-            className="rounded-md object-cover"
-          />
+        <div className="relative size-16 overflow-hidden rounded-md bg-muted">
+          {row?.original?.images?.[0]?.url ? (
+            <Image
+              src={row?.original?.images?.[0]?.url}
+              alt={row?.original?.name || "Product image"}
+              fill
+              className="object-cover transition-transform hover:scale-105"
+              sizes="64px"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center bg-muted">
+              <span className="text-xs text-muted-foreground">No image</span>
+            </div>
+          )}
         </div>
       ),
     },
@@ -404,13 +438,15 @@ export function ProductTable() {
     },
     {
       id: "actions",
+      header: "Actions",
       enableSorting: false,
       cell: ({ row }) => {
         const product = row.original;
         return (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href={`/admin-dashboard/products/${product.id}`}>
+          <div className="flex items-center gap-1">
+            <ProductPreviewDialog product={product} />
+            <Button variant="ghost" size="icon" asChild title="Edit Product">
+              <Link href={`/admin-dashboard/products/${product?.id}`}>
                 <Pencil className="size-4" />
               </Link>
             </Button>
@@ -440,229 +476,585 @@ export function ProductTable() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin" />
-      </div>
+      <Card>
+        <CardContent className="flex h-96 items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="size-8 animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading products...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
+  const filteredProducts = table.getFilteredRowModel().rows;
+  const totalProducts = products?.length || 0;
+  const hasActiveFilters = columnFilters.length > 0;
+
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-          <Select
-            onValueChange={(value) =>
-              table
-                .getColumn("category")
-                ?.setFilterValue(value === "all" ? "" : value)
-            }
-            defaultValue="all"
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories?.map((category: any) => (
-                <SelectItem key={category?.id} value={category?.id}>
-                  {category?.parent
-                    ? `${category.parent.name} > ${category.name}`
-                    : category?.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button asChild>
-          <Link href="/admin-dashboard/products/add">
-            <Plus className="mr-2 size-4" />
-            Add Product
-          </Link>
-        </Button>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No products found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} row(s) found
-        </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-4">
-            <p className="text-sm font-medium">Rows</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-[120px]">
-                <SelectValue
-                  placeholder={table.getState().pagination.pageSize}
-                />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-6">
+      {/* Header with Actions */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Products
+                <Badge variant="secondary" className="ml-2">
+                  {totalProducts}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Manage your product catalog and inventory
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="size-4" />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+              <Button asChild>
+                <Link href="/admin-dashboard/products/add">
+                  <Plus className="mr-2 size-4" />
+                  <span className="hidden sm:inline">Add Product</span>
+                  <span className="sm:hidden">Add</span>
+                </Link>
+              </Button>
+            </div>
           </div>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    table.previousPage();
-                  }}
-                  aria-disabled={!table.getCanPreviousPage()}
-                  className={
-                    !table.getCanPreviousPage()
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-              {table.getPageCount() > 3 &&
-                table.getState().pagination.pageIndex > 1 && (
-                  <>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          table.setPageIndex(0);
-                        }}
-                      >
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  </>
-                )}
-              {Array.from(
-                { length: Math.min(3, table.getPageCount()) },
-                (_, i) => {
-                  const page = table.getState().pagination.pageIndex + i - 1;
-                  if (page < 0 || page >= table.getPageCount()) return null;
-                  return (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          table.setPageIndex(page);
-                        }}
-                        isActive={
-                          page === table.getState().pagination.pageIndex
-                        }
-                      >
-                        {page + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={
+                  (table.getColumn("name")?.getFilterValue() as string) ?? ""
                 }
+                onChange={(event) =>
+                  table.getColumn("name")?.setFilterValue(event.target.value)
+                }
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select
+                onValueChange={(value) =>
+                  table
+                    .getColumn("category")
+                    ?.setFilterValue(value === "all" ? "" : value)
+                }
+                defaultValue="all"
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories?.map((category: any) => (
+                    <SelectItem key={category?.id} value={category?.id}>
+                      {category?.parent
+                        ? `${category?.parent?.name} > ${category?.name}`
+                        : category?.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    table.resetColumnFilters();
+                  }}
+                  className="px-2"
+                >
+                  <X className="size-4" />
+                  Clear
+                </Button>
               )}
-              {table.getPageCount() > 3 &&
-                table.getState().pagination.pageIndex <
-                  table.getPageCount() - 2 && (
-                  <>
+            </div>
+          </div>
+
+          {/* View Toggle - Desktop Only */}
+          <div className="hidden items-center justify-between md:flex">
+            <div className="text-sm text-muted-foreground">
+              {hasActiveFilters ? (
+                <>
+                  {filteredProducts.length} of {totalProducts} products
+                </>
+              ) : (
+                <>{totalProducts} products total</>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "table" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+              >
+                Table
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+              >
+                Grid
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      {/* Desktop Table View */}
+      {viewMode === "table" && (
+        <Card className="hidden md:block">
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className="hover:bg-muted/50"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="text-muted-foreground">
+                          No products found
+                        </p>
+                        {hasActiveFilters && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.resetColumnFilters()}
+                          >
+                            Clear filters
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      )}
+
+      {/* Grid View */}
+      {viewMode === "grid" && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const product = row.original;
+              return <ProductCard key={product.id} product={product} />;
+            })
+          ) : (
+            <div className="col-span-full flex flex-col items-center gap-4 py-12">
+              <p className="text-muted-foreground">No products found</p>
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.resetColumnFilters()}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mobile Card View (Always visible on mobile) */}
+      <div className="block space-y-4 md:hidden">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => {
+            const product = row.original;
+            return <ProductCard key={product.id} product={product} mobile />;
+          })
+        ) : (
+          <div className="flex flex-col items-center gap-4 py-12">
+            <p className="text-muted-foreground">No products found</p>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.resetColumnFilters()}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      {/* Pagination */}
+      {table.getPageCount() > 1 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing{" "}
+                {table.getState().pagination.pageIndex *
+                  table.getState().pagination.pageSize +
+                  1}{" "}
+                to{" "}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) *
+                    table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length
+                )}{" "}
+                of {table.getFilteredRowModel().rows.length} products
+              </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Rows per page</span>
+                  <Select
+                    value={`${table.getState().pagination.pageSize}`}
+                    onValueChange={(value) => {
+                      table.setPageSize(Number(value));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 20, 30, 40, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Pagination>
+                  <PaginationContent>
                     <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
+                      <PaginationPrevious
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          table.setPageIndex(table.getPageCount() - 1);
+                          table.previousPage();
                         }}
-                      >
-                        {table.getPageCount()}
-                      </PaginationLink>
+                        aria-disabled={!table.getCanPreviousPage()}
+                        className={
+                          !table.getCanPreviousPage()
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
                     </PaginationItem>
-                  </>
+                    {Array.from({ length: table.getPageCount() }, (_, i) => {
+                      const page = i;
+                      const currentPage = table.getState().pagination.pageIndex;
+
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        page === 0 ||
+                        page === table.getPageCount() - 1 ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                table.setPageIndex(page);
+                              }}
+                              isActive={page === currentPage}
+                            >
+                              {page + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      }
+
+                      // Show ellipsis
+                      if (
+                        (page === currentPage - 2 && currentPage > 2) ||
+                        (page === currentPage + 2 &&
+                          currentPage < table.getPageCount() - 3)
+                      ) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+
+                      return null;
+                    })}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.nextPage();
+                        }}
+                        aria-disabled={!table.getCanNextPage()}
+                        className={
+                          !table.getCanNextPage()
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// Product Card Component for Grid and Mobile Views
+function ProductCard({
+  product,
+  mobile = false,
+}: {
+  product: ProductWithVariants;
+  mobile?: boolean;
+}) {
+  const getCategoryPath = (category: ProductWithVariants["category"]) => {
+    if (!category) return "Uncategorized";
+    const names = [];
+    if (category?.parent?.parent) names.push(category?.parent?.parent?.name);
+    if (category?.parent) names.push(category?.parent?.name);
+    names.push(category?.name);
+    return names.join(" > ");
+  };
+
+  const getStockStatus = () => {
+    const totalStock =
+      product?.variants?.reduce(
+        (sum, variant) => sum + (variant?.stock || 0),
+        0
+      ) || 0;
+    if (totalStock === 0)
+      return { status: "Out of Stock", color: "destructive" as const };
+    if (totalStock < 10)
+      return { status: "Low Stock", color: "secondary" as const };
+    return { status: "In Stock", color: "default" as const };
+  };
+
+  const stockInfo = getStockStatus();
+
+  return (
+    <Card
+      className={cn(
+        "overflow-hidden transition-all hover:shadow-md",
+        mobile && "border-l-4 border-l-primary/20"
+      )}
+    >
+      <div className={cn("flex gap-4", mobile ? "p-4" : "flex-col")}>
+        {/* Image */}
+        <div
+          className={cn(
+            "relative overflow-hidden rounded-md bg-muted",
+            mobile ? "size-20 shrink-0" : "aspect-square"
+          )}
+        >
+          {product?.images?.[0]?.url ? (
+            <Image
+              src={product?.images?.[0]?.url}
+              alt={product?.name || "Product image"}
+              fill
+              className="object-cover transition-transform hover:scale-105"
+              sizes={
+                mobile
+                  ? "80px"
+                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+              }
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <span
+                className={cn(
+                  "text-muted-foreground",
+                  mobile ? "text-xs" : "text-sm"
                 )}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    table.nextPage();
-                  }}
-                  aria-disabled={!table.getCanNextPage()}
-                  className={
-                    !table.getCanNextPage()
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+              >
+                No image
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div
+          className={cn(
+            "flex flex-col",
+            mobile ? "min-w-0 flex-1" : "p-4 pt-3"
+          )}
+        >
+          <div className="flex-1 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3
+                className={cn(
+                  "font-medium leading-tight",
+                  mobile ? "text-sm" : "text-base"
+                )}
+              >
+                {product?.name}
+              </h3>
+              {!mobile && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <ProductPreviewDialog
+                      product={product}
+                      trigger={
+                        <DropdownMenuItem
+                          onSelect={(e) => e.preventDefault()}
+                          className="cursor-pointer"
+                        >
+                          <Eye className="mr-2 size-4" />
+                          Preview Product
+                        </DropdownMenuItem>
+                      }
+                    />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin-dashboard/products/${product?.id}`}>
+                        <Pencil className="mr-2 size-4" />
+                        Edit Product
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DeleteProductDialog product={product} asMenuItem />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  mobile ? "text-xs" : "text-sm"
+                )}
+              >
+                {getCategoryPath(product?.category)}
+              </p>
+
+              {product?.brand && (
+                <p
+                  className={cn("font-medium", mobile ? "text-xs" : "text-sm")}
+                >
+                  {product?.brand}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+              <Badge
+                variant={stockInfo.color}
+                className={mobile ? "text-xs" : ""}
+              >
+                {stockInfo.status}
+              </Badge>
+              {product?.variants && product?.variants?.length > 0 && (
+                <Badge variant="outline" className={mobile ? "text-xs" : ""}>
+                  {product?.variants?.length} variants
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "flex items-center justify-between pt-2",
+              mobile && "mt-2"
+            )}
+          >
+            <div className="font-semibold">
+              {formatPrice(product?.price ? Number(product?.price) : 0)}
+            </div>
+
+            {mobile && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <ProductPreviewDialog
+                    product={product}
+                    trigger={
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="cursor-pointer"
+                      >
+                        <Eye className="mr-2 size-4" />
+                        Preview Product
+                      </DropdownMenuItem>
+                    }
+                  />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/admin-dashboard/products/${product?.id}`}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit Product
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DeleteProductDialog product={product} asMenuItem />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
