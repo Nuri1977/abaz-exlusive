@@ -17,19 +17,21 @@ export function formatDate(date: Date | string | undefined): string {
 }
 
 export function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    // eslint-disable-next-line no-useless-escape
-    .replace(/\-\-+/g, "-");
+  return (
+    text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      // eslint-disable-next-line no-useless-escape
+      .replace(/\-\-+/g, "-")
+  );
 }
 
 export const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("mk-MK", {
     style: "currency",
-    currency: "USD",
+    currency: "MKD",
   }).format(price);
 };

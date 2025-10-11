@@ -9,9 +9,9 @@ import { slugify } from "@/lib/utils";
 import { utapi } from "@/utils/utapi";
 
 interface CategoryIdParams {
-  params: {
+  params: Promise<{
     categoryId: string;
-  };
+  }>;
 }
 
 export async function PATCH(req: Request, { params }: CategoryIdParams) {
@@ -22,6 +22,7 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { categoryId } = await params;
     const body = await req.json();
     const { name, description, image, parentId } = body;
 
@@ -31,7 +32,7 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
 
     // Get current category to check for existing image and current parent
     const currentCategory = await prisma.category.findUnique({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
       include: {
         children: true,
       },
@@ -50,7 +51,9 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
       if (parent) {
         // Prevent circular references
         if (parent.id === currentCategory.id) {
-          return new NextResponse("Cannot set category as its own parent", { status: 400 });
+          return new NextResponse("Cannot set category as its own parent", {
+            status: 400,
+          });
         }
         // Check if the new parent is a child of the current category
         const isChild = await prisma.category.findFirst({
@@ -63,14 +66,16 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
           },
         });
         if (isChild) {
-          return new NextResponse("Cannot set a child category as parent", { status: 400 });
+          return new NextResponse("Cannot set a child category as parent", {
+            status: 400,
+          });
         }
         level = parent.level + 1;
       }
     }
 
     // If there's an existing image and it's being updated, delete the old one
-    if (currentCategory?.image && image && typeof image !== 'string') {
+    if (currentCategory?.image && image && typeof image !== "string") {
       const oldImage = currentCategory.image as FileUploadThing;
       await utapi.deleteFiles(oldImage.key);
     }
@@ -91,7 +96,7 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
 
     const category = await prisma.category.update({
       where: {
-        id: params.categoryId,
+        id: categoryId,
       },
       data: {
         name,
@@ -99,11 +104,13 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
         description,
         level,
         image: image ? image : Prisma.JsonNull,
-        parent: parentId ? {
-          connect: { id: parentId }
-        } : {
-          disconnect: true
-        },
+        parent: parentId
+          ? {
+              connect: { id: parentId },
+            }
+          : {
+              disconnect: true,
+            },
       },
       include: {
         parent: true,
@@ -126,9 +133,11 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { categoryId } = await params;
+
     // Get category to check for image and children
     const category = await prisma.category.findUnique({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
       include: {
         children: true,
       },
@@ -146,20 +155,56 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
       );
     }
 
-    // Delete image if exists
-    if (category?.image) {
-      const imageData = category.image as FileUploadThing;
-      await utapi.deleteFiles(imageData.key);
-    }
-
-    // Delete category
+    // Delete category first
     await prisma.category.delete({
       where: {
-        id: params.categoryId,
+        id: categoryId,
       },
     });
 
-    return NextResponse.json({ success: true });
+    // Delete image from UploadThing and Gallery after successful category deletion
+    if (category?.image) {
+      try {
+        const imageData = category.image as FileUploadThing;
+        console.log("Deleting category image from UploadThing:", imageData.key);
+
+        // Delete from UploadThing
+        const uploadThingResponse = await utapi.deleteFiles(imageData.key);
+        console.log("UploadThing deletion response:", uploadThingResponse);
+
+        // Delete from Gallery database by key
+        await prisma.gallery.deleteMany({
+          where: { key: imageData.key },
+        });
+
+        // Also try to delete by URL if key deletion didn't work
+        if (imageData.url) {
+          await prisma.gallery.deleteMany({
+            where: { url: imageData.url },
+          });
+        }
+
+        // Delete by ufsUrl if it exists
+        if (imageData.ufsUrl) {
+          await prisma.gallery.deleteMany({
+            where: { url: imageData.ufsUrl },
+          });
+        }
+
+        console.log("Deleted category image from Gallery database");
+      } catch (imageError) {
+        console.error("Error deleting category image:", imageError);
+        // Don't fail the entire operation if image deletion fails
+        // The category is already deleted, so we just log the error
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message:
+        "Category deleted successfully" +
+        (category?.image ? " along with associated image" : ""),
+    });
   } catch (error) {
     console.error("[CATEGORY_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });

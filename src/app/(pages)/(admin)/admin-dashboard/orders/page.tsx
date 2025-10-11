@@ -43,19 +43,26 @@ export default function AdminOrdersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">Orders</h1>
-      <div className="overflow-x-auto rounded border bg-background p-4 shadow">
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold md:text-3xl">Orders</h1>
+        <p className="text-sm text-muted-foreground md:text-base">
+          Manage customer orders and track their status.
+        </p>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden overflow-x-auto rounded-lg border bg-background shadow-sm md:block">
         <table className="min-w-full text-sm">
-          <thead>
+          <thead className="bg-muted/50">
             <tr className="border-b">
-              <th className="px-3 py-2 text-left">Order #</th>
-              <th className="px-3 py-2 text-left">Customer</th>
-              <th className="px-3 py-2 text-left">Phone</th>
-              <th className="px-3 py-2 text-left">Status</th>
-              <th className="px-3 py-2 text-left">Total</th>
-              <th className="px-3 py-2 text-left">Created</th>
-              <th className="px-3 py-2 text-left">Actions</th>
+              <th className="px-4 py-3 text-left font-medium">Order #</th>
+              <th className="px-4 py-3 text-left font-medium">Customer</th>
+              <th className="px-4 py-3 text-left font-medium">Phone</th>
+              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th className="px-4 py-3 text-left font-medium">Total</th>
+              <th className="px-4 py-3 text-left font-medium">Created</th>
+              <th className="px-4 py-3 text-left font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -81,34 +88,33 @@ export default function AdminOrdersPage() {
             )}
             {orders?.map((order) => (
               <tr key={order?.id} className="border-b hover:bg-accent/30">
-                <td className="px-3 py-2 font-mono text-xs">
+                <td className="px-4 py-3 font-mono text-xs">
                   {order?.id?.slice(0, 8)}
                 </td>
-                <td className="px-3 py-2">
-                  {/* Show checkout-provided name/email, fallback to user, fallback to Guest */}
-                  {order?.customerName || order?.user?.name || "Guest"}
-                  <br />
-                  <span className="text-xs text-muted-foreground">
-                    {order?.customerEmail || order?.user?.email || "-"}
-                  </span>
-                  {/* If user is present, show original account info for admins */}
-                  {order?.user && (
-                    <span className="block text-xs text-muted-foreground">
-                      (Account: {order?.user?.name} / {order?.user?.email})
-                    </span>
-                  )}
+                <td className="px-4 py-3">
+                  <div>
+                    {order?.customerName || order?.user?.name || "Guest"}
+                    <div className="text-xs text-muted-foreground">
+                      {order?.customerEmail || order?.user?.email || "-"}
+                    </div>
+                    {order?.user && (
+                      <div className="text-xs text-muted-foreground">
+                        (Account: {order?.user?.name} / {order?.user?.email})
+                      </div>
+                    )}
+                  </div>
                 </td>
-                <td className="px-3 py-2">{order?.phone || "-"}</td>
-                <td className="px-3 py-2 font-semibold">{order?.status}</td>
-                <td className="px-3 py-2">{order?.total} MKD</td>
-                <td className="px-3 py-2">
+                <td className="px-4 py-3">{order?.phone || "-"}</td>
+                <td className="px-4 py-3 font-semibold">{order?.status}</td>
+                <td className="px-4 py-3">{order?.total} MKD</td>
+                <td className="px-4 py-3">
                   {new Date(order?.createdAt).toLocaleString()}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-4 py-3">
                   <OrderStatusActions
                     order={order}
                     mutation={statusMutation}
-                    onDelete={() => setDeleteId(order.id)}
+                    onDelete={() => setDeleteId(order?.id)}
                   />
                 </td>
               </tr>
@@ -116,6 +122,72 @@ export default function AdminOrdersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="block space-y-4 md:hidden">
+        {isLoading && (
+          <div className="py-8 text-center text-muted-foreground">
+            Loading orders...
+          </div>
+        )}
+        {!isLoading && orders?.length === 0 && (
+          <div className="py-8 text-center text-muted-foreground">
+            No orders found.
+          </div>
+        )}
+        {orders?.map((order) => (
+          <div
+            key={order?.id}
+            className="rounded-lg border bg-background p-4 shadow-sm"
+          >
+            <div className="space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-mono text-sm font-medium">
+                    #{order?.id?.slice(0, 8)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {new Date(order?.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold">{order?.status}</div>
+                  <div className="text-sm font-medium">{order?.total} MKD</div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="font-medium">
+                  {order?.customerName || order?.user?.name || "Guest"}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {order?.customerEmail || order?.user?.email || "-"}
+                </div>
+                {order?.phone && (
+                  <div className="text-sm text-muted-foreground">
+                    Phone: {order?.phone}
+                  </div>
+                )}
+                {order?.user && (
+                  <div className="text-xs text-muted-foreground">
+                    Account: {order?.user?.name} / {order?.user?.email}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <OrderStatusActions
+                  order={order}
+                  mutation={statusMutation}
+                  onDelete={() => setDeleteId(order?.id)}
+                  mobile={true}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <DeleteOrderDialog
         open={!!deleteId}
         onOpenChange={() => setDeleteId(null)}
@@ -133,13 +205,15 @@ function OrderStatusActions({
   order,
   mutation,
   onDelete,
+  mobile = false,
 }: {
   order: any;
   mutation: any;
   onDelete: () => void;
+  mobile?: boolean;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className={`flex gap-2 ${mobile ? "flex-wrap" : ""}`}>
       {order?.status === "PENDING" && (
         <>
           <Button
@@ -147,8 +221,9 @@ function OrderStatusActions({
             variant="secondary"
             disabled={mutation.isPending}
             onClick={() =>
-              mutation.mutate({ orderId: order.id, status: "PROCESSING" })
+              mutation.mutate({ orderId: order?.id, status: "PROCESSING" })
             }
+            className={mobile ? "flex-1" : ""}
           >
             Accept
           </Button>
@@ -157,8 +232,9 @@ function OrderStatusActions({
             variant="destructive"
             disabled={mutation.isPending}
             onClick={() =>
-              mutation.mutate({ orderId: order.id, status: "CANCELLED" })
+              mutation.mutate({ orderId: order?.id, status: "CANCELLED" })
             }
+            className={mobile ? "flex-1" : ""}
           >
             Decline
           </Button>
@@ -170,8 +246,9 @@ function OrderStatusActions({
           variant="secondary"
           disabled={mutation.isPending}
           onClick={() =>
-            mutation.mutate({ orderId: order.id, status: "SHIPPED" })
+            mutation.mutate({ orderId: order?.id, status: "SHIPPED" })
           }
+          className={mobile ? "flex-1" : ""}
         >
           Mark Shipped
         </Button>
@@ -182,8 +259,9 @@ function OrderStatusActions({
           variant="secondary"
           disabled={mutation.isPending}
           onClick={() =>
-            mutation.mutate({ orderId: order.id, status: "DELIVERED" })
+            mutation.mutate({ orderId: order?.id, status: "DELIVERED" })
           }
+          className={mobile ? "flex-1" : ""}
         >
           Mark Delivered
         </Button>
@@ -191,7 +269,7 @@ function OrderStatusActions({
       <Button
         size="sm"
         variant="outline"
-        className="border-destructive text-destructive hover:bg-destructive/10"
+        className={`border-destructive text-destructive hover:bg-destructive/10 ${mobile ? "mt-2 w-full" : ""}`}
         onClick={onDelete}
       >
         Delete
