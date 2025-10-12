@@ -202,9 +202,7 @@ export default function AdminOrderDetailPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Order Details</h1>
-            <p className="text-sm text-muted-foreground">
-              Order #{order.id.slice(0, 8)}...
-            </p>
+            <p className="text-sm text-muted-foreground">Order {order.id}</p>
           </div>
         </div>
 
