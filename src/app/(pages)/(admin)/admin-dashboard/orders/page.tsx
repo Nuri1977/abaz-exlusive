@@ -411,7 +411,13 @@ export default function AdminOrdersPage() {
                   </tr>
                 )}
                 {newOrders?.map((order) => (
-                  <tr key={order?.id} className="border-b hover:bg-accent/30">
+                  <tr
+                    key={order?.id}
+                    className="cursor-pointer border-b hover:bg-accent/30"
+                    onClick={() =>
+                      (window.location.href = `/admin-dashboard/orders/${order?.id}`)
+                    }
+                  >
                     <td className="px-3 py-2 font-mono text-xs">
                       {order?.id?.slice(0, 8)}
                     </td>
@@ -443,7 +449,10 @@ export default function AdminOrdersPage() {
                     <td className="px-3 py-2">
                       {new Date(order?.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2">
+                    <td
+                      className="px-3 py-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <OrderStatusActions
                         order={order}
                         mutation={statusMutation}
@@ -606,7 +615,13 @@ export default function AdminOrdersPage() {
                   </tr>
                 )}
                 {finishedOrders?.map((order) => (
-                  <tr key={order?.id} className="border-b hover:bg-accent/30">
+                  <tr
+                    key={order?.id}
+                    className="cursor-pointer border-b hover:bg-accent/30"
+                    onClick={() =>
+                      (window.location.href = `/admin-dashboard/orders/${order?.id}`)
+                    }
+                  >
                     <td className="px-3 py-2 font-mono text-xs">
                       {order?.id?.slice(0, 8)}
                     </td>
@@ -642,7 +657,10 @@ export default function AdminOrdersPage() {
                         order?.updatedAt || order?.createdAt
                       ).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2">
+                    <td
+                      className="px-3 py-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <OrderStatusActions
                         order={order}
                         mutation={statusMutation}
