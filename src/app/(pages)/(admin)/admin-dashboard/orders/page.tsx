@@ -692,6 +692,7 @@ function OrderStatusActions({
   order,
   mutation,
   onDelete,
+  mobile = false,
 }: {
   order: Order;
   mutation: UseMutationResult<
@@ -701,9 +702,10 @@ function OrderStatusActions({
     unknown
   >;
   onDelete: () => void;
+  mobile?: boolean;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className={`flex gap-2 ${mobile ? "flex-wrap" : ""}`}>
       {order?.status === "PENDING" && (
         <>
           <Button
@@ -713,6 +715,7 @@ function OrderStatusActions({
             onClick={() =>
               mutation.mutate({ orderId: order?.id, status: "PROCESSING" })
             }
+            className={mobile ? "flex-1" : ""}
           >
             Accept
           </Button>
@@ -723,6 +726,7 @@ function OrderStatusActions({
             onClick={() =>
               mutation.mutate({ orderId: order?.id, status: "CANCELLED" })
             }
+            className={mobile ? "flex-1" : ""}
           >
             Decline
           </Button>
@@ -736,6 +740,7 @@ function OrderStatusActions({
           onClick={() =>
             mutation.mutate({ orderId: order?.id, status: "SHIPPED" })
           }
+          className={mobile ? "flex-1" : ""}
         >
           Mark Shipped
         </Button>
@@ -748,6 +753,7 @@ function OrderStatusActions({
           onClick={() =>
             mutation.mutate({ orderId: order?.id, status: "DELIVERED" })
           }
+          className={mobile ? "flex-1" : ""}
         >
           Mark Delivered
         </Button>
@@ -755,7 +761,7 @@ function OrderStatusActions({
       <Button
         size="sm"
         variant="outline"
-        className="border-destructive text-destructive hover:bg-destructive/10"
+        className={`border-destructive text-destructive hover:bg-destructive/10 ${mobile ? "mt-2 w-full" : ""}`}
         onClick={onDelete}
       >
         Delete

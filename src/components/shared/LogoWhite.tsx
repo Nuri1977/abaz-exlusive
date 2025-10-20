@@ -7,7 +7,7 @@ interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({
+const LogoWhite: React.FC<LogoProps> = ({
   size = 56,
   label = "Abaz Exclusive",
   className,
@@ -15,7 +15,7 @@ const Logo: React.FC<LogoProps> = ({
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`.trim()}>
       <Image
-        src="/logo/logo_black_transparet.png"
+        src="/logo/logo_white_transparent.png"
         alt={label}
         width={size}
         height={size}
@@ -27,4 +27,4 @@ const Logo: React.FC<LogoProps> = ({
   );
 };
 
-export default Logo;
+export default LogoWhite;

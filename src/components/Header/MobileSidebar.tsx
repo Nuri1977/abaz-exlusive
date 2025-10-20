@@ -6,6 +6,7 @@ import { useCartContext } from "@/context/CartContext";
 import { LayoutDashboard, LogOut, Menu, Search, Settings } from "lucide-react";
 
 import { navLinks } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,8 @@ interface MobileSidebarProps {
   session: any;
   isPending: boolean;
   handleSignOut: () => Promise<void>;
+  isHeroSection?: boolean;
+  scrolled?: boolean;
 }
 
 export function MobileSidebar({
@@ -33,6 +36,8 @@ export function MobileSidebar({
   session,
   isPending,
   handleSignOut,
+  isHeroSection = false,
+  scrolled = false,
 }: MobileSidebarProps) {
   const router = useRouter();
   const isAdmin = useIsAdmin();
@@ -52,8 +57,16 @@ export function MobileSidebar({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="h-auto p-3 lg:hidden">
-          <Menu className="h-10 w-10" />
+        <Button
+          variant="ghost"
+          className={cn(
+            "h-auto p-3 lg:hidden",
+            isHeroSection && !scrolled
+              ? "text-white hover:bg-white/10"
+              : "text-primary hover:bg-primary/10"
+          )}
+        >
+          <Menu className="h-6 w-6" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>

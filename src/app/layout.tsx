@@ -5,8 +5,8 @@ import "./globals.css";
 
 import CookieConsent from "@/components/ui/cookie-consent";
 import { Toaster } from "@/components/ui/toaster";
+import { ConditionalHeader } from "@/components/shared/ConditionalHeader";
 import { Footer } from "@/components/shared/Footer";
-import { Header } from "@/components/shared/Header";
 import Providers from "@/providers/providers";
 
 const montserrat = Montserrat({
@@ -44,7 +44,7 @@ export default function RootLayout({
     <html lang="en" className={`${montserrat.variable} ${geistMono.variable}`}>
       <body suppressHydrationWarning>
         <Providers>
-          <Header />
+          <ConditionalHeader />
           <main className="min-h-screen">{children}</main>
           <Footer />
           <Toaster />

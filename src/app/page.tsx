@@ -3,12 +3,15 @@ import HeroSection from "@/components/home/HeroSection";
 import NewArrivals from "@/components/home/NewArrivals";
 import PromoBanner from "@/components/home/PromoBanner";
 import ShopByCategory from "@/components/home/ShopByCategory";
+import { getSettingsSA } from "@/services/settings/settingsService";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getSettingsSA();
+
   return (
     <>
       {/* Hero Banner */}
-      <HeroSection />
+      <HeroSection settings={settings} />
 
       {/* Main content */}
       <div className="space-y-20 py-20">
