@@ -44,7 +44,7 @@ import {
 async function fetchOrder(id: string): Promise<Order> {
   const res = await fetch(`/api/admin/orders/${id}`);
   if (!res.ok) throw new Error("Failed to fetch order");
-  const json = await res.json();
+  const json = (await res.json()) as { data: Order };
   return json.data;
 }
 
@@ -58,7 +58,7 @@ async function updateOrderStatus(
     body: JSON.stringify({ orderId, status }),
   });
   if (!res.ok) throw new Error("Failed to update order");
-  return res.json();
+  return (await res.json()) as Order;
 }
 
 async function deleteOrder(orderId: string): Promise<void> {
@@ -163,9 +163,9 @@ export default function AdminOrderDetailPage() {
       sku?: string;
     };
     Product?: {
-      name?: string;
-      brand?: string;
-      style?: string;
+      name?: string | null;
+      brand?: string | null;
+      style?: string | null;
     };
     price: number;
     quantity: number;

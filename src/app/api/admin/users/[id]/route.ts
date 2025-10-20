@@ -5,7 +5,7 @@ import { isAdminServer } from "@/helpers/isAdminServer";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -17,7 +17,7 @@ export async function GET(
       );
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // Fetch user by ID
     const user = await prisma.user.findUnique({
@@ -51,7 +51,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -63,8 +63,14 @@ export async function PATCH(
       );
     }
 
-    const userId = params.id;
-    const body = await request.json();
+    const { id: userId } = await params;
+    const body = (await request.json()) as {
+      name?: string;
+      email?: string;
+      isAdmin?: boolean;
+      image?: string;
+      password?: string;
+    };
 
     // Fetch user to verify it exists
     const existingUser = await prisma.user.findUnique({
@@ -124,7 +130,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -136,7 +142,7 @@ export async function DELETE(
       );
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
