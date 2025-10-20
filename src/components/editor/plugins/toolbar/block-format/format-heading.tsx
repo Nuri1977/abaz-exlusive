@@ -1,4 +1,4 @@
-import { $createHeadingNode, HeadingTagType } from "@lexical/rich-text"
+import { $createHeadingNode, type HeadingTagType } from "@lexical/rich-text"
 import { $setBlocksType } from "@lexical/selection"
 import { $getSelection } from "lexical"
 
@@ -25,8 +25,8 @@ export function FormatHeading({ levels = [] }: { levels: HeadingTagType[] }) {
       onPointerDown={() => formatHeading(level)}
     >
       <div className="flex items-center gap-1 font-normal">
-        {blockTypeToBlockName[level].icon}
-        {blockTypeToBlockName[level].label}
+        {blockTypeToBlockName[level]?.icon}
+        {blockTypeToBlockName[level]?.label}
       </div>
     </SelectItem>
   ))

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getSessionServer } from "@/helpers/getSessionServer";
 
-export async function POST(_request: NextRequest, { params }: { params: { productId: string } }) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
   const session = await getSessionServer();
 
   if (!session) {
@@ -10,7 +10,7 @@ export async function POST(_request: NextRequest, { params }: { params: { produc
   }
 
   const userId = session.user.id;
-  const productId = params.productId;
+  const { productId } = await params;
 
   try {
     await prisma.like.create({
@@ -35,7 +35,7 @@ export async function POST(_request: NextRequest, { params }: { params: { produc
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { productId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
   const session = await getSessionServer();
 
   if (!session) {
@@ -43,7 +43,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { produ
   }
 
   const userId = session.user.id;
-  const productId = params.productId;
+  const { productId } = await params;
 
   try {
     await prisma.like.deleteMany({
@@ -54,7 +54,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { produ
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json({ message: "Internal Error" }, { status: 500 });
   }
 }
