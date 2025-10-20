@@ -115,3 +115,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
   - [Better Auth](https://better-auth.dev/)
   - [UploadThing](https://uploadthing.com/)
   - [React Email](https://react.email/)
+
+Changed text
