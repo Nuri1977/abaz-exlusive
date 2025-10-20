@@ -116,4 +116,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
   - [UploadThing](https://uploadthing.com/)
   - [React Email](https://react.email/)
 
-Changed text to run deoployment
+Changed text
