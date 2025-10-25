@@ -106,7 +106,7 @@ export function HeroHeader({ settings }: HeroHeaderProps) {
   };
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 w-full">
+    <header className="fixed inset-x-0 top-0 z-50 w-full">
       <div
         className={cn(
           "w-full transition-all duration-300",
@@ -220,7 +220,14 @@ export function HeroHeader({ settings }: HeroHeaderProps) {
                     <Heart size={20} />
                     <span className="sr-only">Likes</span>
                     {likedCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-destructive-foreground">
+                      <span
+                        style={{
+                          height: "18.3px",
+                          minWidth: "18.3px",
+                          top: "-13px",
+                        }}
+                        className="absolute -right-2 flex items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-destructive-foreground"
+                      >
                         {likedCount > 99 ? "99+" : likedCount}
                       </span>
                     )}

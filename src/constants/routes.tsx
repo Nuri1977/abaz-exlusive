@@ -1,4 +1,5 @@
 import {
+  FolderOpen,
   Heart,
   Home,
   Image,
@@ -13,7 +14,6 @@ import {
   Tags,
   UserRoundPen,
   Users,
-  FolderOpen,
 } from "lucide-react";
 
 export const adminLinks = [
@@ -49,7 +49,6 @@ export const adminLinks = [
     name: "Users",
     href: "/admin-dashboard/users",
     icon: Users,
-    value: "25",
     description: "Manage user accounts and permissions",
   },
   {
