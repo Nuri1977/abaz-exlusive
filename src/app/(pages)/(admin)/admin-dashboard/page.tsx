@@ -1,9 +1,19 @@
 import Link from "next/link";
 
 import { adminLinks } from "@/constants/routes";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminDashboardPage = async () => {
+  const usersCount = await prisma.user.count();
+
+  const links = adminLinks.map((item) => {
+    if (item.href === "/admin-dashboard/users") {
+      return { ...item, value: String(usersCount) };
+    }
+    return item;
+  });
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -14,7 +24,7 @@ const AdminDashboardPage = async () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {adminLinks.map((item, index) => (
+        {links.map((item, index) => (
           <Link href={item.href} key={index}>
             <Card className="cursor-pointer transition-all duration-200 hover:bg-muted/50 hover:shadow-md">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

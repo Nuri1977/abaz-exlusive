@@ -26,13 +26,14 @@ const UserNavLinks = ({ onClick }: { onClick?: () => void }) => {
             key={link.name}
             href={link.href}
             onClick={onClick}
+            // eslint-disable-next-line tailwindcss/no-custom-classname
             className={cn(
               "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
               isActive ? "bg-accent text-accent-foreground" : "transparent"
             )}
           >
             <Icon className="mr-2 size-4" />
-            {/* <span>{lin  k.name}</span> */}
+            <span>{link.name}</span>
           </Link>
         );
       })}
@@ -70,7 +71,13 @@ const UserSidebar = () => {
           </SheetTrigger>
           <SheetContent side="left" className="w-[250px] pr-0 sm:w-[300px]">
             <div className="px-1 py-4">
-              <ScrollArea className="h-[calc(100vh-100px)]">
+              {/* Title for mobile sheet */}
+              <div className="px-3 py-2">
+                <h2 className="mb-2 px-1 text-lg font-semibold tracking-tight">
+                  User Dashboard
+                </h2>
+              </div>
+              <ScrollArea className="h-[calc(100vh-140px)]">
                 <UserNavLinks onClick={() => setOpen(false)} />
               </ScrollArea>
             </div>
