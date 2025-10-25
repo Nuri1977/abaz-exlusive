@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams?.get("limit") || "12");
     const sortParam = searchParams?.get("sort") || "createdAt:desc";
     const category = searchParams?.get("category");
+    const collection = searchParams?.get("collection");
     const minPrice = searchParams?.get("minPrice");
     const maxPrice = searchParams?.get("maxPrice");
     const gender = searchParams?.get("gender");
@@ -73,6 +74,17 @@ export async function GET(request: Request) {
       }
     }
 
+    if (collection && collection !== "all") {
+      // Find collection by slug
+      const selectedCollection = await prisma.collection.findUnique({
+        where: { slug: collection, isActive: true },
+      });
+
+      if (selectedCollection) {
+        where.collectionId = selectedCollection.id;
+      }
+    }
+
     if (minPrice || maxPrice) {
       where.price = {
         ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
@@ -110,6 +122,7 @@ export async function GET(request: Request) {
         where,
         include: {
           category: true,
+          collection: true,
           variants: {
             include: {
               options: {

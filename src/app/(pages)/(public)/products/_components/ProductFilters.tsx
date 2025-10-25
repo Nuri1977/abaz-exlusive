@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartContext } from "@/context/CartContext";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   brandOptions,
@@ -36,6 +37,18 @@ export function ProductFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currency, convertPrice, currencySymbol } = useCartContext();
+
+  // Fetch collections for filtering
+  const { data: collections = [] } = useQuery({
+    queryKey: ["collections"],
+    queryFn: async () => {
+      const response = await fetch("/api/collections");
+      if (!response.ok) {
+        throw new Error("Failed to fetch collections");
+      }
+      return response.json();
+    },
+  });
 
   // Set slider min/max based on currency
   const sliderMax = currency === "MKD" ? 300000 : 5000;
@@ -168,6 +181,26 @@ export function ProductFilters() {
             {genderOptions.map((gender) => (
               <SelectItem key={gender.value} value={gender.value}>
                 {gender.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold">Collection</h3>
+        <Select
+          value={searchParams.get("collection") || ""}
+          onValueChange={(value) => updateFilters("collection", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select collection" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Collections</SelectItem>
+            {collections.map((collection: any) => (
+              <SelectItem key={collection.id} value={collection.slug}>
+                {collection.name}
               </SelectItem>
             ))}
           </SelectContent>

@@ -168,7 +168,7 @@ export function Header() {
               <Heart size={24} />
               <span className="sr-only">Likes</span>
               {likedCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-destructive-foreground">
                   {likedCount > 99 ? "99+" : likedCount}
                 </span>
               )}

@@ -110,6 +110,7 @@ export const userLinks = [
 export const navLinks = [
   { name: "HOME", href: "/", icon: Home },
   { name: "PRODUCTS", href: "/products", icon: ShoppingBag },
+  { name: "COLLECTIONS", href: "/collections", icon: FolderOpen },
   { name: "ABOUT", href: "/about", icon: Info },
   { name: "CONTACT", href: "/contact", icon: Mail },
 ];
