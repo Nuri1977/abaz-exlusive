@@ -32,6 +32,7 @@ export default async function EditProductPage({
     where: { id },
     include: {
       category: true,
+      collection: true,
       options: {
         include: {
           values: true,

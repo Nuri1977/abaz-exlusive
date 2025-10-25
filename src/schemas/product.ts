@@ -30,6 +30,7 @@ export const baseProductFormSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   style: z.string().min(1, "Style is required"),
   categoryId: z.string().min(1, "Category is required"),
+  collectionId: z.string().optional(),
   features: z.array(z.string()).optional(),
   images: z.array(imageSchema).min(1, "At least one image is required"),
 });

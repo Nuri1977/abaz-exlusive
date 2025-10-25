@@ -13,6 +13,7 @@ import {
   Tags,
   UserRoundPen,
   Users,
+  FolderOpen,
 } from "lucide-react";
 
 export const adminLinks = [
@@ -36,6 +37,13 @@ export const adminLinks = [
     icon: Tags,
     value: "Manage",
     description: "Manage product categories",
+  },
+  {
+    name: "Collections",
+    href: "/admin-dashboard/collections",
+    icon: FolderOpen,
+    value: "Manage",
+    description: "Manage product collections",
   },
   {
     name: "Users",

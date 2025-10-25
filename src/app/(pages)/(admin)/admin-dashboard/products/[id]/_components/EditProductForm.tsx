@@ -78,6 +78,17 @@ export function EditProductForm({ product }: EditProductFormProps) {
     },
   });
 
+  const { data: collections } = useQuery({
+    queryKey: ["collections"],
+    queryFn: async () => {
+      const response = await fetch("/api/collections");
+      if (!response.ok) {
+        throw new Error("Failed to fetch collections");
+      }
+      return response.json();
+    },
+  });
+
   const form = useForm<EditProductFormValues>({
     resolver: zodResolver(editProductFormSchema),
     defaultValues: {
@@ -90,6 +101,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
       style: product?.style || "",
       features: product?.features || [],
       categoryId: product?.categoryId || "",
+      collectionId: (product as any)?.collectionId || "none",
       images: initialImages,
     },
   });
@@ -360,35 +372,65 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories?.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.parent
-                              ? `${category.parent.name} > ${category.name}`
-                              : category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories?.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.parent
+                                ? `${category.parent.name} > ${category.name}`
+                                : category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="collectionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Collection (Optional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select collection" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No Collection</SelectItem>
+                          {collections?.map((collection: any) => (
+                            <SelectItem key={collection.id} value={collection.id}>
+                              {collection.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 
