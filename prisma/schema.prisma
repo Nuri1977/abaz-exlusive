@@ -91,30 +91,32 @@ model Category {
 }
 
 model Product {
-  id          String           @id @default(uuid())
-  name        String
-  slug        String           @unique
-  description String?
-  price       Decimal          @db.Decimal(10, 2)
-  categoryId  String
-  category    Category         @relation(fields: [categoryId], references: [id])
-  options     ProductOption[]
-  variants    ProductVariant[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  likes       Like[]
-  newArrivals NewArrivals[]
-  bestSellers BestSellers[]
-  // Shoe specific details
-  brand       String?
-  material    String?
-  gender      String?
-  style       String?
-  features    String[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  images      Json[]
+  id           String           @id @default(uuid())
+  name         String
+  slug         String           @unique
+  description  String?
+  price        Decimal          @db.Decimal(10, 2)
+  categoryId   String
+  collectionId String?
+  brand        String?
+  material     String?
+  gender       String?
+  style        String?
+  features     String[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  images       Json[]
+  bestSellers  BestSellers[]
+  cartItems    CartItem[]
+  likes        Like[]
+  newArrivals  NewArrivals[]
+  orderItems   OrderItem[]
+  category     Category         @relation(fields: [categoryId], references: [id])
+  collection   Collection?      @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  options      ProductOption[]
+  variants     ProductVariant[]
 
+  @@index([collectionId])
   @@map("product")
 }
 
@@ -222,13 +224,13 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  isDeleted       Boolean       @default(false)
+  phone           String?
+  customerEmail   String?
+  customerName    String?
   deletedAt       DateTime?
+  isDeleted       Boolean       @default(false)
   user            User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
-  phone           String?
-  customerName    String?
-  customerEmail   String?
 
   @@map("order")
 }
@@ -301,6 +303,20 @@ model MediaUsage {
   @@map("media_usage")
 }
 
+model Collection {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       Json?     @default("null")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@map("collection")
+}
+
 model Settings {
   id        String   @id @default("default")
   name      String
@@ -314,9 +330,9 @@ model Settings {
   instagram String?
   youtube   String?
   aboutInfo String
-  aboutUs   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  aboutUs   Json?
 
   @@map("settings")
 }
@@ -324,9 +340,9 @@ model Settings {
 model NewArrivals {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@map("new_arrivals")
 }
@@ -334,9 +350,9 @@ model NewArrivals {
 model BestSellers {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@map("best_sellers")
 }
