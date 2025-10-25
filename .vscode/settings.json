@@ -8,16 +8,22 @@
     "typescript",
     "typescriptreact"
   ],
-  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
   "editor.renderValidationDecorations": "on",
   "problems.decorations.enabled": true,
   "editor.formatOnSave": true,
-
   // Tailwind IntelliSense (optional but recommended)
-  "tailwindCSS.classAttributes": ["class", "className"],
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className"
+  ],
   "tailwindCSS.experimental.classRegex": [
     "clsx\\(([^)]*)\\)",
     "cn\\(([^)]*)\\)",

@@ -10,9 +10,28 @@ export async function GET() {
     const products = await prisma.product.findMany({
       include: {
         category: true,
+        collection: true,
+        variants: {
+          select: {
+            id: true,
+            sku: true,
+            price: true,
+            stock: true,
+            options: {
+              select: {
+                optionValue: {
+                  select: {
+                    id: true,
+                    value: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        name: "asc",
+        updatedAt: "desc",
       },
     });
 
@@ -47,6 +66,7 @@ export async function POST(req: Request) {
       options,
       variants,
       categoryId,
+      collectionId,
     } = body;
 
     if (!categoryId) {
@@ -95,6 +115,11 @@ export async function POST(req: Request) {
             id: categoryId || category.id,
           },
         },
+        collection: collectionId && collectionId !== "none" ? {
+          connect: {
+            id: collectionId,
+          },
+        } : undefined,
         options: {
           create: options.map((option: any) => ({
             name: option.name,

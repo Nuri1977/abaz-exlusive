@@ -113,6 +113,11 @@ export type ProductWithVariants = Product & {
       } | null;
     } | null;
   } | null;
+  collection?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   images: FileUploadThing[] | null;
 };
 
@@ -372,6 +377,33 @@ export function ProductTable() {
       filterFn: categoryFilterFn,
     },
     {
+      accessorKey: "collection",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              column?.toggleSorting(column?.getIsSorted() === "asc")
+            }
+            className="-ml-4"
+          >
+            Collection
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const collection = (row?.original as any)?.collection;
+        if (!collection) return <span className="text-muted-foreground">No Collection</span>;
+        return collection.name;
+      },
+      sortingFn: (rowA, rowB) => {
+        const collectionA = (rowA?.original as any)?.collection?.name || "";
+        const collectionB = (rowB?.original as any)?.collection?.name || "";
+        return collectionA.localeCompare(collectionB);
+      },
+    },
+    {
       accessorKey: "updatedAt",
       header: ({ column }) => {
         return (
@@ -628,9 +660,9 @@ export function ProductTable() {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                         </TableHead>
                       );
                     })}
@@ -744,7 +776,7 @@ export function ProductTable() {
                 to{" "}
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
+                  table.getState().pagination.pageSize,
                   table.getFilteredRowModel().rows.length
                 )}{" "}
                 of {table.getFilteredRowModel().rows.length} products
@@ -986,6 +1018,17 @@ function ProductCard({
               >
                 {getCategoryPath(product?.category)}
               </p>
+
+              {(product as any)?.collection && (
+                <p
+                  className={cn(
+                    "text-muted-foreground",
+                    mobile ? "text-xs" : "text-sm"
+                  )}
+                >
+                  Collection: {(product as any)?.collection?.name}
+                </p>
+              )}
 
               {product?.brand && (
                 <p

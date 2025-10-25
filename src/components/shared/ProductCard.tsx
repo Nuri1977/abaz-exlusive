@@ -68,7 +68,7 @@ export function ProductCard({ product }: ProductCardProps) {
         className="absolute inset-0 z-10"
       />
 
-      <div className="relative aspect-square">
+      <div className="relative aspect-[3/4]">
         <Image
           src={getImageUrl(product?.images?.[0])}
           alt={product?.name || ""}
@@ -97,19 +97,21 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <CardContent className="p-4">
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">{product?.brand}</p>
-          <h3 className="line-clamp-2 font-semibold transition-colors group-hover:text-primary">
-            {product?.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">
+      <CardContent className="p-3">
+        <div className="space-y-0.5">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="line-clamp-2 text-sm font-medium transition-colors group-hover:text-primary leading-tight flex-1">
+              {product?.name}
+            </h3>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide shrink-0">{product?.brand}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
             {product?.category?.name}
           </p>
         </div>
       </CardContent>
 
-      <CardFooter className="flex w-full items-center justify-between px-4 pb-4 pt-0">
+      <CardFooter className="flex w-full items-center justify-between px-3 pb-3 pt-0">
         <p className="font-semibold">
           {currencySymbol}{" "}
           {convertPrice(Number(product?.price), "MKD", currency).toLocaleString(
@@ -131,12 +133,12 @@ export function ProductCard({ product }: ProductCardProps) {
               handleAddToCart();
             }}
             aria-label={hasVariants ? "View options" : "Add to cart"}
-            className="text-black transition-colors hover:text-blue-600"
+            className="h-9 w-9 text-muted-foreground transition-colors hover:text-primary"
           >
-            <ShoppingCart size={20} />
+            <ShoppingCart size={18} />
           </Button>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="h-5" />
 
           <Button
             variant="ghost"
@@ -150,11 +152,11 @@ export function ProductCard({ product }: ProductCardProps) {
             }}
             aria-label="Toggle like"
             className={cn(
-              "transition-colors",
-              liked ? "text-red-500" : "text-black hover:text-red-500"
+              "h-9 w-9 transition-colors",
+              liked ? "text-destructive" : "text-muted-foreground hover:text-destructive"
             )}
           >
-            <Heart size={20} className={liked ? "fill-current" : ""} />
+            <Heart size={18} className={liked ? "fill-current" : ""} />
           </Button>
         </div>
       </CardFooter>
