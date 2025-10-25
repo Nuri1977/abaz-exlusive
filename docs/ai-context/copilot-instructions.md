@@ -150,6 +150,20 @@ The project uses shadcn/ui (also known as "chadcn") component library:
   - Use `response?.data?.items` never `response.data.items`
   - Apply this rule consistently with no exceptions throughout all code
 
+### Responsive Design Requirements
+
+**MANDATORY FOR ALL PAGES AND COMPONENTS:**
+
+- **Mobile-First Approach**: Design and develop for mobile devices first, then enhance for larger screens
+- **Breakpoint Coverage**: Every component must work seamlessly across all Tailwind breakpoints (sm, md, lg, xl, 2xl)
+- **Touch-Friendly Interfaces**: All interactive elements must be touch-optimized with proper sizing (minimum 44px touch targets)
+- **Responsive Typography**: Use responsive text sizing with Tailwind utilities
+- **Flexible Layouts**: Use CSS Grid and Flexbox with responsive utilities
+- **Responsive Images**: Always use Next.js Image component with responsive sizing and proper `sizes` attribute
+- **Navigation Adaptation**: Mobile navigation should use Sheet components, desktop should use standard dropdowns
+- **Form Optimization**: Forms must be optimized for mobile input with proper keyboard types and validation
+- **Performance**: Ensure fast loading on mobile networks with optimized assets and lazy loading
+
 ### Next.js 15.2.3 Specific Requirements
 
 The project uses Next.js 15.2.3 with React 18.3.1, which includes several important features and breaking changes:
@@ -304,6 +318,7 @@ The project uses UploadThing v7 for file uploads and management:
 - **Pagination**: Paginate product listings and search results
 - **Caching**: Cache frequently accessed data with appropriate TTL
 - **Mobile Performance**: Optimize for mobile networks and devices
+- **MANDATORY RESPONSIVE DESIGN**: ALL pages and components MUST be fully responsive and mobile-optimized
 
 ### Security Features
 

@@ -78,9 +78,9 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   }));
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
       {/* Collection Header - VloraKaltrina Style */}
-      <div className="mb-16 text-center">
+      <div className="mb-8 sm:mb-12 md:mb-16 text-center">
         <h1 className="text-4xl font-light uppercase tracking-[0.2em] md:text-5xl lg:text-6xl">
           {collection.name}
         </h1>

@@ -61,6 +61,52 @@ This repository uses a modular documentation approach with comprehensive helper 
   - Use `response?.data?.items` never `response.data.items`
   - Apply this rule consistently with no exceptions throughout all code
 
+### Responsive Design Requirements
+
+**MANDATORY FOR ALL PAGES AND COMPONENTS:**
+
+- **Mobile-First Approach**: Design and develop for mobile devices first, then enhance for larger screens
+- **Breakpoint Coverage**: Every component must work seamlessly across all Tailwind breakpoints:
+  - `sm:` (640px+) - Small tablets and large phones
+  - `md:` (768px+) - Tablets and small laptops
+  - `lg:` (1024px+) - Laptops and desktops
+  - `xl:` (1280px+) - Large desktops
+  - `2xl:` (1536px+) - Extra large screens
+- **Touch-Friendly Interfaces**: All interactive elements must be touch-optimized with proper sizing (minimum 44px touch targets)
+- **Responsive Typography**: Use responsive text sizing (`text-sm md:text-base lg:text-lg`)
+- **Flexible Layouts**: Use CSS Grid and Flexbox with responsive utilities (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`)
+- **Responsive Images**: Always use Next.js Image component with responsive sizing and proper `sizes` attribute
+- **Navigation Adaptation**: Mobile navigation should use Sheet components, desktop should use standard dropdowns
+- **Form Optimization**: Forms must be optimized for mobile input with proper keyboard types and validation
+- **Performance**: Ensure fast loading on mobile networks with optimized assets and lazy loading
+
+**Examples of Required Responsive Patterns:**
+
+```tsx
+// Responsive grid layout
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+// Responsive text sizing
+<h1 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
+
+// Responsive padding/margins
+<div className="p-4 sm:p-6 md:p-8 lg:p-12">
+
+// Responsive navigation
+<div className="block md:hidden"> {/* Mobile menu */}
+<div className="hidden md:block"> {/* Desktop menu */}
+
+// Responsive image
+<Image
+  src="/image.jpg"
+  alt="Description"
+  width={800}
+  height={600}
+  className="w-full h-auto"
+  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+/>
+```
+
 ### Component Library Integration
 
 The project uses shadcn/ui (also known as "chadcn") component library:
@@ -368,6 +414,7 @@ The project uses UploadThing v7 for file uploads and management:
 - **Pagination**: Paginate product listings and search results
 - **Caching**: Cache frequently accessed data with appropriate TTL
 - **Mobile Performance**: Optimize for mobile networks and devices
+- **Responsive Design**: ALL components must be fully responsive with mobile-first approach
 
 ### Security Features
 
@@ -381,4 +428,4 @@ The project uses UploadThing v7 for file uploads and management:
 
 - The development server runs on port 3000 by default
 - When generating code or responses, follow the conventions defined in the Tailwind CSS configuration and use TypeScript syntax
-- Implement a responsive design that works well on all devices
+- **MANDATORY RESPONSIVE DESIGN**: ALL pages and components MUST be fully responsive and mobile-optimized. Every page should work seamlessly across all device sizes (mobile, tablet, desktop) with proper breakpoints, touch-friendly interfaces, and mobile-first design principles. This is a non-negotiable requirement for every UI component and page built.

@@ -43,6 +43,7 @@ For deeper detail, see `docs/ai-context/`:
 - Keep pages in `src/app/**/page.tsx` as server components. If client features are needed, create a child component under `_components/` with `"use client"`.
 - Use Next.js `Link` from `next/link` for all navigation (internal and external). Prefer `asChild` with Button when needed.
 - Use shadcn/ui toast system (with `useToast`) and ensure a global `<Toaster />` is present in the root layout.
+- **MANDATORY RESPONSIVE DESIGN**: ALL pages and components MUST be fully responsive and mobile-optimized. Every page should work seamlessly across all device sizes (mobile, tablet, desktop) with proper breakpoints, touch-friendly interfaces, and mobile-first design principles.
 
 Next.js 15 specifics:
 
@@ -154,6 +155,7 @@ Core models (guide level):
 - Buttons, dialogs, sheets follow shadcn/ui patterns and variants.
 - Navigation uses `Link`; for buttons that navigate, use `<Button asChild><Link ... /></Button>`.
 - Toast notifications use `useToast` only.
+- **RESPONSIVE DESIGN MANDATORY**: Every UI component must be mobile-first and fully responsive across all breakpoints (sm, md, lg, xl). Use Tailwind responsive prefixes consistently.
 
 ---
 
