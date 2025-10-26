@@ -1,5 +1,8 @@
 import "server-only";
+
 import { unstable_cache } from "next/cache";
+
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { prisma } from "@/lib/prisma";
 
 export const getSettingsSA = unstable_cache(
@@ -12,8 +15,8 @@ export const getSettingsSA = unstable_cache(
     }
     return settings;
   },
-  ["settings"],
+  [SSGCacheKeys.settings],
   {
-    tags: ["settings"],
+    tags: [SSGCacheKeys.settings],
   }
 );

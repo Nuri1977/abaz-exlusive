@@ -1,11 +1,14 @@
+import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminServer } from "@/helpers/isAdminServer";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -59,8 +62,17 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name?: string;
+      description?: string;
+      image?: Prisma.InputJsonValue;
+      parentId?: string;
+    };
     const { name, description, image, parentId } = body;
+
+    if (!name || typeof name !== "string") {
+      return new NextResponse("Name is required", { status: 400 });
+    }
 
     // Calculate level based on parent
     let level = 0;
@@ -78,7 +90,7 @@ export async function POST(req: Request) {
         name,
         slug: name.toLowerCase().replace(/\s+/g, "-"),
         description,
-        image,
+        image: image ?? Prisma.JsonNull,
         level,
         parent: parentId
           ? {
@@ -93,6 +105,7 @@ export async function POST(req: Request) {
       },
     });
 
+    revalidateTag(SSGCacheKeys.categories);
     return NextResponse.json(category);
   } catch (error) {
     console.error("[CATEGORIES_POST]", error);

@@ -1,15 +1,27 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 
 import type { FileUploadThing } from "@/types/UploadThing";
 import getCategoriesSSG from "@/services/categories/categoriesService";
+
+type CategoryWithChildren = Prisma.CategoryGetPayload<{
+  include: {
+    children: true;
+    _count: {
+      select: {
+        products: true;
+      };
+    };
+  };
+}>;
 
 const ShopByCategory = async () => {
   const categories = await getCategoriesSSG();
 
   // Transform the data to match our needs
-  const transformedCategories = categories.map((category: any) => ({
+  const transformedCategories = categories.map((category: CategoryWithChildren) => ({
     id: category?.id,
     name: category?.name,
     slug: category?.slug,
@@ -36,7 +48,7 @@ const ShopByCategory = async () => {
             key={category?.id}
             className="group flex flex-col items-center"
           >
-            <div className="mb-3 size-32 overflow-hidden rounded-full border-4 border-tertiary transition-transform group-hover:scale-105 md:h-40 md:w-40">
+            <div className="mb-3 size-32 overflow-hidden rounded-full border-4 border-tertiary transition-transform group-hover:scale-105 md:size-40">
               {category?.image?.url && (
                 <Image
                   src={category.image.url}
