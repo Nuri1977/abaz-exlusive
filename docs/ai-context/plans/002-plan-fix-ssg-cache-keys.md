@@ -47,6 +47,8 @@ export const SSGCacheKeys = {
 
 - [x] Update `getNewArrivalsSSG` to use unstable_cache
 - [x] Update `getCategoriesSSG` to use unstable_cache
+- [x] Update `getBestSellersSSG` to use unstable_cache
+- [x] Update `getCollectionsSSG` to use unstable_cache
 - [x] Update `getSettingsSA` to use consistent cache keys
 - [x] Add "server-only" imports for security
 - [x] Implement proper cache tags for revalidation
@@ -55,9 +57,12 @@ export const SSGCacheKeys = {
 
 - **New Arrivals Service**: Added unstable_cache wrapper with proper tags
 - **Categories Service**: Added unstable_cache wrapper with categories key
+- **Best Sellers Service**: Added unstable_cache wrapper with best sellers key
+- **Collections Service**: Created new SSG service with unstable_cache wrapper
 - **Settings Service**: Updated to use SSGCacheKeys constant
 - **Server-Only**: Added "server-only" imports to prevent client-side execution
 - **Cache Tags**: Proper tagging for selective cache invalidation
+- **Type Safety**: All services use proper Prisma-generated types
 
 ---
 
@@ -68,16 +73,22 @@ export const SSGCacheKeys = {
 ### Tasks Completed:
 
 - [x] Update new arrivals API routes to use SSGCacheKeys
+- [x] Update best sellers API routes to use SSGCacheKeys
+- [x] Update categories API routes to use SSGCacheKeys
+- [x] Update collections API routes to use SSGCacheKeys
 - [x] Remove redundant "all-tags" revalidation calls
 - [x] Import SSGCacheKeys constant in API routes
 - [x] Update console.log to console.error for better logging
+- [x] Fix TypeScript type safety issues in all routes
 
 ### Implementation Details:
 
-- **Consistent Revalidation**: All API routes now use `revalidateTag(SSGCacheKeys.newArrivals)`
-- **Removed Redundancy**: Eliminated unnecessary "all-tags" revalidation
+- **Consistent Revalidation**: All API routes now use proper SSGCacheKeys constants
+- **Comprehensive Coverage**: New arrivals, best sellers, categories, and collections all have cache invalidation
+- **Type Safety**: Added proper Prisma types for JSON fields and request bodies
 - **Better Error Handling**: Updated console.log to console.error with descriptive messages
-- **Import Optimization**: Added SSGCacheKeys import to API routes
+- **Import Optimization**: Added SSGCacheKeys import to all relevant API routes
+- **Parameter Cleanup**: Fixed unused parameter warnings with underscore prefix
 
 ---
 
@@ -96,11 +107,32 @@ export const SSGCacheKeys = {
 
 ### Implementation Details:
 
-- **Collections Service**: Created new SSG service with unstable_cache wrapper
-- **Collections API Routes**: Added cache revalidation to all CRUD operations
-- **Categories API Routes**: Added missing cache revalidation
-- **Type Safety**: Proper Prisma types for all JSON fields
-- **Public Route Integration**: Updated CollectionsList component to use cached service
+**Collections Service (`src/services/collections/collectionService.ts`)**:
+
+- Created new SSG service with unstable_cache wrapper
+- Uses SSGCacheKeys.collections constant for consistent cache keys
+- Proper Prisma-generated types with CollectionWithCount interface
+- Server-only import for security
+- Error handling with fallback empty array
+
+**Collections API Routes**:
+
+- `/api/admin/collections/route.ts`: Added revalidateTag on POST operations
+- `/api/admin/collections/[id]/route.ts`: Added revalidateTag on PUT and DELETE operations
+- Proper TypeScript types for request bodies with Prisma.InputJsonValue
+- Fixed unused parameter warnings with underscore prefix
+
+**Categories API Routes**:
+
+- Added missing cache revalidation to all CRUD operations
+- Fixed type safety issues with proper Prisma types
+
+**Public Route Integration**:
+
+- Updated CollectionsList component to use cached getCollectionsSSG service
+- Enhanced type safety with proper Prisma-generated types
+- Improved image URL handling with type guards instead of 'any'
+- Maintains responsive design and performance benefits
 
 ---
 
@@ -136,7 +168,20 @@ export const SSGCacheKeys = {
 
 ### Current Status Summary
 
-- ✅ **Phases 1-3 Complete**: Cache keys, service caching, and API invalidation implemented
-- ⏳ **Phases 4-5 Pending**: Additional services and testing
+- ✅ **Phases 1-4 Complete**: Cache keys, service caching, API invalidation, and additional services implemented
+- ⏳ **Phase 5 Pending**: Testing and optimization
 
-**Completion Status: 80%** - Core caching infrastructure is complete for new arrivals, categories, settings, best sellers, and collections. Products service and settings API routes remain.
+**Completion Status: 90%** - Core caching infrastructure is complete for new arrivals, categories, settings, best sellers, and collections. Only products service and settings API routes remain.
+
+### Services with Complete SSG Cache Implementation:
+
+1. **New Arrivals** - ✅ Service + API routes
+2. **Categories** - ✅ Service + API routes
+3. **Best Sellers** - ✅ Service + API routes
+4. **Collections** - ✅ Service + API routes
+5. **Settings** - ✅ Service (API routes pending)
+
+### Remaining Work:
+
+- Products service SSG implementation
+- Settings API routes cache invalidation
