@@ -1,9 +1,10 @@
 import { revalidateTag } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const response = await prisma.newArrivals.findMany({
       include: {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json()) as { productId?: string };
   if (!body?.productId) {
     return NextResponse.json(
       { message: "Product ID is required" },
@@ -80,17 +81,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    revalidateTag("new-arrivals");
-    revalidateTag("all-tags");
+    revalidateTag(SSGCacheKeys.newArrivals);
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json(error, { status: 500 });
+    console.error("Error creating new arrival:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json()) as { id?: string; productId?: string };
 
   if (!body?.id || !body?.productId) {
     return NextResponse.json(
@@ -130,17 +133,16 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: "No data found" }, { status: 404 });
     }
 
-    revalidateTag("new-arrivals");
-    revalidateTag("all-tags");
+    revalidateTag(SSGCacheKeys.newArrivals);
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.log(error);
+    console.error("Error updating new arrival:", error);
     return NextResponse.json(error, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json()) as { id?: string };
 
   if (!body?.id) {
     return NextResponse.json({ message: "ID is required" }, { status: 400 });
@@ -157,11 +159,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "No data found" }, { status: 404 });
     }
 
-    revalidateTag("new-arrivals");
-    revalidateTag("all-tags");
+    revalidateTag(SSGCacheKeys.newArrivals);
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting new arrival:", error);
     return NextResponse.json(error, { status: 500 });
   }
 }

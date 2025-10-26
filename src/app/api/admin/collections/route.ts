@@ -1,11 +1,14 @@
+import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminServer } from "@/helpers/isAdminServer";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -49,15 +52,22 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name?: string;
+      description?: string;
+      image?: Prisma.InputJsonValue;
+    };
     const { name, description, image } = body;
 
-    if (!name) {
+    if (!name || typeof name !== "string") {
       return new NextResponse("Name is required", { status: 400 });
     }
 
     // Generate slug from name
-    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
 
     // Check if slug already exists
     const existingCollection = await prisma.collection.findUnique({
@@ -65,7 +75,9 @@ export async function POST(req: Request) {
     });
 
     if (existingCollection) {
-      return new NextResponse("Collection with this name already exists", { status: 400 });
+      return new NextResponse("Collection with this name already exists", {
+        status: 400,
+      });
     }
 
     const collection = await prisma.collection.create({
@@ -73,10 +85,11 @@ export async function POST(req: Request) {
         name,
         slug,
         description,
-        image,
+        image: image ?? Prisma.JsonNull,
       },
     });
 
+    revalidateTag(SSGCacheKeys.collections);
     return NextResponse.json(collection);
   } catch (error) {
     console.error("[COLLECTIONS_POST]", error);

@@ -1,8 +1,10 @@
+import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import { FileUploadThing } from "@/types/UploadThing";
+import { type FileUploadThing } from "@/types/UploadThing";
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
@@ -23,10 +25,15 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
     }
 
     const { categoryId } = await params;
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name?: string;
+      description?: string;
+      image?: Prisma.InputJsonValue;
+      parentId?: string;
+    };
     const { name, description, image, parentId } = body;
 
-    if (!name) {
+    if (!name || typeof name !== "string") {
       return new NextResponse("Name is required", { status: 400 });
     }
 
@@ -118,6 +125,7 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
       },
     });
 
+    revalidateTag(SSGCacheKeys.categories);
     return NextResponse.json(category);
   } catch (error) {
     console.error("[CATEGORY_PATCH]", error);
@@ -125,7 +133,7 @@ export async function PATCH(req: Request, { params }: CategoryIdParams) {
   }
 }
 
-export async function DELETE(req: Request, { params }: CategoryIdParams) {
+export async function DELETE(_req: Request, { params }: CategoryIdParams) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -166,11 +174,14 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
     if (category?.image) {
       try {
         const imageData = category.image as FileUploadThing;
-        console.log("Deleting category image from UploadThing:", imageData.key);
+        console.error(
+          "Deleting category image from UploadThing:",
+          imageData.key
+        );
 
         // Delete from UploadThing
         const uploadThingResponse = await utapi.deleteFiles(imageData.key);
-        console.log("UploadThing deletion response:", uploadThingResponse);
+        console.error("UploadThing deletion response:", uploadThingResponse);
 
         // Delete from Gallery database by key
         await prisma.gallery.deleteMany({
@@ -191,7 +202,7 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
           });
         }
 
-        console.log("Deleted category image from Gallery database");
+        console.error("Deleted category image from Gallery database");
       } catch (imageError) {
         console.error("Error deleting category image:", imageError);
         // Don't fail the entire operation if image deletion fails
@@ -199,6 +210,7 @@ export async function DELETE(req: Request, { params }: CategoryIdParams) {
       }
     }
 
+    revalidateTag(SSGCacheKeys.categories);
     return NextResponse.json({
       success: true,
       message:

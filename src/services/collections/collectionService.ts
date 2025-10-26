@@ -6,9 +6,8 @@ import type { Prisma } from "@prisma/client";
 import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { prisma } from "@/lib/prisma";
 
-type CategoryWithChildren = Prisma.CategoryGetPayload<{
+type CollectionWithCount = Prisma.CollectionGetPayload<{
   include: {
-    children: true;
     _count: {
       select: {
         products: true;
@@ -17,41 +16,37 @@ type CategoryWithChildren = Prisma.CategoryGetPayload<{
   };
 }>;
 
-const getCategoriesData = async (): Promise<CategoryWithChildren[]> => {
+const getCollectionsData = async (): Promise<CollectionWithCount[]> => {
   try {
-    const response = await prisma.category.findMany({
+    const response = await prisma.collection.findMany({
       where: {
         isActive: true,
-        parentId: null, // Only get top-level categories for the homepage
       },
-      orderBy: [
-        {
-          name: "asc",
-        },
-      ],
       include: {
-        children: true,
         _count: {
           select: {
             products: true,
           },
         },
       },
+      orderBy: {
+        name: "asc",
+      },
     });
     return response;
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Error fetching collections:", error);
     return [];
   }
 };
 
-export const getCategoriesSSG = unstable_cache(
-  getCategoriesData,
-  [SSGCacheKeys.categories],
+export const getCollectionsSSG = unstable_cache(
+  getCollectionsData,
+  [SSGCacheKeys.collections],
   {
-    tags: [SSGCacheKeys.categories],
+    tags: [SSGCacheKeys.collections],
   }
 );
 
 // Also export as default for compatibility
-export default getCategoriesSSG;
+export default getCollectionsSSG;

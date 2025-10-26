@@ -1,17 +1,20 @@
+import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminServer } from "@/helpers/isAdminServer";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -50,7 +53,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -61,15 +64,23 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name?: string;
+      description?: string;
+      image?: Prisma.InputJsonValue;
+      isActive?: boolean;
+    };
     const { name, description, image, isActive } = body;
 
-    if (!name) {
+    if (!name || typeof name !== "string") {
       return new NextResponse("Name is required", { status: 400 });
     }
 
     // Generate slug from name
-    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
 
     // Check if slug already exists for a different collection
     const existingCollection = await prisma.collection.findFirst({
@@ -80,7 +91,9 @@ export async function PUT(
     });
 
     if (existingCollection) {
-      return new NextResponse("Collection with this name already exists", { status: 400 });
+      return new NextResponse("Collection with this name already exists", {
+        status: 400,
+      });
     }
 
     const collection = await prisma.collection.update({
@@ -89,11 +102,12 @@ export async function PUT(
         name,
         slug,
         description,
-        image,
+        image: image ?? Prisma.JsonNull,
         isActive,
       },
     });
 
+    revalidateTag(SSGCacheKeys.collections);
     return NextResponse.json(collection);
   } catch (error) {
     console.error("[COLLECTION_PUT]", error);
@@ -102,12 +116,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -136,13 +150,17 @@ export async function DELETE(
 
     // Check if collection has products
     if (collection._count.products > 0) {
-      return new NextResponse("Cannot delete collection with associated products", { status: 400 });
+      return new NextResponse(
+        "Cannot delete collection with associated products",
+        { status: 400 }
+      );
     }
 
     await prisma.collection.delete({
       where: { id },
     });
 
+    revalidateTag(SSGCacheKeys.collections);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("[COLLECTION_DELETE]", error);
