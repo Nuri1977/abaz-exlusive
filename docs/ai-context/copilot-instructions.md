@@ -199,6 +199,16 @@ The project uses TanStack Query (React Query) for data fetching and state manage
 - **No Time-Based Revalidation**: Never use time-based revalidation (e.g., `revalidate: 3600`) in `unstable_cache` configurations. Always rely on tag-based revalidation for explicit cache invalidation control.
 - **Tag-Based Invalidation**: Use cache tags for explicit invalidation when data changes through admin operations or user actions.
 - **Cache Strategy**: Implement cache invalidation triggers in API routes that modify data to ensure consistency.
+- **Hero Items Caching**: The hero items system uses `SSGCacheKeys.heroItems` for tag-based cache invalidation.
+
+### Form and Modal Best Practices
+
+- **Responsive Forms**: All forms must use `w-full max-w-full` to prevent overflow in modals
+- **Loading States**: Always implement loading indicators for data fetching operations
+- **Duplicate Prevention**: Implement client-side validation to prevent duplicate entries
+- **Dialog Accessibility**: Always include `DialogDescription` for accessibility compliance
+- **Error Handling**: Provide clear, actionable error messages with proper validation
+- **Mobile Optimization**: Use responsive spacing classes (e.g., `space-y-8 sm:space-y-12 lg:space-y-20`)
 
 ### Authentication Integration
 
@@ -322,9 +332,22 @@ The project uses UploadThing v7 for file uploads and management:
 - **Image Optimization**: Use Next.js Image component with proper sizing
 - **Lazy Loading**: Implement lazy loading for product grids
 - **Pagination**: Paginate product listings and search results
-- **Caching**: Cache frequently accessed data with appropriate TTL
-- **Mobile Performance**: Optimize for mobile networks and devices
+- **Caching**: Cache frequently accessed data with tag-based invalidation (no time-based revalidation)
+- **Mobile Performance**: Optimize for mobile networks and devices with responsive spacing
 - **MANDATORY RESPONSIVE DESIGN**: ALL pages and components MUST be fully responsive and mobile-optimized
+
+### Dynamic Hero Section Implementation
+
+The project now includes a fully implemented Dynamic Hero Section with Collections:
+
+- **Admin Management**: Complete CRUD interface for hero items with collection integration
+- **Duplicate Prevention**: Smart filtering prevents adding the same collection multiple times
+- **Responsive Design**: Mobile-first approach with optimized spacing across all breakpoints
+- **Loading States**: Comprehensive loading indicators for better user experience
+- **Type Safety**: Full TypeScript coverage with strict optional chaining requirements
+- **Accessibility**: ARIA compliant with proper dialog descriptions and keyboard navigation
+- **Performance**: SSG caching with tag-based invalidation for optimal performance
+- **Fallback Support**: Graceful handling of empty states with default content
 
 ### Security Features
 
