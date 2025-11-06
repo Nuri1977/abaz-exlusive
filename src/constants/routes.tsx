@@ -3,6 +3,7 @@ import {
   Heart,
   Home,
   Image,
+  ImageIcon,
   Info,
   KeyRound,
   LayoutDashboard,
@@ -50,6 +51,13 @@ export const adminLinks = [
     href: "/admin-dashboard/users",
     icon: Users,
     description: "Manage user accounts and permissions",
+  },
+  {
+    name: "Hero Items",
+    href: "/admin-dashboard/hero-items",
+    icon: ImageIcon,
+    value: "Manage",
+    description: "Manage homepage hero carousel items",
   },
   {
     name: "Gallery",

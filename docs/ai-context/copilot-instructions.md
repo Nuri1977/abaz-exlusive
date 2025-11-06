@@ -194,6 +194,12 @@ The project uses TanStack Query (React Query) for data fetching and state manage
 - Implement proper error handling and loading states
 - Use optimistic updates for mutations when appropriate
 
+### Caching and Revalidation Rules
+
+- **No Time-Based Revalidation**: Never use time-based revalidation (e.g., `revalidate: 3600`) in `unstable_cache` configurations. Always rely on tag-based revalidation for explicit cache invalidation control.
+- **Tag-Based Invalidation**: Use cache tags for explicit invalidation when data changes through admin operations or user actions.
+- **Cache Strategy**: Implement cache invalidation triggers in API routes that modify data to ensure consistency.
+
 ### Authentication Integration
 
 Authentication is handled using the Better Auth library:

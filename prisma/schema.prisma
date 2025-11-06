@@ -304,17 +304,34 @@ model MediaUsage {
 }
 
 model Collection {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   name        String
-  slug        String    @unique
+  slug        String      @unique
   description String?
-  image       Json?     @default("null")
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  image       Json?       @default("null")
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   products    Product[]
+  heroItems   HeroItem[]
 
   @@map("collection")
+}
+
+model HeroItem {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  imageUrl     String
+  linkUrl      String
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  isActive     Boolean     @default(true)
+  sortOrder    Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("hero_items")
 }
 
 model Settings {
