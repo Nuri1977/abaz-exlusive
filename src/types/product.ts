@@ -44,3 +44,49 @@ export type ProductWithOptionsAndVariants = Omit<Product, "images"> & {
     }[];
   }[];
 };
+
+export type ProductWithVariants = Product & {
+  variants: Array<{
+    id: string;
+    sku: string;
+    price: number | null;
+    stock: number;
+    options: Array<{
+      optionValue: {
+        id: string;
+        value: string;
+      };
+    }>;
+  }>;
+  category: {
+    id: string;
+    name: string;
+    level: number;
+    parentId: string | null;
+    parent?: {
+      id: string;
+      name: string;
+      parentId: string | null;
+      parent?: {
+        id: string;
+        name: string;
+        parentId: string | null;
+      } | null;
+    } | null;
+  } | null;
+  collection?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  images: FileUploadThing[] | null;
+};
+
+export type CategoryWithParent = {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string | null;
+  parent?: CategoryWithParent | null;
+  children?: CategoryWithParent[];
+};
