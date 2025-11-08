@@ -622,9 +622,9 @@ export function ProductTable() {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                         </TableHead>
                       );
                     })}
@@ -738,7 +738,7 @@ export function ProductTable() {
                 to{" "}
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
+                  table.getState().pagination.pageSize,
                   table.getFilteredRowModel().rows.length
                 )}{" "}
                 of {table.getFilteredRowModel().rows.length} products
@@ -966,6 +966,8 @@ function ProductCard({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DeleteProductDialog product={product} asMenuItem />
+                    <DropdownMenuSeparator />
+                    <SocialPostCell product={product} asDropdownItems />
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -1054,6 +1056,8 @@ function ProductCard({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DeleteProductDialog product={product} asMenuItem />
+                  <DropdownMenuSeparator />
+                  <SocialPostCell product={product} asDropdownItems />
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
