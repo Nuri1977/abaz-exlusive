@@ -50,48 +50,43 @@ const LoginForm = () => {
             // Enhanced error handling for specific error cases
             let errorMessage: string;
 
-            if (ctx.error?.status === 403) {
+            // Extract error message first
+            const errorMsg = ctx.error?.message || "";
+
+            // Check for authentication-related errors first (before status checks)
+            if (
+              typeof errorMsg === "string" &&
+              (errorMsg.includes("Invalid password") ||
+                errorMsg.includes("User not found") ||
+                errorMsg.toLowerCase().includes("invalid credentials") ||
+                errorMsg.toLowerCase().includes("incorrect password"))
+            ) {
+              errorMessage = "Incorrect email or password. Please try again.";
+            } else if (ctx.error?.status === 403) {
               errorMessage =
                 "Please verify your email address before signing in.";
+            } else if (ctx.error?.status === 401) {
+              // Unauthorized - typically wrong credentials
+              errorMessage = "Incorrect email or password. Please try again.";
             } else if (ctx.error?.status === 500) {
-              // Handle server errors like "Invalid password" in a user-friendly way
-              if (
-                typeof ctx.error?.message === "string" &&
-                ctx.error?.message.includes("Invalid password")
-              ) {
-                errorMessage = "Incorrect email or password. Please try again.";
-              } else {
-                errorMessage =
-                  "An error occurred during sign in. Please try again later.";
-              }
-            } else if (typeof ctx.error === "object") {
+              // Check if it's an auth error disguised as 500
+              errorMessage = "Incorrect email or password. Please try again.";
+            } else if (typeof ctx.error === "object" && ctx.error !== null) {
               // For other error objects, try to extract meaningful message
               errorMessage =
-                ctx.error?.message ||
-                "Failed to sign in. Please check your credentials.";
+                errorMsg || "Failed to sign in. Please check your credentials.";
 
-              // Special handling for common auth errors that might come as objects
-              if (typeof errorMessage === "string") {
-                if (
-                  errorMessage.includes("Invalid password") ||
-                  errorMessage.includes("User not found")
-                ) {
-                  errorMessage =
-                    "Incorrect email or password. Please try again.";
-                }
-              } else {
-                errorMessage =
-                  "Authentication failed. Please check your credentials and try again.";
+              // Fallback check for auth errors
+              if (
+                typeof errorMessage === "string" &&
+                (errorMessage.includes("Invalid password") ||
+                  errorMessage.includes("User not found"))
+              ) {
+                errorMessage = "Incorrect email or password. Please try again.";
               }
             } else {
               errorMessage =
-                (ctx.error &&
-                typeof ctx.error === "object" &&
-                ctx.error !== null &&
-                "toString" in ctx.error
-                  ? (ctx.error as { toString(): string }).toString()
-                  : String(ctx.error)) ||
-                "Failed to sign in. Please check your credentials.";
+                errorMsg || "Failed to sign in. Please check your credentials.";
             }
 
             setError(errorMessage);

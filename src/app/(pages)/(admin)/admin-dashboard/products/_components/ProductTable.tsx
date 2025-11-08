@@ -1,26 +1,30 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ColumnDef,
-  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
   useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,
   ChevronDown,
   Eye,
-  Filter,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -30,21 +34,15 @@ import {
   X,
 } from "lucide-react";
 
-import { FileUploadThing } from "@/types/UploadThing";
-import {
-  categoryKeys,
-  fetchAdminCategories,
-  type CategoryWithRelations,
-} from "@/lib/query/categories";
+import { type ProductWithVariants } from "@/types/product";
+import { categoryKeys, fetchAdminCategories } from "@/lib/query/categories";
 import { cn, formatPrice } from "@/lib/utils";
-import { useToast } from "@/hooks/useToast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -83,52 +81,7 @@ import {
 
 import { DeleteProductDialog } from "./DeleteProductDialog";
 import { ProductPreviewDialog } from "./ProductPreviewDialog";
-
-export type ProductWithVariants = Product & {
-  variants: Array<{
-    id: string;
-    sku: string;
-    price: number | null;
-    stock: number;
-    options: Array<{
-      optionValue: {
-        id: string;
-        value: string;
-      };
-    }>;
-  }>;
-  category: {
-    id: string;
-    name: string;
-    level: number;
-    parentId: string | null;
-    parent?: {
-      id: string;
-      name: string;
-      parentId: string | null;
-      parent?: {
-        id: string;
-        name: string;
-        parentId: string | null;
-      } | null;
-    } | null;
-  } | null;
-  collection?: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  images: FileUploadThing[] | null;
-};
-
-type CategoryWithParent = {
-  id: string;
-  name: string;
-  level: number;
-  parentId: string | null;
-  parent?: CategoryWithParent | null;
-  children?: CategoryWithParent[];
-};
+import SocialPostCell from "./SocialPostCell";
 
 export function ProductTable() {
   const [sorting, setSorting] = useState<SortingState>([
@@ -140,7 +93,6 @@ export function ProductTable() {
     pageSize: 10,
   });
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const { toast } = useToast();
 
   const {
     data: products,
@@ -394,7 +346,8 @@ export function ProductTable() {
       },
       cell: ({ row }) => {
         const collection = (row?.original as any)?.collection;
-        if (!collection) return <span className="text-muted-foreground">No Collection</span>;
+        if (!collection)
+          return <span className="text-muted-foreground">No Collection</span>;
         return collection.name;
       },
       sortingFn: (rowA, rowB) => {
@@ -421,6 +374,15 @@ export function ProductTable() {
       },
       cell: ({ row }) => {
         return new Date(row?.original?.updatedAt)?.toLocaleDateString();
+      },
+    },
+    {
+      id: "post",
+      header: "Post",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const product = row.original;
+        return <SocialPostCell product={product} />;
       },
     },
     {
@@ -660,9 +622,9 @@ export function ProductTable() {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                         </TableHead>
                       );
                     })}
@@ -776,7 +738,7 @@ export function ProductTable() {
                 to{" "}
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
+                    table.getState().pagination.pageSize,
                   table.getFilteredRowModel().rows.length
                 )}{" "}
                 of {table.getFilteredRowModel().rows.length} products
