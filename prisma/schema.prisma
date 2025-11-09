@@ -304,16 +304,17 @@ model MediaUsage {
 }
 
 model Collection {
-  id          String      @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  slug        String      @unique
+  slug        String       @unique
   description String?
-  image       Json?       @default("null")
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  image       Json?        @default("null")
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   products    Product[]
   heroItems   HeroItem[]
+  promoBanner PromoBanner?
 
   @@map("collection")
 }
@@ -380,6 +381,17 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+model PromoBanner {
+  id           String      @id @default(cuid())
+  collectionId String?     @unique
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("promo_banners")
 }
 
 enum PaymentStatus {

@@ -8,6 +8,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Mail,
+  Megaphone,
   Package,
   Settings,
   ShoppingBag,
@@ -58,6 +59,13 @@ export const adminLinks = [
     icon: ImageIcon,
     value: "Manage",
     description: "Manage homepage hero carousel items",
+  },
+  {
+    name: "Promo Banner",
+    href: "/admin-dashboard/promo-banner",
+    icon: Megaphone,
+    value: "Manage",
+    description: "Manage homepage promotional banner",
   },
   {
     name: "Gallery",

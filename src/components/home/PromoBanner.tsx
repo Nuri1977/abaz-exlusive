@@ -1,92 +1,66 @@
 import Link from "next/link";
 
 import { Button } from "../ui/button";
+import type { PromoBannerData } from "@/services/promoBanner/promoBannerService";
 
-const PromoBanner = () => {
+interface PromoBannerProps {
+  promoBanner?: PromoBannerData | null;
+}
+
+const PromoBanner = ({ promoBanner }: PromoBannerProps) => {
+  // Determine if we have an active promo banner with collection
+  const hasActivePromoBanner = promoBanner?.isActive && promoBanner?.collection;
+  const collection = promoBanner?.collection;
+
+  // Dynamic content based on collection or fallback
+  const content = hasActivePromoBanner && collection ? {
+    title: collection.name,
+    image: collection.image &&
+      typeof collection.image === 'object' &&
+      collection.image !== null &&
+      'url' in collection.image
+      ? collection.image.url as string
+      : "/images/blue.jpg",
+    ctaLink: `/collections/${collection.slug}`,
+    ctaText: "Shop Collection",
+  } : {
+    // Fallback to current static content
+    title: "Free Express Shipping",
+    image: "/images/blue.jpg",
+    ctaLink: "/products",
+    ctaText: "Shop Now",
+  };
+
   return (
-    <section className="relative h-[650px] overflow-hidden">
+    <section className="relative h-[500px] overflow-hidden">
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-no-repeat"
         style={{
-          backgroundImage: `url('/images/blue.jpg')`, // To make it changeable by Admin in Admin Dashboard
+          backgroundImage: `url('${content.image}')`,
           backgroundAttachment: "fixed",
-          backgroundPosition: "center",
+          backgroundPosition: "top center",
           backgroundSize: "cover",
         }}
       >
-        {/* Optional shimmer or overlay */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center text-white">
-        {/* Icon */}
-        <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
-            <svg
-              className="size-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-          Free Express Shipping
+      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-12 text-center text-white">
+        {/* Collection Name */}
+        <h2 className="mb-6 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+          {content.title}
         </h2>
 
-        {/* Subtitle */}
-        <p className="mx-auto mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
-          Enjoy free express shipping on all orders. Shop the latest in
-          women&apos;s footwear and get your favorites delivered fast!
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button
-            asChild
-            size="lg"
-            variant="secondary"
-            className="bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-          >
-            <Link href="/products">Shop Now</Link>
-          </Button>
-
-          <Button
-            asChild
-            size="lg"
-            variant="secondary"
-            className="bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-          >
-            <Link href="/about">Learn More</Link>
-          </Button>
-        </div>
-
-        {/* Info icons */}
-        <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-white/80">
-          {["Fast Delivery", "Free Returns", "Premium Quality"].map(
-            (text, i) => (
-              <div className="flex items-center gap-2" key={i}>
-                <svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{text}</span>
-              </div>
-            )
-          )}
-        </div>
+        {/* Single CTA Button */}
+        <Button
+          asChild
+          size="lg"
+          variant="secondary"
+          className="bg-white text-primary shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+        >
+          <Link href={content.ctaLink}>{content.ctaText}</Link>
+        </Button>
       </div>
     </section>
   );

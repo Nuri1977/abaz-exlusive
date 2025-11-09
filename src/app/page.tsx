@@ -4,12 +4,14 @@ import NewArrivals from "@/components/home/NewArrivals";
 import PromoBanner from "@/components/home/PromoBanner";
 import ShopByCategory from "@/components/home/ShopByCategory";
 import { getCachedHeroItems } from "@/lib/cache/heroItems";
+import { getCachedPromoBanner } from "@/lib/cache/promoBanner";
 import { getSettingsSA } from "@/services/settings/settingsService";
 
 export default async function HomePage() {
-  const [settings, heroItems] = await Promise.all([
+  const [settings, heroItems, promoBanner] = await Promise.all([
     getSettingsSA(),
     getCachedHeroItems(),
+    getCachedPromoBanner(),
   ]);
 
   return (
@@ -23,7 +25,7 @@ export default async function HomePage() {
         <NewArrivals />
 
         {/* Promo Banner */}
-        <PromoBanner />
+        <PromoBanner promoBanner={promoBanner} />
 
         {/* Best Sellers */}
         <BestSellers />
