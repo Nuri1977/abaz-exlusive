@@ -46,6 +46,41 @@ const AdminDashboard = dynamic(() => import("@/components/admin/Dashboard"), {
 - **Incremental Static Regeneration**: Dynamic content with static benefits
 - **Edge Runtime**: API routes optimized for edge execution where appropriate
 
+#### SEO Performance Optimization
+
+- **Server-Side Metadata**: All SEO metadata generated server-side for optimal performance
+- **Structured Data Injection**: Efficient JSON-LD injection without blocking rendering
+- **Dynamic Sitemap**: Cached sitemap generation with database queries optimized for performance
+- **Core Web Vitals**: SEO implementations maintain excellent Core Web Vitals scores
+- **Mobile-First**: All SEO optimizations prioritize mobile performance
+
+```typescript
+// Efficient SEO metadata generation
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  try {
+    // Optimized database query for SEO data
+    const data = await prisma.product.findUnique({
+      where: { id: params.id },
+      select: {
+        // Only select fields needed for SEO
+        name: true,
+        description: true,
+        price: true,
+        images: true,
+        category: { select: { name: true } },
+      },
+    });
+
+    return generateProductMetadata(data);
+  } catch (error) {
+    // Fast fallback for SEO
+    return generateFallbackMetadata();
+  }
+}
+```
+
 ### React Performance
 
 #### Component Optimization

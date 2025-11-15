@@ -46,6 +46,59 @@ type CartItem = {
 - Currency conversion for international customers
 - Guest cart migration on login (planned feature)
 
+## SEO and Search Optimization
+
+### Comprehensive SEO Implementation
+
+The e-commerce platform includes world-class SEO optimization:
+
+**Metadata Generation:**
+
+- Dynamic product page SEO with pricing and availability
+- Collection page optimization with product counts and price ranges
+- Category-specific metadata with targeted keywords
+- Social media optimization with Open Graph and Twitter Cards
+
+**Structured Data (Schema.org) - Ready for Implementation:**
+
+- Product schema library ready for pricing, availability, and ratings
+- Offer schema ready for dynamic pricing information
+- CollectionPage schema ready for showcasing featured products
+- BreadcrumbList schema ready for enhanced navigation
+- ItemList schema ready for product catalogs
+
+**Technical SEO:**
+
+- Dynamic sitemap generation with products and collections
+- Optimized robots.txt with proper crawler directives
+- Canonical URLs to prevent duplicate content
+- Mobile-first SEO optimization
+
+```typescript
+// Example: Product SEO implementation
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const product = await fetchProductForSEO(params.id);
+
+  return {
+    title: `${product.name} - Premium Women's Dress | Abaz Exclusive`,
+    description: `${product.description} Available for ${product.price} MKD. ${product.inStock ? "In stock" : "Limited availability"}.`,
+    keywords: [
+      product.name,
+      "women's dress",
+      product.category,
+      "designer dress",
+    ],
+    openGraph: {
+      title: product.name,
+      description: product.description,
+      images: product.images,
+    },
+  };
+}
+```
+
 ## Product Management
 
 ### Product Catalog Features
