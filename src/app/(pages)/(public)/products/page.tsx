@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
+import { generateProductsListingMetadata } from "@/lib/metadata";
 import { CategoryBreadcrumb } from "@/components/shared/CategoryBreadcrumb";
 
 import { CategoryNav } from "./_components/CategoryNav";
@@ -8,10 +10,8 @@ import { ProductList } from "./_components/ProductList";
 import { ProductSkeleton } from "./_components/ProductSkeleton";
 import { ProductSort } from "./_components/ProductSort";
 
-export const metadata = {
-  title: "Products | Abaz Exclusive",
-  description: "Browse our collection of high-quality shoes",
-};
+// Generate SEO metadata for Products listing page
+export const metadata: Metadata = generateProductsListingMetadata();
 
 export default async function ProductsPage({
   searchParams,

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-};
+import { generatePrivacyMetadata } from "@/lib/metadata";
+
+// Generate SEO metadata for Privacy Policy page
+export const metadata: Metadata = generatePrivacyMetadata();
 
 export default function PrivacyPage() {
   return (

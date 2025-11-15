@@ -46,47 +46,46 @@ export default function ProductPageClient({ id }: { id: string }) {
   if (isError || !product) notFound();
 
   const liked = isLiked(product.id);
-
   const hasVariants = product.variants && product.variants.length > 0;
 
   const availableSizes = hasVariants
     ? Array.from(
-        new Set(
-          product.variants.flatMap((variant) =>
-            variant.options
-              .filter((opt) =>
-                opt.optionValue?.value?.match(/^\d*[XSML]{1,2}$/i)
-              )
-              .map((opt) => opt.optionValue.value)
-          )
+      new Set(
+        product.variants.flatMap((variant) =>
+          variant.options
+            .filter((opt) =>
+              opt.optionValue?.value?.match(/^\d*[XSML]{1,2}$/i)
+            )
+            .map((opt) => opt.optionValue.value)
         )
       )
+    )
     : [];
 
   const availableColors = hasVariants
     ? Array.from(
-        new Set(
-          product.variants.flatMap((variant) =>
-            variant.options
-              .filter(
-                (opt) => !opt.optionValue?.value?.match(/^\d*[XSML]{1,2}$/i)
-              )
-              .map((opt) => opt.optionValue.value)
-          )
+      new Set(
+        product.variants.flatMap((variant) =>
+          variant.options
+            .filter(
+              (opt) => !opt.optionValue?.value?.match(/^\d*[XSML]{1,2}$/i)
+            )
+            .map((opt) => opt.optionValue.value)
         )
       )
+    )
     : [];
 
   const matchedVariant = hasVariants
     ? product.variants.find((variant) => {
-        const optionValues = variant.options.map(
-          (opt) => opt.optionValue.value
-        );
-        return (
-          optionValues.includes(selectedColor || "") &&
-          optionValues.includes(selectedSize || "")
-        );
-      })
+      const optionValues = variant.options.map(
+        (opt) => opt.optionValue.value
+      );
+      return (
+        optionValues.includes(selectedColor || "") &&
+        optionValues.includes(selectedSize || "")
+      );
+    })
     : null;
 
   const effectivePrice = matchedVariant?.price ?? product.price ?? 0;

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 
+import { generateContactMetadata } from "@/lib/metadata";
+
 import ContactForm from "./_components/ContactForm";
 
-export const metadata: Metadata = {
-  title: "Contact | Abaz Exclusive",
-};
+// Generate SEO metadata for Contact page
+export const metadata: Metadata = generateContactMetadata();
 
 export default function ContactPage() {
   return (

@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
+
+import { generateAboutMetadata } from "@/lib/metadata";
+
 import AboutUsPublicClient from "./AboutUsPublicClient";
+
+// Generate SEO metadata for About page
+export const metadata: Metadata = generateAboutMetadata();
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -18,7 +25,7 @@ async function fetchAboutUsPublic() {
       return null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-eslint/no-unsafe-assignment
     const result = await res.json();
     return result?.data ?? null;
   } catch (error) {
