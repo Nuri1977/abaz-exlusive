@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { usePathname, useSearchParams } from "next/navigation";
-
 import type { Product } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 
 export function useCurrentCategory() {
   const pathname = usePathname();
@@ -10,17 +9,18 @@ export function useCurrentCategory() {
 
   // If we're on a product page, we need to fetch the product first to get its category
   const isProductPage = pathname?.startsWith("/product/");
-  const productId = isProductPage ? pathname?.split("/").pop() : null;
+  const productSlug = isProductPage ? pathname?.split("/").pop() : null;
 
   const { data: product } = useQuery({
-    queryKey: ["product", productId],
+    queryKey: ["product", productSlug],
     queryFn: async () => {
-      if (!productId) return null;
-      const response = await fetch(`/api/product/${productId}`);
+      if (!productSlug) return null;
+      const response = await fetch(`/api/product/${productSlug}`);
       if (!response.ok) return null;
-      return response.json() as Promise<Product>;
+      const result = (await response.json()) as { data: Product };
+      return result?.data ?? null;
     },
-    enabled: !!productId,
+    enabled: !!productSlug,
   });
 
   // Now fetch the category based on either the search params or product's category
@@ -31,7 +31,8 @@ export function useCurrentCategory() {
       if (!id) return null;
       const response = await fetch(`/api/categories/current?categoryId=${id}`);
       if (!response.ok) return null;
-      return response.json();
+      const result = (await response.json()) as unknown;
+      return result;
     },
     enabled: !!(categoryId || product?.categoryId),
   });

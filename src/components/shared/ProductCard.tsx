@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCartContext } from "@/context/CartContext";
 import { useUserAccountContext } from "@/context/UserAccountContext";
-import { Category } from "@prisma/client";
+import { type Category } from "@prisma/client";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import { ProductExt } from "@/types/product";
+import { type ProductExt } from "@/types/product";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = () => {
     if (hasVariants) {
       // If product has variants, redirect to product page
-      router.push(`/product/${product?.id}`);
+      router.push(`/product/${product?.slug}`);
       return;
     }
 
@@ -64,7 +64,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="group relative overflow-hidden transition-shadow hover:shadow-lg">
       {/* Main clickable area - entire card */}
       <Link
-        href={`/product/${product?.id}`}
+        href={`/product/${product?.slug}`}
         className="absolute inset-0 z-10"
       />
 
@@ -100,10 +100,10 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-3">
         <div className="space-y-0.5">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 text-sm font-medium transition-colors group-hover:text-primary leading-tight flex-1">
+            <h3 className="line-clamp-2 flex-1 text-sm font-medium leading-tight transition-colors group-hover:text-primary">
               {product?.name}
             </h3>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide shrink-0">{product?.brand}</p>
+            <p className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">{product?.brand}</p>
           </div>
           <p className="text-xs text-muted-foreground">
             {product?.category?.name}
@@ -133,7 +133,7 @@ export function ProductCard({ product }: ProductCardProps) {
               handleAddToCart();
             }}
             aria-label={hasVariants ? "View options" : "Add to cart"}
-            className="h-9 w-9 text-muted-foreground transition-colors hover:text-primary"
+            className="size-9 text-muted-foreground transition-colors hover:text-primary"
           >
             <ShoppingCart size={18} />
           </Button>
@@ -152,7 +152,7 @@ export function ProductCard({ product }: ProductCardProps) {
             }}
             aria-label="Toggle like"
             className={cn(
-              "h-9 w-9 transition-colors",
+              "size-9 transition-colors",
               liked ? "text-destructive" : "text-muted-foreground hover:text-destructive"
             )}
           >

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import ProductImageGallery from "./ProductImageGallery";
 import ProductPageSkeleton from "./ProductPageSkeleton";
 
-export default function ProductPageClient({ id }: { id: string }) {
+export default function ProductPageClient({ slug }: { slug: string }) {
   const { addItem, setOpen, currency, convertPrice, currencySymbol } =
     useCartContext();
   const { toggleLike, isLiked } = useUserAccountContext();
@@ -30,15 +30,15 @@ export default function ProductPageClient({ id }: { id: string }) {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: [queryKeys.products, id],
+    queryKey: [queryKeys.products, slug],
     queryFn: async () => {
       const res = await api.get<ProductWithOptionsAndVariants>(
-        `/product/${id}`
+        `/product/${slug}`
       );
       if (res.status === 404) notFound();
       return res.data ?? null;
     },
-    enabled: !!id,
+    enabled: !!slug,
     retry: false,
   });
 

@@ -4,19 +4,20 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
-    if (!id) {
-      return new NextResponse("Product ID is required", { status: 400 });
+    if (!slug) {
+      return new NextResponse("Product slug is required", { status: 400 });
     }
 
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { slug },
       include: {
         category: true,
+        collection: true,
         options: {
           include: { values: true },
         },
@@ -38,6 +39,7 @@ export async function GET(
 
     return NextResponse.json({ data: product }, { status: 200 });
   } catch (error) {
+    console.error("Error fetching product by slug:", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

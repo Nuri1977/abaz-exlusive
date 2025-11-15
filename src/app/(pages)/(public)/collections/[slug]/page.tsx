@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
           select: {
             id: true,
             name: true,
+            slug: true,
             price: true,
             category: {
               select: {
@@ -117,7 +118,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
           "item": {
             "@type": "Product",
             "name": product.name,
-            "url": `${process.env.NEXT_PUBLIC_SITE_URL || "https://abazexclusive.com"}/product/${product.id}`,
+            "url": `${process.env.NEXT_PUBLIC_SITE_URL || "https://abazexclusive.com"}/product/${product.slug}`,
             "offers": {
               "@type": "Offer",
               "price": Number(product.price),

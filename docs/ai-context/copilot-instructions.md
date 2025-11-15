@@ -26,6 +26,7 @@ This repository uses a modular documentation approach with comprehensive helper 
 - Complete authentication system with Better Auth
 - Shopping cart and checkout functionality with guest support
 - Product management with variants and inventory tracking
+- SEO-friendly slug-based product URLs (`/product/[slug]`) for optimal search engine visibility
 - Admin dashboard with role-based access control
 - File uploads and gallery management with UploadThing v7
 - Email communication system with React Email and Nodemailer
@@ -185,6 +186,25 @@ The project uses Next.js 15.2.3 with React 18.3.1, which includes several import
   ```
 - **Page Components**: Never convert a Next.js page (e.g. files in `src/app/**/page.tsx`) into a client component by adding the `"use client"` directive. Instead, always create a new child component (e.g. in a `_components/` directory) and mark that child with `"use client"` if you need client-side features like React hooks.
 
+### URL Structure and Routing
+
+The application uses SEO-friendly slug-based URLs for all public-facing content:
+
+- **Product Pages**: `/product/[slug]` - Uses descriptive slugs like `/product/elegant-evening-dress`
+- **Collection Pages**: `/collections/[slug]` - Uses collection slugs like `/collections/summer-collection`
+- **Category Filtering**: `/products?category=[id]` - Category filtering uses IDs for internal operations
+- **Admin Routes**: All admin routes use ID-based parameters for internal management and security
+- **API Endpoints**:
+  - Public: `/api/product/[slug]` - Fetch products by slug
+  - Admin: `/api/admin/products/[id]` - Admin operations use IDs
+
+**Important Routing Rules**:
+
+- Never use ID-based URLs for public product pages
+- Always use `product?.slug` when linking to products from components
+- Admin interfaces should continue using ID-based routes for security and consistency
+- All product links in components must use slug-based URLs
+
 ### Data Fetching and State Management
 
 The project uses TanStack Query (React Query) for data fetching and state management:
@@ -196,6 +216,7 @@ The project uses TanStack Query (React Query) for data fetching and state manage
 - Use proper TypeScript types for query and mutation responses
 - Implement proper error handling and loading states
 - Use optimistic updates for mutations when appropriate
+- **Product Queries**: Use slug-based query keys for public product fetching: `[queryKeys.products, slug]`
 
 ### Caching and Revalidation Rules
 
@@ -244,6 +265,11 @@ The project uses UploadThing v7 for file uploads and management:
   // Correct usage for internal links
   import Link from "next/link";
   <Link href="/products">Products</Link>
+
+  // Product links - ALWAYS use slug, never ID
+  <Link href={`/product/${product?.slug}`}>
+    {product?.name}
+  </Link>
 
   // For external links
   <Link href="https://example.com" target="_blank" rel="noopener noreferrer">
@@ -311,8 +337,9 @@ The project uses UploadThing v7 for file uploads and management:
 - **Product Variants**: Support size and color variants with individual pricing and stock
 - **Image Galleries**: Multiple product images with optimized loading
 - **Inventory Tracking**: Real-time stock management and low stock alerts
-- **SEO Optimization**: SEO-friendly URLs and meta tags for product pages
+- **SEO Optimization**: SEO-friendly slug-based URLs (`/product/[slug]`) and comprehensive meta tags for product pages
 - **Search and Filtering**: Advanced product search and category filtering
+- **Slug-Based Routing**: All product URLs use descriptive slugs instead of UUIDs for better SEO and user experience
 
 ### Order Processing
 
@@ -345,9 +372,10 @@ The project has comprehensive SEO optimization implemented across all pages:
 
 - `src/lib/metadata.ts` - Centralized metadata generation with specialized functions
 - `src/lib/structured-data.ts` - Schema.org structured data library (ready for implementation)
-- `src/app/sitemap.ts` - Dynamic sitemap with products and collections
+- `src/app/sitemap.ts` - Dynamic sitemap with slug-based product and collection URLs
 - `src/app/robots.ts` - Optimized crawler directives
-- All page components include comprehensive SEO metadata
+- `src/app/(pages)/(public)/product/[slug]/page.tsx` - Slug-based product pages with comprehensive SEO metadata
+- All page components include comprehensive SEO metadata with slug-based canonical URLs
 
 ### Performance Considerations
 
@@ -358,6 +386,27 @@ The project has comprehensive SEO optimization implemented across all pages:
 - **Mobile Performance**: Optimize for mobile networks and devices with responsive spacing
 - **SEO Performance**: Fast metadata generation without affecting page load times
 - **MANDATORY RESPONSIVE DESIGN**: ALL pages and components MUST be fully responsive and mobile-optimized
+
+### Slug-Based Product Routing Implementation
+
+The application has been fully migrated to slug-based product URLs for optimal SEO:
+
+- **Route Structure**: `/product/[slug]` replaces the old `/product/[id]` pattern
+- **API Endpoints**: `src/app/api/product/[slug]/route.ts` handles slug-based product fetching
+- **Database Queries**: All public product queries use `where: { slug }` instead of `where: { id }`
+- **Component Updates**: All product links in components use `product?.slug` for navigation
+- **SEO Benefits**: Descriptive URLs like `/product/elegant-evening-dress` improve search rankings
+- **Sitemap Integration**: Dynamic sitemap generates slug-based product URLs
+- **Metadata Generation**: Canonical URLs and structured data use slug-based paths
+- **No Backward Compatibility**: Old ID-based routes have been completely removed (no production deployment)
+
+**Key Files Updated**:
+
+- `src/app/(pages)/(public)/product/[slug]/page.tsx` - Main product page with slug routing
+- `src/app/api/product/[slug]/route.ts` - API endpoint for slug-based product fetching
+- `src/components/shared/ProductCard.tsx` - Updated to use slug-based links
+- `src/app/sitemap.ts` - Generates slug-based URLs for products
+- `src/hooks/useCurrentCategory.ts` - Updated to handle slug-based product URLs
 
 ### Dynamic Hero Section Implementation
 

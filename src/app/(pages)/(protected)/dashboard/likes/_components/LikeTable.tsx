@@ -80,7 +80,7 @@ export default function LikeTable() {
                   <Button
                     className="mr-4 w-16"
                     variant="outline"
-                    onClick={() => router.push(`/product/${product?.id}`)}
+                    onClick={() => router.push(`/product/${product?.slug}`)}
                   >
                     View
                   </Button>

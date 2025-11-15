@@ -3,16 +3,16 @@ import { prisma } from "@/lib/prisma";
 import ProductPageClient from "./_components/ProductPageClient";
 
 interface ProductPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 // Generate dynamic metadata for product pages
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { slug },
       include: {
         category: true,
         collection: true,
@@ -112,7 +112,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
         images: [productImage],
       },
       alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://abazexclusive.com"}/product/${product.id}`,
+        canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://abazexclusive.com"}/product/${product.slug}`,
       },
     };
   } catch (error) {
@@ -128,6 +128,6 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { id } = await params;
-  return <ProductPageClient id={id} />;
+  const { slug } = await params;
+  return <ProductPageClient slug={slug} />;
 }

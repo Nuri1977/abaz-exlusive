@@ -41,9 +41,8 @@ export default function ProductImageGallery({
             <button
               key={image?.key || index}
               onClick={() => setSelectedImage(index)}
-              className={`relative aspect-square overflow-hidden rounded-md border-2 ${
-                selectedImage === index ? "border-black" : "border-transparent"
-              }`}
+              className={`relative aspect-square overflow-hidden rounded-md border-2 ${selectedImage === index ? "border-black" : "border-transparent"
+                }`}
             >
               <Image
                 src={image?.url || ""}
