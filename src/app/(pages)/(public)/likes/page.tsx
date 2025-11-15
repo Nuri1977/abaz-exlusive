@@ -1,5 +1,12 @@
 import React from "react";
 
+// Static SEO metadata for Likes page
+export const metadata = {
+  title: "Your Favorite Dresses - Saved Items | Abaz Exclusive",
+  description: "View your saved and liked women's dresses. Keep track of your favorite fashion items and shop them later at Abaz Exclusive.",
+  robots: { index: false, follow: true },
+};
+
 export default function LikesPage() {
   return (
     <div className="container mx-auto py-12">

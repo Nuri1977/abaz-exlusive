@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Terms & Conditions | Abaz Exclusive",
-};
+import { generateTermsMetadata } from "@/lib/metadata";
+
+// Generate SEO metadata for Terms & Conditions page
+export const metadata: Metadata = generateTermsMetadata();
 
 export default function TermsPage() {
   return (

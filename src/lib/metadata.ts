@@ -288,6 +288,150 @@ export function generateErrorMetadata(errorCode: number): Metadata {
   });
 }
 
+// Static page metadata generators
+export function generateAboutMetadata(): Metadata {
+  return generateMetadata({
+    title: "About Us - Premium Women's Fashion Brand",
+    description:
+      "Learn about Abaz Exclusive's commitment to premium women's fashion. Discover our story, values, and dedication to elegant dress design and quality craftsmanship.",
+    keywords: [
+      "about abaz exclusive",
+      "women's fashion brand",
+      "premium dress designer",
+      "fashion boutique story",
+      "elegant clothing brand",
+      "quality craftsmanship",
+      "women's apparel company",
+    ],
+    canonical: `${SITE_CONFIG.url}/about`,
+  });
+}
+
+export function generateContactMetadata(): Metadata {
+  return generateMetadata({
+    title: "Contact Us - Get in Touch with Abaz Exclusive",
+    description:
+      "Contact Abaz Exclusive for inquiries about our premium women's dresses, customer service, or fashion consultation. We're here to help with your fashion needs.",
+    keywords: [
+      "contact abaz exclusive",
+      "customer service",
+      "fashion consultation",
+      "dress inquiries",
+      "women's fashion support",
+      "boutique contact",
+      "fashion customer care",
+    ],
+    canonical: `${SITE_CONFIG.url}/contact`,
+  });
+}
+
+export function generatePrivacyMetadata(): Metadata {
+  return generateMetadata({
+    title: "Privacy Policy - Your Data Protection at Abaz Exclusive",
+    description:
+      "Read Abaz Exclusive's privacy policy to understand how we protect your personal information when shopping for women's dresses and fashion apparel.",
+    keywords: [
+      "privacy policy",
+      "data protection",
+      "personal information",
+      "customer privacy",
+      "secure shopping",
+      "fashion e-commerce privacy",
+    ],
+    canonical: `${SITE_CONFIG.url}/privacy`,
+    noIndex: true, // Privacy policies typically shouldn't be indexed
+  });
+}
+
+export function generateTermsMetadata(): Metadata {
+  return generateMetadata({
+    title: "Terms & Conditions - Shopping Guidelines at Abaz Exclusive",
+    description:
+      "Review the terms and conditions for shopping at Abaz Exclusive. Understand our policies for purchasing women's dresses and fashion apparel online.",
+    keywords: [
+      "terms and conditions",
+      "shopping terms",
+      "purchase policy",
+      "e-commerce terms",
+      "fashion retail policy",
+      "online shopping guidelines",
+    ],
+    canonical: `${SITE_CONFIG.url}/terms`,
+    noIndex: true, // Terms pages typically shouldn't be indexed
+  });
+}
+
+export function generateProductsListingMetadata(): Metadata {
+  return generateMetadata({
+    title: "Women's Dresses - Browse Our Complete Collection",
+    description:
+      "Shop our complete collection of premium women's dresses. Find elegant cocktail dresses, formal wear, casual styles, and designer fashion at Abaz Exclusive.",
+    keywords: [
+      "women's dresses collection",
+      "shop dresses online",
+      "designer dress catalog",
+      "premium women's fashion",
+      "elegant dress selection",
+      "cocktail dresses",
+      "formal dresses",
+      "casual dresses",
+      "fashion boutique",
+    ],
+    canonical: `${SITE_CONFIG.url}/products`,
+  });
+}
+
+export function generateCartMetadata(): Metadata {
+  return generateMetadata({
+    title: "Shopping Cart - Review Your Selected Dresses",
+    description:
+      "Review your selected women's dresses and fashion items. Secure checkout and fast shipping available for your Abaz Exclusive purchases.",
+    keywords: [
+      "shopping cart",
+      "dress checkout",
+      "fashion cart",
+      "secure shopping",
+      "women's fashion purchase",
+    ],
+    canonical: `${SITE_CONFIG.url}/cart`,
+    noIndex: true, // Cart pages shouldn't be indexed
+  });
+}
+
+export function generateCheckoutMetadata(): Metadata {
+  return generateMetadata({
+    title: "Secure Checkout - Complete Your Fashion Purchase",
+    description:
+      "Complete your purchase of premium women's dresses with our secure checkout process. Fast shipping and excellent customer service guaranteed.",
+    keywords: [
+      "secure checkout",
+      "fashion purchase",
+      "dress order",
+      "online shopping",
+      "secure payment",
+    ],
+    canonical: `${SITE_CONFIG.url}/checkout`,
+    noIndex: true, // Checkout pages shouldn't be indexed
+  });
+}
+
+export function generateLikesMetadata(): Metadata {
+  return generateMetadata({
+    title: "Your Favorite Dresses - Saved Items at Abaz Exclusive",
+    description:
+      "View your saved and liked women's dresses. Keep track of your favorite fashion items and shop them later at Abaz Exclusive.",
+    keywords: [
+      "favorite dresses",
+      "saved items",
+      "wishlist",
+      "liked products",
+      "fashion favorites",
+    ],
+    canonical: `${SITE_CONFIG.url}/likes`,
+    noIndex: true, // Personal pages shouldn't be indexed
+  });
+}
+
 // Utility function to extract keywords from text
 export function extractKeywords(
   text: string,
