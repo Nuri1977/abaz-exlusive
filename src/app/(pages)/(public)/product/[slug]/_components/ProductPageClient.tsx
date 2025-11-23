@@ -122,7 +122,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
           <div className="flex items-center space-x-2">
             <span className="text-3xl font-semibold">
               {currencySymbol}{" "}
-              {convertPrice(Number(effectivePrice), "MKD", currency).toFixed(2)}
+              {convertPrice(Number(effectivePrice), "MKD", currency).toLocaleString(
+                "de-DE",
+                {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }
+              )}
             </span>
           </div>
 

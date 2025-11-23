@@ -164,22 +164,25 @@ const DynamicHeroSection = ({ heroItems, settings }: DynamicHeroSectionProps) =>
                   className="absolute inset-0 hidden size-full object-contain opacity-90 lg:block"
                 />
 
+                {/* Gradient Overlay for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
                 {/* Text content positioned at bottom */}
                 <div className="relative z-10 mb-20 w-full px-4 text-center">
-                  <div className="mx-auto max-w-2xl">
-                    <h2 className="mb-4 text-2xl font-light tracking-wide md:text-3xl lg:text-4xl">
+                  <div className="mx-auto max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+                    <h2 className="mb-6 text-3xl font-medium tracking-wide md:text-3xl lg:text-4xl drop-shadow-lg">
                       {slide.title}
                     </h2>
                     {slide.description && (
-                      <p className="mb-6 text-sm opacity-90 md:text-base lg:text-lg">
+                      <p className="mb-8 text-base opacity-90 md:text-md lg:text-lg drop-shadow-md max-w-2xl mx-auto">
                         {slide.description}
                       </p>
                     )}
                     <Button
                       asChild
-                      size="sm"
-                      variant="outline"
-                      className="border border-white bg-transparent px-6 py-2 text-sm text-white hover:bg-white hover:text-black"
+                      size="lg"
+                      variant='outline'
+                      className="bg-transparent text-white border-white hover:bg-white hover:text-black hover:border-black"
                     >
                       <Link href={slide.linkUrl}>SHOP NOW</Link>
                     </Button>
@@ -192,16 +195,16 @@ const DynamicHeroSection = ({ heroItems, settings }: DynamicHeroSectionProps) =>
 
         {/* Carousel indicators */}
         <div className="absolute inset-x-0 bottom-8 z-50">
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-3">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => emblaApi?.scrollTo(index)}
                 className={cn(
-                  "size-2 rounded-full transition-all duration-300",
+                  "h-1 w-8 rounded-full transition-all duration-300",
                   selectedIndex === index
-                    ? "bg-white"
-                    : "border border-white bg-transparent"
+                    ? "bg-white w-12"
+                    : "bg-white/40 hover:bg-white/60"
                 )}
                 aria-label={`Go to slide ${index + 1}`}
               />
