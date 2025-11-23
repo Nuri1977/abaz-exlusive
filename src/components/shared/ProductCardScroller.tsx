@@ -1,5 +1,7 @@
 "use client";
 
+import Autoplay from "embla-carousel-autoplay";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -59,6 +61,8 @@ interface ProductCardScrollerProps {
   loading?: boolean;
   showViewAll?: boolean;
   iconName?: string;
+  enableAutoPlay?: boolean;
+  autoPlayDelay?: number;
 }
 
 // Icon mapping object
@@ -81,12 +85,25 @@ const ProductCardScroller = ({
   loading,
   showViewAll = false,
   iconName,
+  enableAutoPlay = true,
+  autoPlayDelay = 3000,
 }: ProductCardScrollerProps) => {
   if (loading) return <div>Loading...</div>;
 
   if (!products || products.length === 0) return null;
 
   const IconComponent = iconName ? iconMap[iconName] : null;
+
+  const plugins = React.useMemo(() => {
+    if (!enableAutoPlay) return [];
+    return [
+      Autoplay({
+        delay: autoPlayDelay,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+      }),
+    ];
+  }, [enableAutoPlay, autoPlayDelay]);
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -105,8 +122,9 @@ const ProductCardScroller = ({
         <Carousel
           opts={{
             align: "start",
-            loop: false,
+            loop: true,
           }}
+          plugins={plugins}
           className="w-full"
         >
           <CarouselContent className="-ml-2 md:-ml-4">
@@ -140,8 +158,8 @@ const ProductCardScroller = ({
             ))}
           </CarouselContent>
           {/* Mobile arrows - inside carousel */}
-          <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 md:hidden" />
-          <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 md:hidden" />
+          <CarouselPrevious className="absolute left-2 top-1/2 h-12 w-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:h-8 [&>svg]:w-8" />
+          <CarouselNext className="absolute right-2 top-1/2 h-12 w-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:h-8 [&>svg]:w-8" />
           {/* Desktop arrows - outside carousel */}
           <CarouselPrevious className="absolute -left-12 top-1/2 hidden -translate-y-1/2 md:flex" />
           <CarouselNext className="absolute -right-12 top-1/2 hidden -translate-y-1/2 md:flex" />
