@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -97,7 +97,6 @@ model Product {
   description  String?
   price        Decimal          @db.Decimal(10, 2)
   categoryId   String
-  collectionId String?
   brand        String?
   material     String?
   gender       String?
@@ -106,13 +105,14 @@ model Product {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   images       Json[]
+  collectionId String?
   bestSellers  BestSellers[]
   cartItems    CartItem[]
   likes        Like[]
   newArrivals  NewArrivals[]
   orderItems   OrderItem[]
   category     Category         @relation(fields: [categoryId], references: [id])
-  collection   Collection?      @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  collection   Collection?      @relation(fields: [collectionId], references: [id])
   options      ProductOption[]
   variants     ProductVariant[]
 
@@ -312,8 +312,8 @@ model Collection {
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  products    Product[]
   heroItems   HeroItem[]
+  products    Product[]
   promoBanner PromoBanner?
 
   @@map("collection")
@@ -326,11 +326,11 @@ model HeroItem {
   imageUrl     String
   linkUrl      String
   collectionId String?
-  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   isActive     Boolean     @default(true)
   sortOrder    Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  collection   Collection? @relation(fields: [collectionId], references: [id])
 
   @@map("hero_items")
 }
@@ -375,14 +375,6 @@ model BestSellers {
   @@map("best_sellers")
 }
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
 model PromoBanner {
   id           String      @id @default(cuid())
   collectionId String?     @unique
@@ -392,6 +384,14 @@ model PromoBanner {
   updatedAt    DateTime    @updatedAt
 
   @@map("promo_banners")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
 
 enum PaymentStatus {

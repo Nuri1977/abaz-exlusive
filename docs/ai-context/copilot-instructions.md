@@ -205,6 +205,293 @@ The application uses SEO-friendly slug-based URLs for all public-facing content:
 - Admin interfaces should continue using ID-based routes for security and consistency
 - All product links in components must use slug-based URLs
 
+### Next.js Flow Implementation (API Routes + React Query)
+
+**CRITICAL: This project does NOT use Server Actions. All data mutations and fetching must follow the API Route + React Query pattern.**
+
+#### Architecture Pattern
+
+The application follows a strict client-server architecture:
+
+1. **API Routes** (`src/app/api/**`) - All server-side logic and database operations
+2. **Query Functions** (`src/lib/query/**`) - Client-side API call wrappers using axios
+3. **React Query** - State management, caching, and data synchronization in client components
+
+#### Implementation Rules
+
+**DO NOT:**
+- ❌ Create Server Actions (no `"use server"` directives for data mutations)
+- ❌ Use Server Actions in forms or client components
+- ❌ Call Prisma directly from client components
+- ❌ Mix Server Actions with API routes
+
+**DO:**
+- ✅ Create API routes in `src/app/api/**` for all server operations
+- ✅ Use React Query (`useQuery`, `useMutation`) for data fetching and mutations
+- ✅ Create query functions in `src/lib/query/**` that call API routes
+- ✅ Use axios instance from `src/lib/axios.ts` for API calls
+- ✅ Implement proper error handling in both API routes and query functions
+
+#### Standard Implementation Pattern
+
+**Step 1: Create API Route** (`src/app/api/[resource]/route.ts`)
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSessionServer } from "@/helpers/getSessionServer";
+
+// GET - Fetch data
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getSessionServer();
+    // Optional: Check authentication/authorization
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const data = await prisma.model.findMany({
+      // Your query here
+    });
+
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Create/Update data
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getSessionServer();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    
+    // Validate with Zod schema if available
+    // const parsed = schema.safeParse(body);
+    // if (!parsed.success) {
+    //   return NextResponse.json(
+    //     { error: parsed.error.flatten() },
+    //     { status: 400 }
+    //   );
+    // }
+
+    const result = await prisma.model.create({
+      data: body,
+    });
+
+    return NextResponse.json({ data: result });
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+**Step 2: Create Query Function** (`src/lib/query/[resource].ts`)
+
+```typescript
+import api from "@/lib/axios";
+
+// Type definitions
+export interface ResourceData {
+  id: string;
+  // ... other fields
+}
+
+export interface CreateResourceInput {
+  // ... input fields
+}
+
+// GET - Fetch data
+export const fetchResources = async (): Promise<ResourceData[]> => {
+  try {
+    const res = await api.get("/resource");
+    return res.data.data;
+  } catch (err: any) {
+    throw err?.response?.data || { error: "Failed to fetch resources" };
+  }
+};
+
+// POST - Create data
+export const createResource = async (
+  input: CreateResourceInput
+): Promise<ResourceData> => {
+  try {
+    const res = await api.post("/resource", input);
+    return res.data.data;
+  } catch (err: any) {
+    throw err?.response?.data || { error: "Failed to create resource" };
+  }
+};
+
+// PUT/PATCH - Update data
+export const updateResource = async (
+  id: string,
+  input: Partial<CreateResourceInput>
+): Promise<ResourceData> => {
+  try {
+    const res = await api.put(`/resource/${id}`, input);
+    return res.data.data;
+  } catch (err: any) {
+    throw err?.response?.data || { error: "Failed to update resource" };
+  }
+};
+
+// DELETE - Delete data
+export const deleteResource = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/resource/${id}`);
+  } catch (err: any) {
+    throw err?.response?.data || { error: "Failed to delete resource" };
+  }
+};
+```
+
+**Step 3: Use React Query in Client Component**
+
+```typescript
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchResources, createResource, updateResource, deleteResource } from "@/lib/query/resource";
+import { useToast } from "@/hooks/useToast";
+
+export default function ResourceComponent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Fetch data with useQuery
+  const { data: resources, isLoading, error } = useQuery({
+    queryKey: ["resources"],
+    queryFn: fetchResources,
+  });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: createResource,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
+      toast({
+        title: "Success",
+        description: "Resource created successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.error || "Failed to create resource",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateResource(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
+      toast({
+        title: "Success",
+        description: "Resource updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.error || "Failed to update resource",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteResource,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
+      toast({
+        title: "Success",
+        description: "Resource deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.error || "Failed to delete resource",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle form submission
+  const handleCreate = (formData: any) => {
+    createMutation.mutate(formData);
+  };
+
+  const handleUpdate = (id: string, formData: any) => {
+    updateMutation.mutate({ id, data: formData });
+  };
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading resources</div>;
+
+  return (
+    <div>
+      {/* Your component UI */}
+    </div>
+  );
+}
+```
+
+#### Best Practices
+
+1. **Error Handling**: Always implement try-catch in API routes and query functions
+2. **Type Safety**: Define TypeScript interfaces for all API responses and inputs
+3. **Authentication**: Check session in API routes for protected endpoints
+4. **Validation**: Use Zod schemas for request validation in API routes
+5. **Query Keys**: Use consistent, descriptive query keys for React Query
+6. **Invalidation**: Invalidate relevant queries after mutations
+7. **Loading States**: Always handle loading and error states in components
+8. **Toast Notifications**: Provide user feedback for all mutations
+9. **Optimistic Updates**: Use optimistic updates for better UX when appropriate
+10. **Query Client**: Access `useQueryClient()` for manual cache updates
+
+#### File Structure
+
+```
+src/
+├── app/
+│   └── api/
+│       └── [resource]/
+│           ├── route.ts          # GET, POST for collection
+│           └── [id]/
+│               └── route.ts      # GET, PUT, DELETE for single item
+├── lib/
+│   ├── query/
+│   │   └── [resource].ts         # Query functions for API calls
+│   ├── axios.ts                  # Axios instance configuration
+│   └── query-client.ts           # React Query client configuration
+└── components/
+    └── [resource]/
+        └── ResourceComponent.tsx # Client component using React Query
+```
+
 ### Data Fetching and State Management
 
 The project uses TanStack Query (React Query) for data fetching and state management:

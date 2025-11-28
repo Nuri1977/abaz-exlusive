@@ -44,3 +44,4 @@ next-env.d.ts
 
 # Ignore Prisma generated client
 src/generated/prisma/
+generated/prisma/
