@@ -69,7 +69,7 @@
     "embla-carousel-react": "^8.6.0",
     "lexical": "^0.32.1",
     "lucide-react": "^0.475.0",
-    "next": "15.2.3",
+    "next": "15.2.6",
     "nodemailer": "^7.0.3",
     "patch-package": "^8.0.0",
     "pg": "^8.16.3",
