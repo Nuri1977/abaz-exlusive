@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -97,7 +96,6 @@ model Product {
   description  String?
   price        Decimal          @db.Decimal(10, 2)
   categoryId   String
-  collectionId String?
   brand        String?
   material     String?
   gender       String?
@@ -106,13 +104,14 @@ model Product {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   images       Json[]
+  collectionId String?
   bestSellers  BestSellers[]
   cartItems    CartItem[]
   likes        Like[]
   newArrivals  NewArrivals[]
   orderItems   OrderItem[]
   category     Category         @relation(fields: [categoryId], references: [id])
-  collection   Collection?      @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  collection   Collection?      @relation(fields: [collectionId], references: [id])
   options      ProductOption[]
   variants     ProductVariant[]
 
@@ -219,9 +218,13 @@ model Order {
   userId          String?
   status          OrderStatus   @default(PENDING)
   total           Decimal       @db.Decimal(10, 2)
-  shippingAddress String
-  billingAddress  String
+  currency        String        @default("MKD")
+  shippingAddress String?
+  billingAddress  String?
   paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod @default(CARD)
+  deliveryDate    DateTime?
+  deliveryNotes   String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   phone           String?
@@ -231,8 +234,43 @@ model Order {
   isDeleted       Boolean       @default(false)
   user            User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
+  payments        Payment[]
 
   @@map("order")
+}
+
+model Payment {
+  id                   String        @id @default(uuid())
+  orderId              String
+  amount               Decimal       @db.Decimal(10, 2)
+  currency             String        @default("MKD")
+  status               PaymentStatus @default(PENDING)
+  method               PaymentMethod @default(CARD)
+  provider             String        @default("polar") // polar, stripe, cash, etc.
+  providerPaymentId    String? // Polar payment ID
+  providerOrderId      String? // Polar order ID (if using orders)
+  checkoutId           String? // Polar checkout ID
+  paymentMethodDetails String? // card, bank_transfer, etc. (provider-specific)
+  customerEmail        String?
+  customerName         String?
+  deliveryAddress      String? // For cash payments
+  deliveryNotes        String? // Special delivery instructions
+  metadata             Json? // Provider-specific metadata
+  failureReason        String? // Reason for failed payments
+  refundedAmount       Decimal?      @db.Decimal(10, 2)
+  refundedAt           DateTime?
+  confirmedAt          DateTime? // When cash payment was confirmed
+  confirmedBy          String? // Admin who confirmed cash payment
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  order                Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([providerPaymentId])
+  @@index([checkoutId])
+  @@index([method])
+  @@index([status])
+  @@map("payment")
 }
 
 model OrderItem {
@@ -312,8 +350,8 @@ model Collection {
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  products    Product[]
   heroItems   HeroItem[]
+  products    Product[]
   promoBanner PromoBanner?
 
   @@map("collection")
@@ -326,11 +364,11 @@ model HeroItem {
   imageUrl     String
   linkUrl      String
   collectionId String?
-  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   isActive     Boolean     @default(true)
   sortOrder    Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  collection   Collection? @relation(fields: [collectionId], references: [id])
 
   @@map("hero_items")
 }
@@ -375,14 +413,6 @@ model BestSellers {
   @@map("best_sellers")
 }
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
 model PromoBanner {
   id           String      @id @default(cuid())
   collectionId String?     @unique
@@ -394,9 +424,27 @@ model PromoBanner {
   @@map("promo_banners")
 }
 
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
   REFUNDED
+  CASH_PENDING
+  CASH_RECEIVED
+}
+
+enum PaymentMethod {
+  CARD
+  CASH_ON_DELIVERY
+  BANK_TRANSFER
+  DIGITAL_WALLET
 }

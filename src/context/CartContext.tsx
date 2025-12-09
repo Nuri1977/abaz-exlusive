@@ -49,6 +49,7 @@ type CartContextType = {
   exchangeRates: ExchangeRates;
   convertPrice: (price: number, from?: Currency, to?: Currency) => number;
   currencySymbol: string;
+  isLoading: boolean;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -120,7 +121,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const currencySymbol = getCurrencySymbol(currency);
 
-  const { data: userItems = [] } = useQuery({
+  const { data: userItems = [], isLoading: isLoadingCart } = useQuery({
     queryKey: cartKeys.all,
     queryFn: fetchCart,
     enabled: !!session?.user,
@@ -255,25 +256,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [session?.user, clearMutation]);
 
   // Normalize userItems for logged-in users (API returns CartItem with Product)
-  const normalizedUserItems = userItems.map((item: any) => {
-    return {
-      quantity: Number(item?.quantity) || 1,
-      price: Number(item?.price) || 0,
-      productId: item?.productId ?? item?.Product?.id ?? "",
-      image:
-        item?.image ??
-        item?.Product?.images?.[0]?.url ??
-        item?.Product?.images?.[0]?.key ??
-        "/placeholder.jpg",
-      title: item?.title ?? item?.Product?.name ?? "",
-      variantId:
-        typeof item?.variantId === "string" && item?.variantId !== "null"
-          ? item?.variantId
-          : undefined,
-      color: item?.color ?? undefined,
-      size: item?.size ?? undefined,
-    };
-  });
+  const normalizedUserItems = Array.isArray(userItems)
+    ? userItems.map((item: any) => {
+        return {
+          quantity: Number(item?.quantity) || 1,
+          price: Number(item?.price) || 0,
+          productId: item?.productId ?? item?.Product?.id ?? "",
+          image:
+            item?.image ??
+            item?.Product?.images?.[0]?.url ??
+            item?.Product?.images?.[0]?.key ??
+            "/placeholder.jpg",
+          title: item?.title ?? item?.Product?.name ?? "",
+          variantId:
+            typeof item?.variantId === "string" && item?.variantId !== "null"
+              ? item?.variantId
+              : undefined,
+          color: item?.color ?? undefined,
+          size: item?.size ?? undefined,
+        };
+      })
+    : [];
 
   const items = session?.user ? normalizedUserItems : guestItems;
 
@@ -289,6 +292,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     exchangeRates,
     convertPrice,
     currencySymbol,
+    isLoading: session?.user ? isLoadingCart : false,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

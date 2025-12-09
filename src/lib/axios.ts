@@ -83,25 +83,19 @@ axiosInstance.interceptors.response.use(
 // Type-safe request methods
 export const api = {
   get: <T>(url: string, config?: InternalAxiosRequestConfig) =>
-    axiosInstance.get<ApiResponse<T>>(url, config).then((res) => res.data),
+    axiosInstance.get<T>(url, config).then((res) => res.data),
 
   post: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance
-      .post<ApiResponse<T>>(url, data, config)
-      .then((res) => res.data),
+    axiosInstance.post<T>(url, data, config).then((res) => res.data),
 
   put: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance
-      .put<ApiResponse<T>>(url, data, config)
-      .then((res) => res.data),
+    axiosInstance.put<T>(url, data, config).then((res) => res.data),
 
   patch: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
-    axiosInstance
-      .patch<ApiResponse<T>>(url, data, config)
-      .then((res) => res.data),
+    axiosInstance.patch<T>(url, data, config).then((res) => res.data),
 
   delete: <T>(url: string, config?: InternalAxiosRequestConfig) =>
-    axiosInstance.delete<ApiResponse<T>>(url, config).then((res) => res.data),
+    axiosInstance.delete<T>(url, config).then((res) => res.data),
 };
 
 export default api;

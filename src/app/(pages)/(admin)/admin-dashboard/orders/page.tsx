@@ -10,6 +10,7 @@ import {
   deleteOrder,
   fetchOrders,
   updateOrderStatus,
+  type PaginatedOrdersResponse,
 } from "@/lib/query/orders";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,10 +35,20 @@ type SortDirection = "asc" | "desc" | null;
 
 export default function AdminOrdersPage() {
   const queryClient = useQueryClient();
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
-    queryKey: ["admin-orders"],
-    queryFn: fetchOrders,
-  });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data: ordersResponse, isLoading } = useQuery<PaginatedOrdersResponse>(
+    {
+      queryKey: ["admin-orders", currentPage, pageSize],
+      queryFn: () => fetchOrders({ page: currentPage, limit: pageSize }),
+    }
+  );
+
+  const orders = ordersResponse?.data ?? [];
+  const pagination = ordersResponse?.pagination;
 
   const statusMutation = useMutation<
     Order,
@@ -136,13 +147,14 @@ export default function AdminOrdersPage() {
 
   // Filter orders based on status
   const newOrders = useMemo(() => {
-    let filtered = orders?.filter(
+    const ordersArray = Array.isArray(orders) ? orders : [];
+    let filtered = ordersArray.filter(
       (order) => order?.status === "PENDING" || order?.status === "PROCESSING"
     );
 
     // Apply search filter
     if (newSearchTerm) {
-      filtered = filtered?.filter(
+      filtered = filtered.filter(
         (order) =>
           order?.id?.toLowerCase()?.includes(newSearchTerm.toLowerCase()) ||
           order?.customerName
@@ -171,7 +183,8 @@ export default function AdminOrdersPage() {
   }, [orders, newSearchTerm, newStatusFilter, newSortField, newSortDirection]);
 
   const finishedOrders = useMemo(() => {
-    let filtered = orders?.filter(
+    const ordersArray = Array.isArray(orders) ? orders : [];
+    let filtered = ordersArray.filter(
       (order) =>
         order?.status === "SHIPPED" ||
         order?.status === "DELIVERED" ||
@@ -180,7 +193,7 @@ export default function AdminOrdersPage() {
 
     // Apply search filter
     if (finishedSearchTerm) {
-      filtered = filtered?.filter(
+      filtered = filtered.filter(
         (order) =>
           order?.id
             ?.toLowerCase()
@@ -674,6 +687,103 @@ export default function AdminOrdersPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+            {Math.min(
+              pagination.page * pagination.limit,
+              pagination.totalCount
+            )}{" "}
+            of {pagination.totalCount} orders
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination.hasPrev || isLoading}
+            >
+              Previous
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {Array.from(
+                { length: Math.min(5, pagination.totalPages) },
+                (_, i) => {
+                  const pageNum = i + 1;
+                  const isActive = pageNum === pagination.page;
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={isLoading}
+                      className="size-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+              )}
+
+              {pagination.totalPages > 5 && (
+                <>
+                  <span className="px-2">...</span>
+                  <Button
+                    variant={
+                      pagination.page === pagination.totalPages
+                        ? "default"
+                        : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setCurrentPage(pagination.totalPages)}
+                    disabled={isLoading}
+                    className="size-8 p-0"
+                  >
+                    {pagination.totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.min(pagination.totalPages, prev + 1)
+                )
+              }
+              disabled={!pagination.hasNext || isLoading}
+            >
+              Next
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded border border-input bg-background px-2 py-1 text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       <DeleteOrderDialog
         open={!!deleteId}

@@ -10,7 +10,6 @@ import { Heart, ShoppingCart } from "lucide-react";
 
 import { type ProductExt } from "@/types/product";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -23,7 +22,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const { toggleLike, isLiked } = useUserAccountContext();
   const { addItem, setOpen, currency, convertPrice, currencySymbol } =
     useCartContext();
@@ -53,10 +51,6 @@ export function ProductCard({ product }: ProductCardProps) {
       image: getImageUrl(product?.images?.[0]),
     });
 
-    toast({
-      title: "Added to cart",
-      description: "Item has been added to your cart",
-    });
     setOpen(true);
   };
 
@@ -103,7 +97,9 @@ export function ProductCard({ product }: ProductCardProps) {
             <h3 className="line-clamp-2 flex-1 text-sm font-medium leading-tight transition-colors group-hover:text-primary">
               {product?.name}
             </h3>
-            <p className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">{product?.brand}</p>
+            <p className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+              {product?.brand}
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">
             {product?.category?.name}
@@ -153,7 +149,9 @@ export function ProductCard({ product }: ProductCardProps) {
             aria-label="Toggle like"
             className={cn(
               "size-9 transition-colors",
-              liked ? "text-destructive" : "text-muted-foreground hover:text-destructive"
+              liked
+                ? "text-destructive"
+                : "text-muted-foreground hover:text-destructive"
             )}
           >
             <Heart size={18} className={liked ? "fill-current" : ""} />

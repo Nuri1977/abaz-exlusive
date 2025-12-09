@@ -28,5 +28,7 @@
   ],
   "IDX.aI.enableInlineCompletion": true,
   "IDX.aI.enableCodebaseIndexing": true,
-  "kiroAgent.configureMCP": "Disabled"
+  "kiroAgent.configureMCP": "Disabled",
+  "prisma.pinToPrisma6": false,
+  "typescript.autoClosingTags": false
 }
