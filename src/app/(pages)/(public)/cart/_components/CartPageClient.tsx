@@ -95,7 +95,10 @@ const CartPageClient = () => {
                   item.price * item.quantity,
                   "MKD",
                   currency
-                ).toFixed(2)}
+                ).toLocaleString("de-DE", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
               </p>
               <Button
                 variant="destructive"
@@ -117,7 +120,11 @@ const CartPageClient = () => {
       <Separator className="mx-auto my-6 max-w-3xl" />
 
       <div className="mx-auto max-w-3xl text-right text-lg font-semibold">
-        Total: {currencySymbol} {total.toFixed(2)}
+        Total: {currencySymbol}{" "}
+        {total.toLocaleString("de-DE", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}
       </div>
 
       <div className="mx-auto mt-6 flex max-w-3xl justify-end">

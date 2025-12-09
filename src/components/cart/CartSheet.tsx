@@ -36,6 +36,7 @@ export function CartSheet({
     convertPrice,
     currencySymbol,
     addItem,
+    isLoading,
   } = useCartContext();
 
   const handleQuantityChange = (item: any, delta: any) => {
@@ -64,11 +65,15 @@ export function CartSheet({
           )}
         >
           <ShoppingCart size={24} />
-          {itemCount > 0 && (
+          {isLoading ? (
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/50 animate-pulse">
+              <span className="sr-only">Loading cart...</span>
+            </span>
+          ) : itemCount > 0 ? (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
               {itemCount > 99 ? "99+" : itemCount}
             </span>
-          )}
+          ) : null}
         </button>
       </SheetTrigger>
 
@@ -78,7 +83,41 @@ export function CartSheet({
           <Separator />
         </SheetHeader>
 
-        {itemCount > 0 ? (
+        {isLoading ? (
+          <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
+            {/* Loading skeleton for cart items */}
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-4 border-b pb-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="size-16 animate-pulse rounded-md bg-muted" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                    <div className="flex items-center gap-2">
+                      <div className="size-7 animate-pulse rounded bg-muted" />
+                      <div className="h-4 w-6 animate-pulse rounded bg-muted" />
+                      <div className="size-7 animate-pulse rounded bg-muted" />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2 text-right">
+                  <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                  <div className="h-9 w-20 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+            <Separator />
+            <div className="flex justify-end">
+              <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="flex w-full justify-between gap-2">
+              <div className="h-10 flex-1 animate-pulse rounded bg-muted" />
+              <div className="h-10 flex-1 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        ) : itemCount > 0 ? (
           <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
             {items.map((item, index) => (
               <div
@@ -129,7 +168,10 @@ export function CartSheet({
                       item.price * item.quantity,
                       "MKD",
                       currency
-                    ).toFixed(2)}
+                    ).toLocaleString("de-DE", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
                   </p>
                   <Button
                     variant="destructive"
@@ -142,7 +184,11 @@ export function CartSheet({
             ))}
             <Separator />
             <div className="text-right font-semibold">
-              Total: {currencySymbol} {total.toFixed(2)}
+              Total: {currencySymbol}{" "}
+              {total.toLocaleString("de-DE", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
             </div>
             <div className="flex w-full justify-between">
               <Link

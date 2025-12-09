@@ -3,13 +3,13 @@ import { CartItem } from "@/context/CartContext";
 import api from "@/lib/axios";
 
 export const fetchCart = async (): Promise<CartItem[]> => {
-  const res = await api.get<CartItem[]>("/cart");
-  return res.data;
+  const response = await api.get<{ data: CartItem[] }>("/cart");
+  return response.data || [];
 };
 
 export const addToCart = async (item: CartItem) => {
-  const res = await api.post("/cart", item);
-  return res.data;
+  const response = await api.post("/cart", item);
+  return response;
 };
 
 export const removeFromCart = async (id: string, variantId?: string) => {
