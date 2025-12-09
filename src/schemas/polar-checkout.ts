@@ -49,7 +49,7 @@ export const PolarCheckoutInputSchema = z.object({
   email: z.string().email("Invalid email address").optional(),
 
   // User ID from Better Auth session (optional for guest checkout)
-  userId: z.string().uuid().optional(),
+  userId: z.string().optional(),
 
   // Order/cart information for metadata
   cartItems: z
