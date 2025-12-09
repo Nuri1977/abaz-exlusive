@@ -3,7 +3,7 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { PaymentService } from "@/services/payment";
 import { PolarService } from "@/services/polar";
 
-import { PaymentStatus } from "../../../../../generated/prisma/client";
+import { PaymentStatus } from "@prisma/client";
 
 export const POST = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
@@ -15,7 +15,7 @@ export const POST = Webhooks({
 
       // Parse metadata to get our payment ID
       const metadata = PolarService.parseMetadata(
-        payload.metadata as Record<string, string>
+        (payload as any).metadata as Record<string, string>
       );
 
       if (!metadata.paymentId && !metadata.orderId) {
@@ -42,9 +42,9 @@ export const POST = Webhooks({
       }
 
       // Check if we should use custom amount
-      const shouldUseCustomAmount = metadata.useCustomAmount === "true";
+      const shouldUseCustomAmount = (metadata as any).useCustomAmount === "true";
       const customAmount = shouldUseCustomAmount
-        ? parseInt(metadata.actualAmountCents || "0") / 100
+        ? parseInt((metadata as any).actualAmountCents || "0") / 100
         : undefined;
 
       // Update payment status
@@ -74,7 +74,7 @@ export const POST = Webhooks({
 
       // Parse metadata to get our payment ID
       const metadata = PolarService.parseMetadata(
-        payload.metadata as Record<string, string>
+        (payload as any).metadata as Record<string, string>
       );
 
       if (!metadata.paymentId && !metadata.orderId) {
@@ -104,7 +104,7 @@ export const POST = Webhooks({
         });
       }
 
-      console.error(`Payment linked to checkout ${(payload as any).id}`);
+      console.error(`Payment linked to checkout ${(payload as any).id} `);
     } catch (error) {
       console.error("Error processing checkout created webhook:", error);
     }
@@ -123,7 +123,7 @@ export const POST = Webhooks({
       if (payment) {
         await PaymentService.updatePaymentStatus(payment.id, {
           metadata: {
-            ...payment.metadata,
+            ...(payment.metadata as object || {}),
             checkoutUpdated: payload,
             lastUpdated: new Date().toISOString(),
           },
@@ -143,7 +143,7 @@ export const POST = Webhooks({
 
       // Parse metadata to get our payment ID
       const metadata = PolarService.parseMetadata(
-        payload.metadata as Record<string, string>
+        (payload as any).metadata as Record<string, string>
       );
 
       if (!metadata.paymentId && !metadata.orderId) {

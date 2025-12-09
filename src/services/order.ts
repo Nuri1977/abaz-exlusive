@@ -5,7 +5,7 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
-} from "../../generated/prisma/client";
+} from "@prisma/client";
 
 export class OrderService {
   /**

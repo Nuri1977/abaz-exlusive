@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-import { PaymentMethod, PaymentStatus } from "../../generated/prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 export interface CreatePaymentData {
   orderId: string;
@@ -13,7 +13,7 @@ export interface CreatePaymentData {
   customerName?: string;
   deliveryAddress?: string;
   deliveryNotes?: string;
-  metadata?: unknown;
+  metadata?: any;
 }
 
 export interface UpdatePaymentData {
@@ -26,8 +26,9 @@ export interface UpdatePaymentData {
   customerName?: string;
   deliveryAddress?: string;
   deliveryNotes?: string;
-  metadata?: unknown;
+  metadata?: any;
   failureReason?: string;
+  amount?: number;
   confirmedAt?: Date;
   confirmedBy?: string;
 }
@@ -58,7 +59,7 @@ export class PaymentService {
           customerName: paymentData.customerName,
           deliveryAddress: paymentData.deliveryAddress,
           deliveryNotes: paymentData.deliveryNotes,
-          metadata: paymentData.metadata,
+          metadata: paymentData.metadata as any,
         },
         include: {
           order: {
@@ -276,7 +277,7 @@ export class PaymentService {
               reason: refundReason,
               processedAt: new Date().toISOString(),
             },
-          },
+          } as any,
         },
         include: {
           order: true,
@@ -318,7 +319,7 @@ export class PaymentService {
       if (!order) return;
 
       // Determine overall payment status
-      let overallStatus = PaymentStatus.PENDING;
+      let overallStatus: PaymentStatus = PaymentStatus.PENDING;
       const totalPaid = payments
         .filter(
           (p) =>
@@ -350,17 +351,17 @@ export class PaymentService {
       }
 
       // Update order status based on payment status
-      let orderStatus;
+      let orderStatus: OrderStatus | undefined;
       if (
         overallStatus === PaymentStatus.PAID ||
         overallStatus === PaymentStatus.CASH_RECEIVED
       ) {
         orderStatus =
           overallStatus === PaymentStatus.CASH_RECEIVED
-            ? "DELIVERED"
-            : "PROCESSING";
+            ? OrderStatus.DELIVERED
+            : OrderStatus.PROCESSING;
       } else if (overallStatus === PaymentStatus.CASH_PENDING) {
-        orderStatus = "PROCESSING"; // Order is being prepared for delivery
+        orderStatus = OrderStatus.PROCESSING; // Order is being prepared for delivery
       }
 
       await prisma.order.update({
@@ -414,7 +415,7 @@ export class PaymentService {
               confirmedAt: new Date().toISOString(),
               notes,
             },
-          },
+          } as any,
         },
         include: {
           order: true,
@@ -425,7 +426,7 @@ export class PaymentService {
       await prisma.order.update({
         where: { id: payment.orderId },
         data: {
-          status: "DELIVERED",
+          status: OrderStatus.DELIVERED,
           paymentStatus: PaymentStatus.CASH_RECEIVED,
         },
       });
