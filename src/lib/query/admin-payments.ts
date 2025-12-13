@@ -1,260 +1,209 @@
-import { PaymentMethod, PaymentStatus } from "@prisma/client";
-
+import type {
+  AdminPaymentParams,
+  AdminPaymentResponse,
+  AdminPaymentTableData,
+  PaymentActionData,
+} from "@/types/admin-payments";
 import api from "@/lib/axios";
 
-// Type definitions
-export interface AdminPaymentParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  search?: string;
-  method?: PaymentMethod;
-  status?: PaymentStatus;
-  dateFrom?: Date;
-  dateTo?: Date;
-}
-
-export interface AdminPaymentData {
-  id: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-  method: PaymentMethod;
-  provider: string;
-  providerPaymentId?: string;
-  checkoutId?: string;
-  customerEmail?: string;
-  customerName?: string;
-  deliveryAddress?: string;
-  deliveryNotes?: string;
-  failureReason?: string;
-  refundedAmount?: number;
-  refundedAt?: Date;
-  confirmedAt?: Date;
-  confirmedBy?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  metadata?: any;
-  order: {
-    id: string;
-    status: string;
-    total: number;
-    currency: string;
-    customerName?: string;
-    customerEmail?: string;
-    phone?: string;
-    items: any[];
-    user?: {
-      id: string;
-      name?: string;
-      email?: string;
-    };
+interface PaymentAnalyticsResponse {
+  analytics: {
+    totalPayments: number;
+    totalRevenue: number;
+    totalRefunded: number;
+    netRevenue: number;
+    successRate: number;
+    paymentsByMethod: Record<string, number>;
+    paymentsByStatus: Record<string, number>;
+    revenueByMethod: Record<string, number>;
+    averagePaymentAmount: number;
+  };
+  methodBreakdown: Record<
+    string,
+    {
+      total: number;
+      successful: number;
+      failed: number;
+      pending: number;
+      revenue: number;
+    }
+  >;
+  revenueStats: {
+    currentMonthRevenue: number;
+    lastMonthRevenue: number;
+    growthRate: number;
+    totalTransactions: number;
   };
 }
 
-export interface AdminPaymentResponse {
-  payments: AdminPaymentData[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
-export interface PaymentAnalytics {
-  totalPayments: number;
-  totalRevenue: number;
-  totalRefunded: number;
-  netRevenue: number;
-  successRate: number;
-  paymentsByMethod: Record<PaymentMethod, number>;
-  paymentsByStatus: Record<PaymentStatus, number>;
-  revenueByMethod: Record<PaymentMethod, number>;
-  averagePaymentAmount: number;
-}
-
-export interface PaymentMethodBreakdown {
-  [key: string]: {
-    total: number;
-    successful: number;
-    failed: number;
-    pending: number;
-    revenue: number;
-  };
-}
-
-export interface RevenueStats {
-  currentMonthRevenue: number;
-  lastMonthRevenue: number;
-  growthRate: number;
-  totalTransactions: number;
-}
-
-export interface UpdatePaymentData {
-  status?: PaymentStatus;
-  deliveryAddress?: string;
-  deliveryNotes?: string;
-  failureReason?: string;
-  metadata?: any;
-}
-
-// Query functions
+// Fetch admin payments with filtering and pagination
 export const fetchAdminPayments = async (
   params: AdminPaymentParams
 ): Promise<AdminPaymentResponse> => {
   try {
     const searchParams = new URLSearchParams();
 
-    if (params.page) searchParams.set("page", params.page.toString());
-    if (params.limit) searchParams.set("limit", params.limit.toString());
-    if (params.sortBy) searchParams.set("sortBy", params.sortBy);
-    if (params.sortOrder) searchParams.set("sortOrder", params.sortOrder);
-    if (params.search) searchParams.set("search", params.search);
-    if (params.method) searchParams.set("method", params.method);
-    if (params.status) searchParams.set("status", params.status);
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
+    if (params.search) searchParams.append("search", params.search);
+    if (params.method) searchParams.append("method", params.method);
+    if (params.status) searchParams.append("status", params.status);
     if (params.dateFrom)
-      searchParams.set("dateFrom", params.dateFrom.toISOString());
-    if (params.dateTo) searchParams.set("dateTo", params.dateTo.toISOString());
+      searchParams.append("dateFrom", params.dateFrom.toISOString());
+    if (params.dateTo)
+      searchParams.append("dateTo", params.dateTo.toISOString());
 
-    const res = await api.get(`/admin/payments?${searchParams.toString()}`);
-    return res.data;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to fetch admin payments" };
+    const data = await api.get<AdminPaymentResponse>(
+      `/admin/payments?${searchParams.toString()}`
+    );
+
+    // Ensure we always return a valid response structure
+    if (!data) {
+      return {
+        payments: [],
+        pagination: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          totalCount: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+
+    return data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to fetch admin payments"
+    );
   }
 };
 
+// Fetch single payment by ID
 export const fetchPaymentById = async (
   id: string
-): Promise<AdminPaymentData> => {
+): Promise<AdminPaymentTableData> => {
   try {
-    const res = await api.get(`/admin/payments/${id}`);
-    return res.data.payment;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to fetch payment details" };
+    const data = await api.get<{ payment: AdminPaymentTableData }>(
+      `/admin/payments/${id}`
+    );
+    return data.payment;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to fetch payment details"
+    );
   }
 };
 
+// Update payment status
 export const updatePaymentStatus = async (
   id: string,
-  data: UpdatePaymentData
-): Promise<AdminPaymentData> => {
+  data: PaymentActionData
+): Promise<AdminPaymentTableData> => {
   try {
-    const res = await api.put(`/admin/payments/${id}`, {
-      action: "updateStatus",
-      ...data,
-    });
-    return res.data.payment;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to update payment status" };
+    const response = await api.put<{ payment: AdminPaymentTableData }>(
+      `/admin/payments/${id}`,
+      data
+    );
+    return response.payment;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to update payment status"
+    );
   }
 };
 
+// Confirm cash payment
 export const confirmCashPayment = async (
   id: string,
   notes?: string
-): Promise<AdminPaymentData> => {
+): Promise<AdminPaymentTableData> => {
   try {
-    const res = await api.put(`/admin/payments/${id}`, {
-      action: "confirmCash",
-      notes,
-    });
-    return res.data.payment;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to confirm cash payment" };
+    const data = await api.put<{ payment: AdminPaymentTableData }>(
+      `/admin/payments/${id}`,
+      {
+        action: "confirmCash",
+        notes,
+      }
+    );
+    return data.payment;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to confirm cash payment"
+    );
   }
 };
 
+// Process refund
 export const processRefund = async (
   id: string,
   amount: number,
   reason?: string
-): Promise<AdminPaymentData> => {
+): Promise<AdminPaymentTableData> => {
   try {
-    const res = await api.put(`/admin/payments/${id}`, {
-      action: "processRefund",
-      amount,
-      reason,
-    });
-    return res.data.payment;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to process refund" };
-  }
-};
-
-export const bulkConfirmCashPayments = async (
-  paymentIds: string[],
-  notes?: string
-): Promise<{ success: boolean; updated: number }> => {
-  try {
-    const res = await api.post("/admin/payments", {
-      action: "confirmCash",
-      paymentIds,
-      data: { notes },
-    });
-    return res.data;
-  } catch (err: any) {
-    throw (
-      err?.response?.data || { error: "Failed to bulk confirm cash payments" }
+    const data = await api.put<{ payment: AdminPaymentTableData }>(
+      `/admin/payments/${id}`,
+      {
+        action: "processRefund",
+        amount,
+        reason,
+      }
     );
+    return data.payment;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(error?.response?.data?.error || "Failed to process refund");
   }
 };
 
-export const bulkUpdatePaymentStatus = async (
-  paymentIds: string[],
-  status: PaymentStatus
-): Promise<{ success: boolean; updated: number }> => {
-  try {
-    const res = await api.post("/admin/payments", {
-      action: "updateStatus",
-      paymentIds,
-      data: { status },
-    });
-    return res.data;
-  } catch (err: any) {
-    throw (
-      err?.response?.data || { error: "Failed to bulk update payment status" }
-    );
-  }
-};
-
+// Fetch payment analytics
 export const fetchPaymentAnalytics = async (dateRange?: {
   from: Date;
   to: Date;
-}): Promise<{
-  analytics: PaymentAnalytics;
-  methodBreakdown: PaymentMethodBreakdown;
-  revenueStats: RevenueStats;
-}> => {
+}): Promise<PaymentAnalyticsResponse> => {
   try {
     const searchParams = new URLSearchParams();
-
     if (dateRange?.from)
-      searchParams.set("dateFrom", dateRange.from.toISOString());
-    if (dateRange?.to) searchParams.set("dateTo", dateRange.to.toISOString());
+      searchParams.append("dateFrom", dateRange.from.toISOString());
+    if (dateRange?.to)
+      searchParams.append("dateTo", dateRange.to.toISOString());
 
-    const res = await api.get(
+    const data = await api.get<PaymentAnalyticsResponse>(
       `/admin/payments/analytics?${searchParams.toString()}`
     );
-    return res.data;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to fetch payment analytics" };
+    return data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to fetch payment analytics"
+    );
   }
 };
 
-// Query keys for TanStack Query
-export const adminPaymentKeys = {
-  all: ["admin-payments"] as const,
-  lists: () => [...adminPaymentKeys.all, "list"] as const,
-  list: (params: AdminPaymentParams) =>
-    [...adminPaymentKeys.lists(), params] as const,
-  details: () => [...adminPaymentKeys.all, "detail"] as const,
-  detail: (id: string) => [...adminPaymentKeys.details(), id] as const,
-  analytics: () => [...adminPaymentKeys.all, "analytics"] as const,
-  analyticsWithRange: (dateRange?: { from: Date; to: Date }) =>
-    [...adminPaymentKeys.analytics(), dateRange] as const,
+// Sync payment status with Polar
+export const syncPaymentWithPolar = async (id: string, forceSync = false) => {
+  try {
+    const data = await api.post<{
+      message: string;
+      previousStatus?: string;
+      newStatus?: string;
+      polarStatus?: string;
+      synced: boolean;
+      forceSync?: boolean;
+      payment?: AdminPaymentTableData;
+    }>(`/admin/payments/${id}/sync`, { forceSync });
+    return data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to sync payment with Polar"
+    );
+  }
 };

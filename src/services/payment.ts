@@ -107,7 +107,26 @@ export class PaymentService {
               items: {
                 include: {
                   Product: true,
-                  variant: true,
+                  variant: {
+                    include: {
+                      options: {
+                        include: {
+                          optionValue: {
+                            include: {
+                              option: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
                 },
               },
             },

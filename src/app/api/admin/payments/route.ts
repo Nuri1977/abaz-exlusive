@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is admin
     const user = session.user;
     if (!user || !("isAdmin" in user) || !user.isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -41,7 +40,7 @@ export async function GET(req: NextRequest) {
       ? new Date(searchParams.get("dateTo")!)
       : undefined;
 
-    // Get payments with filtering and pagination
+    // Get payments data
     const result = await PaymentService.getAdminPayments({
       page,
       limit,
@@ -83,51 +82,32 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json()) as {
       action: string;
-      paymentIds: string[];
-      data?: { notes?: string; status?: PaymentStatus };
+      paymentIds?: string[];
+      notes?: string;
     };
-    const { action, paymentIds, data } = body;
+    const { action, paymentIds, notes } = body;
 
-    // Handle bulk actions
-    switch (action) {
-      case "confirmCash":
-        // Bulk confirm cash payments
-        if (!("id" in user)) {
-          return NextResponse.json({ error: "Invalid user" }, { status: 400 });
-        }
-        const confirmResults = await Promise.all(
-          paymentIds.map((id) =>
-            PaymentService.confirmCashReceived(id, user.id, data?.notes)
-          )
-        );
-        return NextResponse.json({
-          success: true,
-          updated: confirmResults.length,
-        });
-
-      case "updateStatus":
-        // Bulk status updates
-        if (!data?.status) {
-          return NextResponse.json(
-            { error: "Status is required" },
-            { status: 400 }
+    // Handle bulk operations
+    if (action === "bulkConfirmCash" && paymentIds && paymentIds.length > 0) {
+      const results = [];
+      for (const paymentId of paymentIds) {
+        try {
+          const result = await PaymentService.confirmCashReceived(
+            paymentId,
+            user.id,
+            notes
           );
+          results.push({ paymentId, success: true, result });
+        } catch (error) {
+          results.push({ paymentId, success: false, error });
         }
-        const updateResults = await Promise.all(
-          paymentIds.map((id) =>
-            PaymentService.updatePaymentStatus(id, { status: data.status! })
-          )
-        );
-        return NextResponse.json({
-          success: true,
-          updated: updateResults.length,
-        });
-
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+      }
+      return NextResponse.json({ results });
     }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Admin payments bulk action error:", error);
+    console.error("Admin payments bulk action API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

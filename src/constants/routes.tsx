@@ -1,4 +1,5 @@
 import {
+  CreditCard,
   FolderOpen,
   Heart,
   Home,
@@ -80,6 +81,13 @@ export const adminLinks = [
     icon: ShoppingCart,
     value: "Manage",
     description: "View and manage customer orders",
+  },
+  {
+    name: "Payments",
+    href: "/admin-dashboard/payments",
+    icon: CreditCard,
+    value: "Manage",
+    description: "Manage payments and transactions",
   },
   {
     name: "New Arrivals",

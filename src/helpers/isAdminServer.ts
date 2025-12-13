@@ -7,7 +7,18 @@ import { getSessionServer } from "./getSessionServer";
  * @returns Promise<boolean> - True if the user is an admin, false otherwise
  */
 export const isAdminServer = async (): Promise<boolean> => {
-  const session = await getSessionServer();
-  // Access the isAdmin property safely with type checking
-  return Boolean((session?.user as User & { isAdmin?: boolean })?.isAdmin);
+  try {
+    const session = await getSessionServer();
+
+    // If session is null (timeout or error), return false
+    if (!session?.user) {
+      return false;
+    }
+
+    // Access the isAdmin property safely with type checking
+    return Boolean((session.user as User & { isAdmin?: boolean })?.isAdmin);
+  } catch (error) {
+    console.error("Admin check error:", error);
+    return false; // Return false on any error to prevent access
+  }
 };
