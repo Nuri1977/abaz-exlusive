@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import AccountInfo from "./AccountInfo";
 import ProfileForm from "./ProfileForm";
 
+// import { UserPaymentSummary } from "./UserPaymentSummary";
+
 interface DashboardClientProps {
   user: User;
 }
@@ -79,7 +81,12 @@ const DashboardClient = ({ user }: DashboardClientProps) => {
           <ProfileForm user={user} onComplete={() => setIsEditing(false)} />
         </>
       ) : (
-        <AccountInfo user={user} onEdit={() => setIsEditing(true)} />
+        <>
+          <AccountInfo user={user} onEdit={() => setIsEditing(true)} />
+
+          {/* Payment Summary Section - Temporarily disabled to prevent 500 error */}
+          {/* <UserPaymentSummary /> */}
+        </>
       )}
     </div>
   );

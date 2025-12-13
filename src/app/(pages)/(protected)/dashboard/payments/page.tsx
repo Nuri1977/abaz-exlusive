@@ -1,18 +1,17 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getSessionServer } from "@/helpers/getSessionServer";
 
-import { UserPaymentTable } from "./_components/UserPaymentTable";
+import { UserPaymentsClient } from "./_components/UserPaymentsClient";
 
 export const metadata: Metadata = {
-  title: "My Payments | Abaz Exclusive",
+  title: "My Payments | Dashboard",
   description: "View your payment history and manage transactions.",
 };
 
 export default async function UserPaymentsPage() {
   const session = await getSessionServer();
-
   if (!session?.user) {
     redirect("/login");
   }
@@ -25,8 +24,7 @@ export default async function UserPaymentsPage() {
           View your payment history and manage transactions.
         </p>
       </div>
-
-      <UserPaymentTable />
+      <UserPaymentsClient />
     </div>
   );
 }

@@ -601,13 +601,21 @@ export function AdminPaymentTable() {
             </Select>
           </div>
 
-          {/* Column visibility - Hidden on mobile since table is hidden */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="hidden md:flex">
-                Columns <ChevronDown className="ml-2 size-4" />
-              </Button>
-            </DropdownMenuTrigger>
+          <div className="flex items-center gap-2">
+            {/* Analytics Button */}
+            <Button variant="outline" asChild>
+              <Link href="/admin-dashboard/payments/analytics">
+                Analytics
+              </Link>
+            </Button>
+
+            {/* Column visibility - Hidden on mobile since table is hidden */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="hidden md:flex">
+                  Columns <ChevronDown className="ml-2 size-4" />
+                </Button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {table
                 .getAllColumns()

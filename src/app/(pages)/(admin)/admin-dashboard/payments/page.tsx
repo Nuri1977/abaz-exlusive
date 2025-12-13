@@ -1,11 +1,6 @@
-import { Metadata } from "next";
+"use client";
 
 import { AdminPaymentTable } from "./_components/AdminPaymentTable";
-
-export const metadata: Metadata = {
-  title: "Payments | Admin Dashboard",
-  description: "Manage payments and process transactions",
-};
 
 export default function AdminPaymentsPage() {
   return (

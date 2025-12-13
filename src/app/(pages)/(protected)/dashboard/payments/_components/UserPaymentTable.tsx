@@ -272,9 +272,18 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
     error,
   } = useQuery({
     queryKey: ["user-payments", queryParams],
-    queryFn: () => fetchUserPayments(queryParams),
+    queryFn: () => {
+      console.log("🔍 [UserPaymentTable] Query params:", queryParams);
+      return fetchUserPayments(queryParams);
+    },
     retry: 1,
     staleTime: 30000, // 30 seconds
+  });
+
+  console.log("📊 [UserPaymentTable] Query result:", {
+    paymentsData,
+    isLoading,
+    error,
   });
 
   const table = useReactTable({

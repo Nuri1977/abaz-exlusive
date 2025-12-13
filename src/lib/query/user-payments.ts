@@ -1,56 +1,28 @@
-import {
-  type UserPaymentParams,
-  type UserPaymentResponse,
-  type UserPaymentTableData,
+import type {
+  UserPaymentParams,
+  UserPaymentResponse,
+  UserPaymentTableData,
 } from "@/types/user-payments";
-import type { PaymentDetailData } from "@/types/payment-details";
 import api from "@/lib/axios";
 
-// Fetch user's payment history
+// Fetch user payments with filtering and pagination
 export const fetchUserPayments = async (
   params: UserPaymentParams = {}
 ): Promise<UserPaymentResponse> => {
   try {
     const searchParams = new URLSearchParams();
 
-    if (params.page) searchParams.set("page", params.page.toString());
-    if (params.limit) searchParams.set("limit", params.limit.toString());
-    if (params.sortBy) searchParams.set("sortBy", params.sortBy);
-    if (params.sortOrder) searchParams.set("sortOrder", params.sortOrder);
-    if (params.method) searchParams.set("method", params.method);
-    if (params.status) searchParams.set("status", params.status);
-    if (params.dateFrom)
-      searchParams.set("dateFrom", params.dateFrom.toISOString());
-    if (params.dateTo) searchParams.set("dateTo", params.dateTo.toISOString());
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
+    if (params.method) searchParams.append("method", params.method);
+    if (params.status) searchParams.append("status", params.status);
 
-    console.log("🔍 [fetchUserPayments] Calling API with params:", {
-      url: `/user/payments?${searchParams.toString()}`,
-      params,
-    });
+    const data = await api.get(`/user/payments?${searchParams.toString()}`);
 
-    const res = await api.get(`/user/payments?${searchParams.toString()}`);
-
-    console.log("📦 [fetchUserPayments] Raw API response:", {
-      hasData: !!res,
-      dataKeys: res ? Object.keys(res) : [],
-      data: res,
-    });
-
-    // The API returns NextResponse.json({ data: result })
-    // But our axios wrapper (src/lib/axios.ts) already unwraps res.data
-    // So api.get() returns the response body directly: { data: { payments, pagination } }
-    // We need to access res.data to get { payments, pagination }
-    const apiResponse = res?.data;
-    
-    console.log("🔍 [fetchUserPayments] Checking response:", {
-      hasRes: !!res,
-      hasApiResponse: !!apiResponse,
-      apiResponseKeys: apiResponse ? Object.keys(apiResponse) : [],
-      paymentsCount: apiResponse?.payments?.length,
-    });
-
-    if (!apiResponse || !apiResponse.payments) {
-      console.log("⚠️ [fetchUserPayments] No data in response, returning empty");
+    // Ensure we always return a valid response structure
+    if (!data) {
       return {
         payments: [],
         pagination: {
@@ -64,66 +36,48 @@ export const fetchUserPayments = async (
       };
     }
 
-    
-
-    return apiResponse;
-  } catch (err: any) {
-    console.error("❌ [fetchUserPayments] Error:", {
-      message: err?.message,
-      response: err?.response?.data,
-      status: err?.response?.status,
-    });
-    // Return empty result instead of throwing to prevent undefined query data
-    return {
-      payments: [],
-      pagination: {
-        page: params.page || 1,
-        limit: params.limit || 10,
-        totalCount: 0,
-        totalPages: 0,
-        hasNext: false,
-        hasPrev: false,
-      },
-    };
+    return data as UserPaymentResponse;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to fetch user payments"
+    );
   }
 };
 
-// Fetch individual payment details
+// Fetch individual user payment by ID
 export const fetchUserPaymentById = async (
   id: string
-): Promise<PaymentDetailData> => {
-  try {
-    const res = await api.get(`/user/payments/${id}`);
-    return res.data.data;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to fetch payment details" };
-  }
-};
-
-// Update payment details (for cash payments)
-export const updateUserPayment = async (
-  id: string,
-  data: { deliveryAddress?: string; deliveryNotes?: string }
 ): Promise<UserPaymentTableData> => {
   try {
-    const res = await api.put(`/user/payments/${id}`, data);
-    return res.data.data;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to update payment" };
+    const data = await api.get(`/user/payments/${id}`);
+    return (data as { data: UserPaymentTableData }).data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to fetch payment details"
+    );
   }
 };
 
-// Download receipt
-export const downloadReceipt = async (id: string): Promise<any> => {
+// Update user payment (limited fields)
+export const updateUserPayment = async (
+  id: string,
+  updateData: {
+    deliveryAddress?: string;
+    deliveryNotes?: string;
+  }
+): Promise<UserPaymentTableData> => {
   try {
-    const res = await api.get(`/user/payments/${id}/receipt`);
-    return res.data.data;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to download receipt" };
+    const data = await api.put(`/user/payments/${id}`, updateData);
+    return (data as { data: UserPaymentTableData }).data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(error?.response?.data?.error || "Failed to update payment");
   }
 };
 
-// Request refund
+// Request refund for eligible payment
 export const requestRefund = async (
   id: string,
   reason: string
@@ -131,6 +85,20 @@ export const requestRefund = async (
   try {
     await api.post(`/user/payments/${id}/refund`, { reason });
   } catch (err: unknown) {
-    throw err?.response?.data || { error: "Failed to request refund" };
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(error?.response?.data?.error || "Failed to request refund");
+  }
+};
+
+// Download receipt data
+export const downloadReceipt = async (id: string): Promise<unknown> => {
+  try {
+    const data = await api.get(`/user/payments/${id}/receipt`);
+    return data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { error?: string } } };
+    throw new Error(
+      error?.response?.data?.error || "Failed to download receipt"
+    );
   }
 };
