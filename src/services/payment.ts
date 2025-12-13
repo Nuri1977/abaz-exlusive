@@ -760,6 +760,8 @@ export class PaymentService {
       sortOrder?: "asc" | "desc";
       method?: PaymentMethod;
       status?: PaymentStatus;
+      dateFrom?: Date;
+      dateTo?: Date;
     }
   ) {
     try {
@@ -770,9 +772,46 @@ export class PaymentService {
         sortOrder = "desc",
         method,
         status,
+        dateFrom,
+        dateTo,
       } = options;
 
       const skip = (page - 1) * limit;
+
+      console.log("🔍 [PaymentService.getUserPayments] Starting query:", {
+        userId,
+        page,
+        limit,
+        skip,
+        sortBy,
+        sortOrder,
+        method,
+        status,
+        dateFrom,
+        dateTo,
+      });
+
+      // First, let's check if there are ANY payments for this user
+      const allUserPayments = await prisma.payment.findMany({
+        where: {
+          order: {
+            userId,
+          },
+        },
+        select: {
+          id: true,
+          orderId: true,
+          status: true,
+          method: true,
+          amount: true,
+          createdAt: true,
+        },
+      });
+
+      console.log("📊 [PaymentService.getUserPayments] All user payments:", {
+        count: allUserPayments.length,
+        payments: allUserPayments,
+      });
 
       // Build where clause with proper typing
       const where: {
@@ -781,6 +820,10 @@ export class PaymentService {
         };
         method?: PaymentMethod;
         status?: PaymentStatus;
+        createdAt?: {
+          gte?: Date;
+          lte?: Date;
+        };
       } = {
         order: {
           userId,
@@ -795,8 +838,18 @@ export class PaymentService {
         where.status = status;
       }
 
+      if (dateFrom || dateTo) {
+        where.createdAt = {};
+        if (dateFrom) where.createdAt.gte = dateFrom;
+        if (dateTo) where.createdAt.lte = dateTo;
+      }
+
+      console.log("🔍 [PaymentService.getUserPayments] Where clause:", where);
+
       // Get total count for pagination
       const totalCount = await prisma.payment.count({ where });
+
+      console.log("📊 [PaymentService.getUserPayments] Total count:", totalCount);
 
       // Get payments with related data
       const payments = await prisma.payment.findMany({
@@ -856,6 +909,11 @@ export class PaymentService {
         skip,
       });
 
+      console.log("✅ [PaymentService.getUserPayments] Payments found:", {
+        count: payments.length,
+        paymentIds: payments.map((p) => p.id),
+      });
+
       return {
         payments,
         pagination: {
@@ -868,7 +926,7 @@ export class PaymentService {
         },
       };
     } catch (error) {
-      console.error("Failed to get user payments:", error);
+      console.error("❌ [PaymentService.getUserPayments] Error:", error);
       throw new Error("Failed to get user payments");
     }
   }
@@ -1107,6 +1165,48 @@ export class PaymentService {
     } catch (error) {
       console.error("Failed to get revenue stats:", error);
       throw new Error("Failed to get revenue stats");
+    }
+  }
+
+  /**
+   * Update payment details (for user-editable fields)
+   */
+  static async updatePaymentDetails(
+    paymentId: string,
+    data: {
+      deliveryAddress?: string;
+      deliveryNotes?: string;
+    }
+  ) {
+    try {
+      return await prisma.payment.update({
+        where: { id: paymentId },
+        data: {
+          deliveryAddress: data.deliveryAddress,
+          deliveryNotes: data.deliveryNotes,
+          updatedAt: new Date(),
+        },
+        include: {
+          order: {
+            include: {
+              items: {
+                include: {
+                  Product: {
+                    select: {
+                      name: true,
+                      slug: true,
+                      images: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to update payment details:", error);
+      throw new Error("Failed to update payment details");
     }
   }
 }

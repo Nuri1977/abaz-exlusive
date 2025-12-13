@@ -1,117 +1,13 @@
-import { type PaymentMethod, type PaymentStatus } from "@prisma/client";
-
+import {
+  type UserPaymentParams,
+  type UserPaymentResponse,
+  type UserPaymentTableData,
+} from "@/types/user-payments";
 import api from "@/lib/axios";
 
-// Type definitions
-export interface UserPaymentParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  method?: PaymentMethod;
-  status?: PaymentStatus;
-}
-
-export interface UserPaymentData {
-  id: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-  method: PaymentMethod;
-  provider: string;
-  customerEmail?: string;
-  customerName?: string;
-  deliveryAddress?: string;
-  deliveryNotes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  order: {
-    id: string;
-    status: string;
-    total: number;
-    currency: string;
-    shippingAddress?: string;
-    deliveryDate?: Date;
-    items: {
-      id: string;
-      quantity: number;
-      price: number;
-      Product?: {
-        id: string;
-        name: string;
-        slug: string;
-        images: any[];
-        category: {
-          name: string;
-          parent?: {
-            name: string;
-            parent?: {
-              name: string;
-            };
-          };
-        };
-      };
-      variant?: {
-        id: string;
-        sku: string;
-        options: {
-          optionValue: {
-            id: string;
-            value: string;
-            option: {
-              name: string;
-            };
-          };
-        }[];
-      };
-    }[];
-  };
-}
-
-export interface UserPaymentResponse {
-  payments: UserPaymentData[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
-export interface PaymentReceiptData {
-  paymentId: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  method: PaymentMethod;
-  status: PaymentStatus;
-  paidAt: Date;
-  customer: {
-    name?: string;
-    email?: string;
-  };
-  order: {
-    items: {
-      name: string;
-      quantity: number;
-      price: number;
-      total: number;
-      variant?: string;
-    }[];
-    total: number;
-    shippingAddress?: string;
-  };
-  company: {
-    name: string;
-  };
-}
-
-// Query functions
+// Fetch user's payment history
 export const fetchUserPayments = async (
-  params: UserPaymentParams
+  params: UserPaymentParams = {}
 ): Promise<UserPaymentResponse> => {
   try {
     const searchParams = new URLSearchParams();
@@ -122,76 +18,118 @@ export const fetchUserPayments = async (
     if (params.sortOrder) searchParams.set("sortOrder", params.sortOrder);
     if (params.method) searchParams.set("method", params.method);
     if (params.status) searchParams.set("status", params.status);
+    if (params.dateFrom)
+      searchParams.set("dateFrom", params.dateFrom.toISOString());
+    if (params.dateTo) searchParams.set("dateTo", params.dateTo.toISOString());
+
+    console.log("🔍 [fetchUserPayments] Calling API with params:", {
+      url: `/user/payments?${searchParams.toString()}`,
+      params,
+    });
 
     const res = await api.get(`/user/payments?${searchParams.toString()}`);
-    return res.data;
+
+    console.log("📦 [fetchUserPayments] Raw API response:", {
+      hasData: !!res,
+      dataKeys: res ? Object.keys(res) : [],
+      data: res,
+    });
+
+    // The API returns NextResponse.json({ data: result })
+    // But our axios wrapper (src/lib/axios.ts) already unwraps res.data
+    // So api.get() returns the response body directly: { data: { payments, pagination } }
+    // We need to access res.data to get { payments, pagination }
+    const apiResponse = res?.data;
+    
+    console.log("🔍 [fetchUserPayments] Checking response:", {
+      hasRes: !!res,
+      hasApiResponse: !!apiResponse,
+      apiResponseKeys: apiResponse ? Object.keys(apiResponse) : [],
+      paymentsCount: apiResponse?.payments?.length,
+    });
+
+    if (!apiResponse || !apiResponse.payments) {
+      console.log("⚠️ [fetchUserPayments] No data in response, returning empty");
+      return {
+        payments: [],
+        pagination: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          totalCount: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+
+    
+
+    return apiResponse;
   } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to fetch user payments" };
+    console.error("❌ [fetchUserPayments] Error:", {
+      message: err?.message,
+      response: err?.response?.data,
+      status: err?.response?.status,
+    });
+    // Return empty result instead of throwing to prevent undefined query data
+    return {
+      payments: [],
+      pagination: {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        totalCount: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
   }
 };
 
+// Fetch individual payment details
 export const fetchUserPaymentById = async (
   id: string
-): Promise<UserPaymentData> => {
+): Promise<UserPaymentTableData> => {
   try {
     const res = await api.get(`/user/payments/${id}`);
-    return res.data.payment;
+    return res.data.data;
   } catch (err: any) {
     throw err?.response?.data || { error: "Failed to fetch payment details" };
   }
 };
 
-export const requestRefund = async (
+// Update payment details (for cash payments)
+export const updateUserPayment = async (
   id: string,
-  reason: string
-): Promise<UserPaymentData> => {
+  data: { deliveryAddress?: string; deliveryNotes?: string }
+): Promise<UserPaymentTableData> => {
   try {
-    const res = await api.put(`/user/payments/${id}`, {
-      action: "requestRefund",
-      reason,
-    });
-    return res.data.payment;
+    const res = await api.put(`/user/payments/${id}`, data);
+    return res.data.data;
   } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to request refund" };
+    throw err?.response?.data || { error: "Failed to update payment" };
   }
 };
 
-export const updateDeliveryAddress = async (
-  id: string,
-  deliveryAddress: string,
-  deliveryNotes?: string
-): Promise<UserPaymentData> => {
-  try {
-    const res = await api.put(`/user/payments/${id}`, {
-      action: "updateDeliveryAddress",
-      deliveryAddress,
-      deliveryNotes,
-    });
-    return res.data.payment;
-  } catch (err: any) {
-    throw err?.response?.data || { error: "Failed to update delivery address" };
-  }
-};
-
-export const downloadReceipt = async (
-  id: string
-): Promise<PaymentReceiptData> => {
+// Download receipt
+export const downloadReceipt = async (id: string): Promise<any> => {
   try {
     const res = await api.get(`/user/payments/${id}/receipt`);
-    return res.data.receipt;
+    return res.data.data;
   } catch (err: any) {
     throw err?.response?.data || { error: "Failed to download receipt" };
   }
 };
 
-// Query keys for TanStack Query
-export const userPaymentKeys = {
-  all: ["user-payments"] as const,
-  lists: () => [...userPaymentKeys.all, "list"] as const,
-  list: (params: UserPaymentParams) =>
-    [...userPaymentKeys.lists(), params] as const,
-  details: () => [...userPaymentKeys.all, "detail"] as const,
-  detail: (id: string) => [...userPaymentKeys.details(), id] as const,
-  receipts: () => [...userPaymentKeys.all, "receipt"] as const,
-  receipt: (id: string) => [...userPaymentKeys.receipts(), id] as const,
+// Request refund
+export const requestRefund = async (
+  id: string,
+  reason: string
+): Promise<void> => {
+  try {
+    await api.post(`/user/payments/${id}/refund`, { reason });
+  } catch (err: unknown) {
+    throw err?.response?.data || { error: "Failed to request refund" };
+  }
 };

@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-import { auth } from "@/lib/auth";
 import { PaymentService } from "@/services/payment";
+import { getSessionServer } from "@/helpers/getSessionServer";
 
 export async function GET(
   req: NextRequest,
@@ -10,30 +9,24 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const session = await getSessionServer();
 
-    // Check authentication
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get payment details
     const payment = await PaymentService.findPaymentById(id);
 
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    // Check if payment belongs to the user
-    if (payment.order.userId !== session.user.id) {
+    // Verify the payment belongs to the user
+    if (payment.order?.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ payment });
+    return NextResponse.json({ data: payment });
   } catch (error) {
     console.error("User payment detail API error:", error);
     return NextResponse.json(
@@ -49,71 +42,43 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const session = await getSessionServer();
 
-    // Check authentication
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
-    const { action, ...updateData } = body;
+    const { deliveryAddress, deliveryNotes } = body;
 
-    // Get payment to verify ownership
     const payment = await PaymentService.findPaymentById(id);
 
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    if (payment.order.userId !== session.user.id) {
+    // Verify the payment belongs to the user
+    if (payment.order?.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    let result;
-
-    switch (action) {
-      case "requestRefund":
-        // For now, we'll just add a note to the payment metadata
-        // In a real system, this might create a refund request record
-        result = await PaymentService.updatePaymentStatus(id, {
-          metadata: {
-            ...payment.metadata,
-            refundRequest: {
-              requestedAt: new Date().toISOString(),
-              reason: updateData.reason,
-              requestedBy: session.user.id,
-            },
-          },
-        });
-        break;
-
-      case "updateDeliveryAddress":
-        // Only allow for cash payments that are still pending
-        if (
-          payment.method !== "CASH_ON_DELIVERY" ||
-          payment.status !== "CASH_PENDING"
-        ) {
-          return NextResponse.json(
-            { error: "Cannot update delivery address for this payment" },
-            { status: 400 }
-          );
-        }
-        result = await PaymentService.updatePaymentStatus(id, {
-          deliveryAddress: updateData.deliveryAddress,
-          deliveryNotes: updateData.deliveryNotes,
-        });
-        break;
-
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    // Only allow updates for cash payments that are still pending
+    if (
+      payment.method !== "CASH_ON_DELIVERY" ||
+      payment.status !== "CASH_PENDING"
+    ) {
+      return NextResponse.json(
+        { error: "Payment cannot be modified" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ success: true, payment: result });
+    const updatedPayment = await PaymentService.updatePaymentDetails(id, {
+      deliveryAddress,
+      deliveryNotes,
+    });
+
+    return NextResponse.json({ data: updatedPayment });
   } catch (error) {
     console.error("User payment update API error:", error);
     return NextResponse.json(

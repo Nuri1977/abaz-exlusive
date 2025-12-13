@@ -1,5 +1,8 @@
+"use client";
+
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import {
+  AlertCircle,
   CheckCircle,
   Clock,
   HandCoins,
@@ -9,11 +12,10 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface PaymentStatusBadgeProps {
   status: PaymentStatus;
-  method: PaymentMethod;
+  method?: PaymentMethod;
   className?: string;
 }
 
@@ -44,39 +46,46 @@ const statusConfig = {
     icon: Truck,
   },
   [PaymentStatus.CASH_RECEIVED]: {
-    color: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    color: "bg-green-100 text-green-800 border-green-200",
     label: "Cash Received",
     icon: HandCoins,
   },
-};
+} as const;
 
 export function PaymentStatusBadge({
   status,
   method,
   className,
 }: PaymentStatusBadgeProps) {
-  const config = statusConfig[status];
+  const config = statusConfig[status] || {
+    color: "bg-gray-100 text-gray-800 border-gray-200",
+    label: status,
+    icon: AlertCircle,
+  };
+
   const Icon = config.icon;
 
-  // Customize label based on method for better UX
-  let displayLabel = config.label;
-  if (status === PaymentStatus.CASH_PENDING && method === PaymentMethod.CASH_ON_DELIVERY) {
+  // Customize label based on payment method for better UX
+  let displayLabel: string = config.label;
+  if (
+    status === PaymentStatus.PENDING &&
+    method === PaymentMethod.CASH_ON_DELIVERY
+  ) {
     displayLabel = "Awaiting Delivery";
-  } else if (status === PaymentStatus.CASH_RECEIVED && method === PaymentMethod.CASH_ON_DELIVERY) {
-    displayLabel = "Delivered & Paid";
+  } else if (
+    status === PaymentStatus.PAID &&
+    method === PaymentMethod.CASH_ON_DELIVERY
+  ) {
+    displayLabel = "Cash Received";
   }
 
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium",
-        config.color,
-        className
-      )}
+      className={`inline-flex items-center gap-1.5 ${config.color} ${className}`}
     >
       <Icon className="size-3" />
-      {displayLabel}
+      <span className="text-xs font-medium">{displayLabel}</span>
     </Badge>
   );
 }

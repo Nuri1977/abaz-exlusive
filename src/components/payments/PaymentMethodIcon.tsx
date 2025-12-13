@@ -1,12 +1,18 @@
-import { PaymentMethod } from "@prisma/client";
-import { Building2, CreditCard, HandCoins, Smartphone } from "lucide-react";
+"use client";
 
-import { cn } from "@/lib/utils";
+import { PaymentMethod } from "@prisma/client";
+import {
+  Building2,
+  CreditCard,
+  HandCoins,
+  HelpCircle,
+  Smartphone,
+} from "lucide-react";
 
 interface PaymentMethodIconProps {
   method: PaymentMethod;
-  size?: "sm" | "md" | "lg";
   showLabel?: boolean;
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -31,39 +37,37 @@ const methodConfig = {
     label: "Digital Wallet",
     color: "text-orange-600",
   },
-};
+} as const;
 
 const sizeConfig = {
-  sm: "size-4",
-  md: "size-5",
-  lg: "size-6",
+  sm: "size-3",
+  md: "size-4",
+  lg: "size-5",
 };
 
 export function PaymentMethodIcon({
   method,
-  size = "md",
   showLabel = false,
+  size = "md",
   className,
 }: PaymentMethodIconProps) {
-  const config = methodConfig[method];
+  const config = methodConfig[method] || {
+    icon: HelpCircle,
+    label: "Unknown Method",
+    color: "text-gray-500",
+  };
+
   const Icon = config.icon;
+  const iconSize = sizeConfig[size];
 
   if (showLabel) {
     return (
-      <div className={cn("inline-flex items-center gap-2", className)}>
-        <Icon
-          className={cn(sizeConfig[size], config.color)}
-        />
+      <div className={`inline-flex items-center gap-2 ${className}`}>
+        <Icon className={`${iconSize} ${config.color}`} />
         <span className="text-sm font-medium">{config.label}</span>
       </div>
     );
   }
 
-  return (
-    <div title={config.label}>
-      <Icon
-        className={cn(sizeConfig[size], config.color, className)}
-      />
-    </div>
-  );
+  return <Icon className={`${iconSize} ${config.color} ${className}`} />;
 }

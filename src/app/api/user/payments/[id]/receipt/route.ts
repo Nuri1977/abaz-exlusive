@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { auth } from "@/lib/auth";
 import { PaymentService } from "@/services/payment";
+import { getSessionServer } from "@/helpers/getSessionServer";
 
 export async function GET(
   req: NextRequest,
@@ -10,80 +9,62 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const session = await getSessionServer();
 
-    // Check authentication
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get payment details
     const payment = await PaymentService.findPaymentById(id);
 
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    // Check if payment belongs to the user
-    if (payment.order.userId !== session.user.id) {
+    // Verify the payment belongs to the user
+    if (payment.order?.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Check if payment is in a state where receipt can be generated
+    // Only allow receipt download for paid payments
     if (payment.status !== "PAID" && payment.status !== "CASH_RECEIVED") {
       return NextResponse.json(
-        { error: "Receipt not available for this payment status" },
+        { error: "Receipt not available for this payment" },
         { status: 400 }
       );
     }
 
-    // For now, return receipt data as JSON
-    // In a real implementation, you might generate a PDF here
+    // Generate receipt data
     const receiptData = {
-      paymentId: payment.id,
-      orderId: payment.orderId,
-      amount: payment.amount,
-      currency: payment.currency,
-      method: payment.method,
-      status: payment.status,
-      paidAt:
-        payment.status === "CASH_RECEIVED"
-          ? payment.confirmedAt
-          : payment.updatedAt,
-      customer: {
-        name: payment.customerName || payment.order.customerName,
-        email: payment.customerEmail || payment.order.customerEmail,
+      payment: {
+        id: payment.id,
+        amount: payment.amount,
+        currency: payment.currency,
+        method: payment.method,
+        status: payment.status,
+        createdAt: payment.createdAt,
+        confirmedAt: payment.confirmedAt,
       },
       order: {
-        items: payment.order.items.map((item) => ({
-          name: item.Product?.name || "Unknown Product",
+        id: payment.order?.id,
+        total: payment.order?.total,
+        items: payment.order?.items?.map((item) => ({
+          id: item.id,
           quantity: item.quantity,
           price: item.price,
-          total: Number(item.price) * item.quantity,
-          variant:
-            item.variant?.options
-              ?.map(
-                (opt) =>
-                  `${opt?.optionValue?.option?.name}: ${opt?.optionValue?.value}`
-              )
-              ?.join(", ") || "",
+          productName: item.Product?.name,
+          productSlug: item.Product?.slug,
         })),
-        total: payment.order.total,
-        shippingAddress: payment.order.shippingAddress,
       },
-      company: {
-        name: "Abaz Exclusive",
-        // Add your company details here
+      customer: {
+        name: payment.customerName || session.user.name,
+        email: payment.customerEmail || session.user.email,
       },
     };
 
-    return NextResponse.json({ receipt: receiptData });
+    return NextResponse.json({ data: receiptData });
   } catch (error) {
-    console.error("Receipt generation API error:", error);
+    console.error("Receipt API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
