@@ -23,13 +23,38 @@ export interface AdminPaymentTableData {
   refundedAmount?: number;
   refundedAt?: Date;
   failureReason?: string;
+  timeline?: {
+    id: string;
+    type: "created" | "status_changed" | "refund" | "confirmation" | "note_added" | "sync_attempt" | "force_confirm";
+    description: string;
+    timestamp: Date;
+    actor?: string;
+    metadata?: {
+      previousStatus?: PaymentStatus;
+      newStatus?: PaymentStatus;
+      refundAmount?: number;
+      refundReason?: string;
+      notes?: string;
+      syncResult?: string;
+      [key: string]: unknown;
+    };
+  }[];
   order: {
     id: string;
     customerName?: string;
     customerEmail?: string;
+    phone?: string | null;
     total: number;
+    currency: string;
     status: OrderStatus;
     createdAt: Date;
+    updatedAt: Date;
+    shippingAddress?: string;
+    billingAddress?: string;
+    deliveryDate?: Date | null;
+    deliveryNotes?: string;
+    paymentStatus?: PaymentStatus;
+    [key: string]: unknown; // Allow additional fields from Prisma
     items: {
       id: string;
       quantity: number;

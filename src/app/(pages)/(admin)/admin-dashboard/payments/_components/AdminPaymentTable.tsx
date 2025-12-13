@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   ChevronDown,
@@ -24,8 +25,19 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
-import Link from "next/link";
 
+import {
+  type AdminPaymentTableData,
+  type PaymentActionData,
+} from "@/types/admin-payments";
+import {
+  confirmCashPayment,
+  fetchAdminPayments,
+  processRefund,
+  syncPaymentWithPolar,
+  updatePaymentStatus,
+} from "@/lib/query/admin-payments";
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -52,15 +64,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/useToast";
-import {
-  confirmCashPayment,
-  fetchAdminPayments,
-  processRefund,
-  syncPaymentWithPolar,
-  updatePaymentStatus,
-} from "@/lib/query/admin-payments";
-import { type AdminPaymentTableData, type PaymentActionData } from "@/types/admin-payments";
 import { PaymentMethodIcon } from "@/components/payments/PaymentMethodIcon";
 import { PaymentStatusBadge } from "@/components/payments/PaymentStatusBadge";
 
@@ -70,8 +73,12 @@ export function AdminPaymentTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-  const [methodFilter, setMethodFilter] = useState<PaymentMethod | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "all">("all");
+  const [methodFilter, setMethodFilter] = useState<PaymentMethod | "all">(
+    "all"
+  );
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "all">(
+    "all"
+  );
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -129,8 +136,13 @@ export function AdminPaymentTable() {
 
   // Sync with Polar mutation
   const syncMutation = useMutation({
-    mutationFn: ({ id, forceSync = false }: { id: string; forceSync?: boolean }) =>
-      syncPaymentWithPolar(id, forceSync),
+    mutationFn: ({
+      id,
+      forceSync = false,
+    }: {
+      id: string;
+      forceSync?: boolean;
+    }) => syncPaymentWithPolar(id, forceSync),
     onSuccess: (data: {
       message: string;
       previousStatus?: string;
@@ -330,10 +342,7 @@ export function AdminPaymentTable() {
       cell: ({ row }) => {
         const payment = row.original;
         return (
-          <PaymentStatusBadge
-            status={payment.status}
-            method={payment.method}
-          />
+          <PaymentStatusBadge status={payment.status} method={payment.method} />
         );
       },
     },
@@ -412,7 +421,9 @@ export function AdminPaymentTable() {
                       Sync with Polar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => syncMutation.mutate({ id: payment.id, forceSync: true })}
+                      onClick={() =>
+                        syncMutation.mutate({ id: payment.id, forceSync: true })
+                      }
                       disabled={syncMutation.isPending}
                       className="text-orange-600"
                     >
@@ -421,20 +432,24 @@ export function AdminPaymentTable() {
                     </DropdownMenuItem>
                   </>
                 )}
-              {payment.status === PaymentStatus.PENDING && (payment.method !== "CARD" || payment.provider !== "polar") && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    updateMutation.mutate({
-                      id: payment.id,
-                      data: { action: "updateStatus", status: PaymentStatus.PAID },
-                    })
-                  }
-                  disabled={updateMutation.isPending}
-                >
-                  <RefreshCw className="mr-2 size-4" />
-                  Mark as Paid
-                </DropdownMenuItem>
-              )}
+              {payment.status === PaymentStatus.PENDING &&
+                (payment.method !== "CARD" || payment.provider !== "polar") && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      updateMutation.mutate({
+                        id: payment.id,
+                        data: {
+                          action: "updateStatus",
+                          status: PaymentStatus.PAID,
+                        },
+                      })
+                    }
+                    disabled={updateMutation.isPending}
+                  >
+                    <RefreshCw className="mr-2 size-4" />
+                    Mark as Paid
+                  </DropdownMenuItem>
+                )}
               {payment.status === PaymentStatus.CASH_PENDING && (
                 <DropdownMenuItem
                   onClick={() =>
@@ -451,20 +466,20 @@ export function AdminPaymentTable() {
               )}
               {(payment.status === PaymentStatus.PAID ||
                 payment.status === PaymentStatus.CASH_RECEIVED) && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      refundMutation.mutate({
-                        id: payment.id,
-                        amount: parseFloat(payment.amount.toString()),
-                        reason: "Admin refund",
-                      })
-                    }
-                    disabled={refundMutation.isPending}
-                  >
-                    <Download className="mr-2 size-4" />
-                    Process Refund
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={() =>
+                    refundMutation.mutate({
+                      id: payment.id,
+                      amount: parseFloat(payment.amount.toString()),
+                      reason: "Admin refund",
+                    })
+                  }
+                  disabled={refundMutation.isPending}
+                >
+                  <Download className="mr-2 size-4" />
+                  Process Refund
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -506,7 +521,11 @@ export function AdminPaymentTable() {
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => void queryClient.invalidateQueries({ queryKey: ["admin-payments"] })}
+            onClick={() =>
+              void queryClient.invalidateQueries({
+                queryKey: ["admin-payments"],
+              })
+            }
           >
             <RefreshCw className="mr-2 size-4" />
             Retry
@@ -624,9 +643,9 @@ export function AdminPaymentTable() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -703,9 +722,13 @@ export function AdminPaymentTable() {
               {/* Customer and Order Info */}
               <div className="mb-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Customer:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Customer:
+                  </span>
                   <span className="text-sm font-medium">
-                    {payment.customerName || payment.order.customerName || "Guest"}
+                    {payment.customerName ||
+                      payment.order.customerName ||
+                      "Guest"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -739,7 +762,9 @@ export function AdminPaymentTable() {
               {/* Date and Provider */}
               <div className="mb-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Created:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Created:
+                  </span>
                   <span className="text-sm">
                     {new Date(payment.createdAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -749,25 +774,33 @@ export function AdminPaymentTable() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Provider:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Provider:
+                  </span>
                   <span className="text-sm capitalize">{payment.provider}</span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm" className="flex-1">
-                  <Link href={`/admin-dashboard/payments/${payment.id}`}>
-                    <Eye className="mr-2 size-4" />
-                    View Details
-                  </Link>
-                </Button>
+              <div className="flex flex-col gap-2">
+                {/* View Details + Primary Action Row */}
+                <div className="flex gap-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Link href={`/admin-dashboard/payments/${payment.id}`}>
+                      <Eye className="mr-2 size-4" />
+                      View Details
+                    </Link>
+                  </Button>
 
-                {payment.status === PaymentStatus.PENDING &&
-                  payment.method === "CARD" &&
-                  payment.provider === "polar" &&
-                  (payment.checkoutId || payment.providerPaymentId) && (
-                    <>
+                  {payment.status === PaymentStatus.PENDING &&
+                    payment.method === "CARD" &&
+                    payment.provider === "polar" &&
+                    (payment.checkoutId || payment.providerPaymentId) && (
                       <Button
                         variant="default"
                         size="sm"
@@ -778,57 +811,51 @@ export function AdminPaymentTable() {
                         <RefreshCw className="mr-2 size-4" />
                         Sync
                       </Button>
+                    )}
+
+                  {payment.status === PaymentStatus.PENDING &&
+                    (payment.method !== "CARD" ||
+                      payment.provider !== "polar") && (
                       <Button
-                        variant="outline"
+                        variant="default"
                         size="sm"
-                        onClick={() => syncMutation.mutate({ id: payment.id, forceSync: true })}
-                        disabled={syncMutation.isPending}
-                        className="flex-1 text-orange-600"
+                        onClick={() =>
+                          updateMutation.mutate({
+                            id: payment.id,
+                            data: {
+                              action: "updateStatus",
+                              status: PaymentStatus.PAID,
+                            },
+                          })
+                        }
+                        disabled={updateMutation.isPending}
+                        className="flex-1"
                       >
                         <RefreshCw className="mr-2 size-4" />
-                        Force Confirm
+                        Mark as Paid
                       </Button>
-                    </>
+                    )}
+
+                  {payment.status === PaymentStatus.CASH_PENDING && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() =>
+                        confirmCashMutation.mutate({
+                          id: payment.id,
+                          notes: "Confirmed via admin dashboard",
+                        })
+                      }
+                      disabled={confirmCashMutation.isPending}
+                      className="flex-1"
+                    >
+                      <RefreshCw className="mr-2 size-4" />
+                      Confirm Cash
+                    </Button>
                   )}
 
-                {payment.status === PaymentStatus.PENDING && (payment.method !== "CARD" || payment.provider !== "polar") && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() =>
-                      updateMutation.mutate({
-                        id: payment.id,
-                        data: { action: "updateStatus", status: PaymentStatus.PAID },
-                      })
-                    }
-                    disabled={updateMutation.isPending}
-                    className="flex-1"
-                  >
-                    <RefreshCw className="mr-2 size-4" />
-                    Mark as Paid
-                  </Button>
-                )}
-
-                {payment.status === PaymentStatus.CASH_PENDING && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() =>
-                      confirmCashMutation.mutate({
-                        id: payment.id,
-                        notes: "Confirmed via admin dashboard",
-                      })
-                    }
-                    disabled={confirmCashMutation.isPending}
-                    className="flex-1"
-                  >
-                    <RefreshCw className="mr-2 size-4" />
-                    Confirm Cash
-                  </Button>
-                )}
-
-                {(payment.status === PaymentStatus.PAID ||
-                  payment.status === PaymentStatus.CASH_RECEIVED) && (
+                  {(payment.status === PaymentStatus.PAID ||
+                    payment.status === PaymentStatus.CASH_RECEIVED) && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -846,6 +873,29 @@ export function AdminPaymentTable() {
                       Refund
                     </Button>
                   )}
+                </div>
+
+                {/* Force Confirm Button - Full Width Row */}
+                {payment.status === PaymentStatus.PENDING &&
+                  payment.method === "CARD" &&
+                  payment.provider === "polar" &&
+                  (payment.checkoutId || payment.providerPaymentId) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        syncMutation.mutate({
+                          id: payment.id,
+                          forceSync: true,
+                        })
+                      }
+                      disabled={syncMutation.isPending}
+                      className="w-full text-orange-600"
+                    >
+                      <RefreshCw className="mr-2 size-4" />
+                      Force Confirm as Paid
+                    </Button>
+                  )}
               </div>
             </div>
           ))
@@ -861,7 +911,7 @@ export function AdminPaymentTable() {
         <div className="text-center text-sm text-muted-foreground sm:text-left">
           {paymentsData && (
             <>
-              Showing {(pagination.pageIndex * pagination.pageSize) + 1} to{" "}
+              Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
               {Math.min(
                 (pagination.pageIndex + 1) * pagination.pageSize,
                 paymentsData.pagination.totalCount

@@ -3,6 +3,7 @@ import {
   type UserPaymentResponse,
   type UserPaymentTableData,
 } from "@/types/user-payments";
+import type { PaymentDetailData } from "@/types/payment-details";
 import api from "@/lib/axios";
 
 // Fetch user's payment history
@@ -90,7 +91,7 @@ export const fetchUserPayments = async (
 // Fetch individual payment details
 export const fetchUserPaymentById = async (
   id: string
-): Promise<UserPaymentTableData> => {
+): Promise<PaymentDetailData> => {
   try {
     const res = await api.get(`/user/payments/${id}`);
     return res.data.data;
