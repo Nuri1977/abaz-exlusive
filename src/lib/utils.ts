@@ -29,9 +29,20 @@ export function slugify(text: string): string {
   );
 }
 
-export const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("mk-MK", {
+export const formatPrice = (price: number, currency: string = "MKD") => {
+  // Map currency to appropriate locale
+  const localeMap: Record<string, string> = {
+    MKD: "mk-MK",
+    USD: "en-US",
+    EUR: "de-DE",
+  };
+
+  const locale = localeMap[currency] || "en-US";
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "MKD",
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(price);
 };

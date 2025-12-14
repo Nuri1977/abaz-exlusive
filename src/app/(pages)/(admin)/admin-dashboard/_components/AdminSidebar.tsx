@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlignLeft, LucideIcon } from "lucide-react";
+import { AlignLeft, type LucideIcon } from "lucide-react";
 
 import { adminLinks } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ const AdminNavLinks = ({ onClick }: { onClick?: () => void }) => {
             href={link.href}
             onClick={onClick}
             className={cn(
-              "flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground",
+              "flex items-center rounded-lg p-3 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground",
               isActive
                 ? "bg-accent text-accent-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
