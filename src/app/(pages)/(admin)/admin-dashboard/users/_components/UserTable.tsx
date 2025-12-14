@@ -164,7 +164,7 @@ export function UserTable() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      (users as User[]).map((user: User) => (
+                      (users).map((user: User) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">
                             {user?.name || (
@@ -228,7 +228,7 @@ export function UserTable() {
                     No users found
                   </div>
                 ) : (
-                  (users as User[]).map((user: User) => (
+                  (users).map((user: User) => (
                     <Card key={user?.id} className="relative">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">

@@ -4,6 +4,8 @@ import { adminLinks } from "@/constants/routes";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { AdminDashboardClient } from "./_components/AdminDashboardClient";
+
 const AdminDashboardPage = async () => {
   const usersCount = await prisma.user.count();
 
@@ -23,6 +25,10 @@ const AdminDashboardPage = async () => {
         </p>
       </div>
 
+      {/* Payment Statistics Widget */}
+      <AdminDashboardClient />
+
+      {/* Admin Links Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {links.map((item, index) => (
           <Link href={item.href} key={index}>

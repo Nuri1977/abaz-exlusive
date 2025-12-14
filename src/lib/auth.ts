@@ -8,6 +8,18 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
+  },
+  rateLimit: {
+    window: 60, // 1 minute
+    max: 100, // 100 requests per minute
+  },
   // Configure authentication methods
   emailAndPassword: {
     enabled: true,
@@ -40,11 +52,11 @@ export const auth = betterAuth({
       if (!res.ok) {
         throw new Error("Failed to send reset password email");
       }
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string };
       if (data.error) {
         throw new Error(data.error);
       }
-      return data;
+      // Function should return void for Better Auth
     },
     resetPasswordTokenExpiresIn: 3600, // 1 hour
     password: {
@@ -86,7 +98,6 @@ export const auth = betterAuth({
     additionalFields: {
       isAdmin: {
         type: "boolean",
-        default: false,
       },
     },
     changeEmail: {
@@ -113,11 +124,11 @@ export const auth = betterAuth({
         if (!res.ok) {
           throw new Error("Failed to send verification email");
         }
-        const data = await res.json();
+        const data = (await res.json()) as { error?: string };
         if (data.error) {
           throw new Error(data.error);
         }
-        return data;
+        // Function should return void for Better Auth
       } catch (error) {
         console.error("Error sending verification email:", error);
         throw new Error("Failed to send verification email");
