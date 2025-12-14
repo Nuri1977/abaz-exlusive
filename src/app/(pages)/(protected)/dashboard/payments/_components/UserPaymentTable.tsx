@@ -101,7 +101,7 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
                 className="relative size-8 overflow-hidden rounded border-2 border-background"
               >
                 {item.Product?.images?.[0] &&
-                typeof item.Product.images[0] === "string" ? (
+                  typeof item.Product.images[0] === "string" ? (
                   <Image
                     src={item.Product.images[0]}
                     alt={item.Product?.name || "Product"}
@@ -155,7 +155,7 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
     header: "Payment Method",
     cell: ({ row }) => {
       const method = row.getValue<PaymentMethod>("method");
-      return <PaymentMethodIcon method={method} showLabel />;
+      return <PaymentMethodIcon method={method} variant="badge" size="sm" />;
     },
   },
   {
@@ -164,7 +164,7 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
     cell: ({ row }) => {
       const status = row.getValue<PaymentStatus>("status");
       const method = row.original.method;
-      return <PaymentStatusBadge status={status} method={method} />;
+      return <PaymentStatusBadge status={status} method={method} size="sm" />;
     },
   },
   {
@@ -218,14 +218,14 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
             </DropdownMenuItem>
             {(payment.status === "PAID" ||
               payment.status === "CASH_RECEIVED") && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Download className="mr-2 size-4" />
-                  Download Receipt
-                </DropdownMenuItem>
-              </>
-            )}
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Download className="mr-2 size-4" />
+                    Download Receipt
+                  </DropdownMenuItem>
+                </>
+              )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -400,9 +400,9 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                         </TableHead>
                       );
                     })}
@@ -463,6 +463,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                         <PaymentStatusBadge
                           status={payment.status}
                           method={payment.method}
+                          size="sm"
                         />
                       </div>
 
@@ -475,7 +476,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                               className="relative size-10 overflow-hidden rounded border-2 border-background"
                             >
                               {item.Product?.images?.[0] &&
-                              typeof item.Product.images[0] === "string" ? (
+                                typeof item.Product.images[0] === "string" ? (
                                 <Image
                                   src={item.Product.images[0]}
                                   alt={item.Product?.name || "Product"}
@@ -510,7 +511,11 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                       {/* Payment Details */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <PaymentMethodIcon method={payment.method} />
+                          <PaymentMethodIcon
+                            method={payment.method}
+                            variant="badge"
+                            size="xs"
+                          />
                           <span className="text-sm text-muted-foreground">
                             {new Date(payment.createdAt).toLocaleDateString(
                               "en-US",
@@ -542,10 +547,10 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                         </Button>
                         {(payment.status === "PAID" ||
                           payment.status === "CASH_RECEIVED") && (
-                          <Button variant="outline" size="sm">
-                            <Download className="size-4" />
-                          </Button>
-                        )}
+                            <Button variant="outline" size="sm">
+                              <Download className="size-4" />
+                            </Button>
+                          )}
                       </div>
                     </div>
                   </CardContent>

@@ -333,7 +333,7 @@ export function AdminPaymentTable() {
       header: "Method",
       cell: ({ row }) => {
         const method = row.getValue<PaymentMethod>("method");
-        return <PaymentMethodIcon method={method} showLabel />;
+        return <PaymentMethodIcon method={method} variant="badge" size="sm" />;
       },
     },
     {
@@ -342,7 +342,11 @@ export function AdminPaymentTable() {
       cell: ({ row }) => {
         const payment = row.original;
         return (
-          <PaymentStatusBadge status={payment.status} method={payment.method} />
+          <PaymentStatusBadge
+            status={payment.status}
+            method={payment.method}
+            size="sm"
+          />
         );
       },
     },
@@ -466,20 +470,20 @@ export function AdminPaymentTable() {
               )}
               {(payment.status === PaymentStatus.PAID ||
                 payment.status === PaymentStatus.CASH_RECEIVED) && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    refundMutation.mutate({
-                      id: payment.id,
-                      amount: parseFloat(payment.amount.toString()),
-                      reason: "Admin refund",
-                    })
-                  }
-                  disabled={refundMutation.isPending}
-                >
-                  <Download className="mr-2 size-4" />
-                  Process Refund
-                </DropdownMenuItem>
-              )}
+                  <DropdownMenuItem
+                    onClick={() =>
+                      refundMutation.mutate({
+                        id: payment.id,
+                        amount: parseFloat(payment.amount.toString()),
+                        reason: "Admin refund",
+                      })
+                    }
+                    disabled={refundMutation.isPending}
+                  >
+                    <Download className="mr-2 size-4" />
+                    Process Refund
+                  </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -652,9 +656,9 @@ export function AdminPaymentTable() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
@@ -725,6 +729,7 @@ export function AdminPaymentTable() {
                 <PaymentStatusBadge
                   status={payment.status}
                   method={payment.method}
+                  size="sm"
                 />
               </div>
 
@@ -764,7 +769,11 @@ export function AdminPaymentTable() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Method:</span>
-                  <PaymentMethodIcon method={payment.method} showLabel />
+                  <PaymentMethodIcon
+                    method={payment.method}
+                    variant="badge"
+                    size="sm"
+                  />
                 </div>
               </div>
 
@@ -865,23 +874,23 @@ export function AdminPaymentTable() {
 
                   {(payment.status === PaymentStatus.PAID ||
                     payment.status === PaymentStatus.CASH_RECEIVED) && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() =>
-                        refundMutation.mutate({
-                          id: payment.id,
-                          amount: parseFloat(payment.amount.toString()),
-                          reason: "Admin refund",
-                        })
-                      }
-                      disabled={refundMutation.isPending}
-                      className="flex-1"
-                    >
-                      <Download className="mr-2 size-4" />
-                      Refund
-                    </Button>
-                  )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() =>
+                          refundMutation.mutate({
+                            id: payment.id,
+                            amount: parseFloat(payment.amount.toString()),
+                            reason: "Admin refund",
+                          })
+                        }
+                        disabled={refundMutation.isPending}
+                        className="flex-1"
+                      >
+                        <Download className="mr-2 size-4" />
+                        Refund
+                      </Button>
+                    )}
                 </div>
 
                 {/* Force Confirm Button - Full Width Row */}
