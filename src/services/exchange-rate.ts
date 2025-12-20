@@ -1,15 +1,10 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import axios from "axios";
 
+import { type Currency, type ExchangeRates } from "@/types/currency";
 import { prisma } from "@/lib/prisma";
 
-export type Currency = "MKD" | "USD" | "EUR";
-
-export interface ExchangeRates {
-  MKD: number;
-  USD: number;
-  EUR: number;
-}
+export type { Currency, ExchangeRates };
 
 const API_BASE =
   "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/";
@@ -79,8 +74,15 @@ export class ExchangeRateService {
 
     try {
       // Try primary API
-      const res = await axios.get(`${API_BASE}${endpoint}`, { timeout: 5000 });
-      const data = res.data?.[base.toLowerCase()] ?? res.data;
+      const res = await axios.get<Record<string, unknown>>(
+        `${API_BASE}${endpoint}`,
+        {
+          timeout: 5000,
+        }
+      );
+      const rawData = res.data;
+      const baseKey = base.toLowerCase();
+      const data = (rawData[baseKey] || rawData) as Record<string, number>;
 
       return {
         MKD: data?.mkd ?? 1,
@@ -88,13 +90,21 @@ export class ExchangeRateService {
         EUR: data?.eur ?? 1,
       };
     } catch (primaryError) {
-      console.warn(`[ExchangeRate] Primary API failed, trying fallback...`);
+      console.warn(
+        `[ExchangeRate] Primary API failed, trying fallback...`,
+        primaryError
+      );
 
       // Try fallback API
-      const res = await axios.get(`${FALLBACK_BASE}${endpoint}`, {
-        timeout: 5000,
-      });
-      const data = res.data?.[base.toLowerCase()] ?? res.data;
+      const res = await axios.get<Record<string, unknown>>(
+        `${FALLBACK_BASE}${endpoint}`,
+        {
+          timeout: 5000,
+        }
+      );
+      const rawData = res.data;
+      const baseKey = base.toLowerCase();
+      const data = (rawData[baseKey] || rawData) as Record<string, number>;
 
       return {
         MKD: data?.mkd ?? 1,
@@ -111,9 +121,9 @@ export class ExchangeRateService {
     base: Currency,
     onlyActive: boolean = true
   ): Promise<{
-    MKD: Decimal;
-    USD: Decimal;
-    EUR: Decimal;
+    MKD: Prisma.Decimal;
+    USD: Prisma.Decimal;
+    EUR: Prisma.Decimal;
     expiresAt: Date;
   } | null> {
     const rates = await prisma.exchangeRate.findMany({
@@ -130,15 +140,22 @@ export class ExchangeRateService {
 
     if (rates.length === 0) return null;
 
-    const rateMap: any = { expiresAt: rates[0]?.expiresAt };
+    const rateMap: Record<string, Prisma.Decimal | Date> = {
+      expiresAt: rates[0]?.expiresAt ?? new Date(),
+    };
     rates.forEach((r) => {
-      rateMap[r.targetCurrency as Currency] = r.rate;
+      rateMap[r.targetCurrency] = r.rate;
     });
 
     // Ensure all currencies are present
     if (!rateMap.MKD || !rateMap.USD || !rateMap.EUR) return null;
 
-    return rateMap;
+    return rateMap as unknown as {
+      MKD: Prisma.Decimal;
+      USD: Prisma.Decimal;
+      EUR: Prisma.Decimal;
+      expiresAt: Date;
+    };
   }
 
   /**
@@ -166,7 +183,7 @@ export class ExchangeRateService {
           data: {
             baseCurrency: base,
             targetCurrency: target,
-            rate: new Decimal(rates[target]),
+            rate: new Prisma.Decimal(rates[target]),
             source: "api",
             fetchedAt,
             expiresAt,
@@ -190,9 +207,9 @@ export class ExchangeRateService {
    * Format database rates to ExchangeRates object
    */
   private static formatDatabaseRates(dbRates: {
-    MKD: Decimal;
-    USD: Decimal;
-    EUR: Decimal;
+    MKD: Prisma.Decimal;
+    USD: Prisma.Decimal;
+    EUR: Prisma.Decimal;
   }): ExchangeRates {
     return {
       MKD: Number(dbRates.MKD),

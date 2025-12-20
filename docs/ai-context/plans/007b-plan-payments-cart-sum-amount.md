@@ -40,40 +40,40 @@ Payment Success → Webhook (Extract Cart from Metadata) → Order Fullfillment
 
 ## PHASE 1: Validation & Setup (Completed)
 
-*   **Status**: ✅ Done
-*   **Outcome**: We verified that `POLAR_GENERIC_PRODUCT_ID` is mandatory. We have confirmed the need for a generic product strategy.
+- **Status**: ✅ Done
+- **Outcome**: We verified that `POLAR_GENERIC_PRODUCT_ID` is mandatory. We have confirmed the need for a generic product strategy.
 
 ---
 
 ## PHASE 2: Enhanced Metadata & Polar Service (Completed)
 
-*   **Status**: ✅ Done
-*   **Outcome**:
-    *   `src/services/polar.ts` updated to handle custom checkouts (wrapping the `create` call).
-    *   Metadata types (`CartItemMetadata`, `PolarCheckoutMetadata`) are defined.
-    *   Logic to flatten/parse metadata for Polar is implemented.
+- **Status**: ✅ Done
+- **Outcome**:
+  - `src/services/polar.ts` updated to handle custom checkouts (wrapping the `create` call).
+  - Metadata types (`CartItemMetadata`, `PolarCheckoutMetadata`) are defined.
+  - Logic to flatten/parse metadata for Polar is implemented.
 
 ---
 
 ## PHASE 3: Currency & Exchange Rate System (Completed)
 
-*   **Status**: ✅ Done
-*   **Outcome**:
-    *   `ExchangeRate` model added to Prisma.
-    *   `ExchangeRateService` implemented with DB caching and fallback.
-    *   `CurrencyConverter` utility created.
-    *   `PolarService` updated to support Generic Product + Price Override.
-    *   `POST /api/polar/checkout` updated to use the new service and convert currency.
+- **Status**: ✅ Done
+- **Outcome**:
+  - `ExchangeRate` model added to Prisma.
+  - `ExchangeRateService` implemented with DB caching and fallback.
+  - `CurrencyConverter` utility created.
+  - `PolarService` updated to support Generic Product + Price Override.
+  - `POST /api/polar/checkout` updated to use the new service and convert currency.
 
 ---
 
 ## PHASE 4: Admin & Automation (Completed)
 
-*   **Status**: ✅ Done
-*   **Outcome**:
-    *   `/api/admin/exchange-rates` created.
-    *   `ExchangeRateService` implements lazy refresh (auto-fetch if expired).
-    *   No external cron job needed.
+- **Status**: ✅ Done
+- **Outcome**:
+  - `/api/admin/exchange-rates` created.
+  - `ExchangeRateService` implements lazy refresh (auto-fetch if expired).
+  - No external cron job needed.
 
 ---
 
@@ -108,12 +108,12 @@ model ExchangeRate {
 
 Create `src/services/exchange-rate.ts` to manage fetching, caching, and fallback logic.
 
-*   **Logic**:
-    1.  Check DB for "fresh" (< 24h old) rate.
-    2.  If missing/stale, fetch from primary API (jsdelivr/fawazahmed0).
-    3.  If primary fails, try fallback API.
-    4.  If all fail, use hardcoded "safe" fallback rates.
-    5.  Save new rates to DB.
+- **Logic**:
+  1.  Check DB for "fresh" (< 24h old) rate.
+  2.  If missing/stale, fetch from primary API (jsdelivr/fawazahmed0).
+  3.  If primary fails, try fallback API.
+  4.  If all fail, use hardcoded "safe" fallback rates.
+  5.  Save new rates to DB.
 
 ```typescript
 // src/services/exchange-rate.ts
@@ -372,13 +372,13 @@ Update `src/app/api/polar/checkout/route.ts` to use this service.
 1.  **Receive**: `amount` and `currency` from the frontend (e.g., 6000 MKD).
 2.  **Convert**: Call `ExchangeRateService` to convert 6000 MKD -> ~105 USD.
 3.  **Metadata**: Prepare metadata including:
-    *   `originalAmount`: 6000
-    *   `originalCurrency`: "MKD"
-    *   `exchangeRate`: 0.0175
+    - `originalAmount`: 6000
+    - `originalCurrency`: "MKD"
+    - `exchangeRate`: 0.0175
 4.  **Call Polar**: Create checkout with:
-    *   `products`: [GENERIC_PRODUCT_ID]
-    *   `prices`: Fixed price override of 105 USD (in cents).
-    *   `metadata`: The elaborate metadata object.
+    - `products`: [GENERIC_PRODUCT_ID]
+    - `prices`: Fixed price override of 105 USD (in cents).
+    - `metadata`: The elaborate metadata object.
 
 ```typescript
 // src/lib/currency-converter.ts
@@ -464,12 +464,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { PolarCheckoutInputSchema } from "@/schemas/polar-checkout";
 
 import { buildCartMetadata } from "@/lib/cart-metadata-builder";
+import { CurrencyConverter } from "@/lib/currency-converter";
+import { fetchExchangeRates } from "@/lib/query/currency";
 import { OrderService } from "@/services/order";
 import { PaymentService } from "@/services/payment";
 import { PolarService } from "@/services/polar";
 import { getSessionServer } from "@/helpers/getSessionServer";
-import { CurrencyConverter } from "@/lib/currency-converter";
-import { fetchExchangeRates } from "@/lib/query/currency";
 
 export async function POST(req: NextRequest) {
   try {
@@ -597,7 +597,9 @@ export async function POST(req: NextRequest) {
 
 ### Step 3.4: Update PolarService for Generic Product with Price Override
 
-The previous `createCustomAmountCheckout` was designed for a truly product-free approach. Now we need to adapt it to use a generic product ID with a price override.
+**IMPORTANT:** The actual implementation differs from the original plan. Polar's SDK requires using a `prices` mapping instead of inline price objects.
+
+The previous `createCustomAmountCheckout` was designed for a truly product-free approach. Now we need to adapt it to use a generic product ID with a price override using Polar's `prices` mapping.
 
 ```typescript
 // src/services/polar.ts
@@ -618,14 +620,14 @@ export class PolarService {
    * This is the hybrid approach to handle dynamic amounts with Polar.
    */
   static async createCustomAmountCheckout(
-    genericProductId: string, // Now requires a generic product ID
+    genericProductId: string,
     amount: number,
     currency: string,
     metadata: PolarCheckoutMetadata,
     customerEmail: string,
     customerName?: string,
     successUrl?: string,
-    cancelUrl?: string
+    _cancelUrl?: string // Unused parameter (kept for backward compatibility)
   ) {
     try {
       // Convert amount to cents (Polar uses smallest currency unit)
@@ -656,32 +658,24 @@ export class PolarService {
 
       // Create checkout session using the generic product and price override
       const checkout = await this.polar.checkouts.create({
-        // 🎯 Use generic product ID and override price
-        products: [
-          {
-            id: genericProductId,
-            price: {
-              amount: amountInCents,
-              currency: currency.toUpperCase(),
+        // 🎯 Use generic product ID (array of strings)
+        products: [genericProductId],
+
+        // 🎯 KEY: Use prices mapping for ad-hoc price creation
+        prices: {
+          [genericProductId]: [
+            {
+              amountType: "fixed",
+              priceAmount: amountInCents,
+              priceCurrency: currency.toLowerCase(),
             },
-          },
-        ],
+          ],
+        },
 
-        // Customer information
-        customerEmail,
-        customerName,
-
-        // Metadata with cart details
+        customerEmail: customerEmail,
+        customerName: customerName,
+        successUrl: successUrl,
         metadata: flatMetadata,
-
-        // Redirect URLs
-        successUrl:
-          successUrl ?? `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
-        cancelUrl:
-          cancelUrl ?? `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
-
-        // Optional: Add description
-        description: `Order ${metadata.cart.orderId} - ${metadata.cart.itemCount} items`,
       });
 
       return {
@@ -689,12 +683,13 @@ export class PolarService {
         checkoutUrl: checkout.url,
         expiresAt: checkout.expiresAt,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Polar checkout creation failed:", error);
 
       // Check if it's an API error with details
       if (error && typeof error === "object" && "message" in error) {
-        throw new Error(`Polar API Error: ${error.message}`);
+        const err = error as { message: string };
+        throw new Error(`Polar API Error: ${err.message}`);
       }
 
       throw new Error("Failed to create payment checkout");
@@ -709,40 +704,6 @@ export class PolarService {
   }
 
   /**
-   * Prepare metadata for Polar checkout
-   */
-  static prepareCheckoutMetadata(
-    sessionData: CheckoutSessionData,
-    orderId: string,
-    paymentId?: string
-  ): OrderMetadata {
-    return {
-      userId: sessionData.userId,
-      orderId,
-      paymentId,
-      cartSummary: {
-        itemCount: sessionData.cartItems.reduce(
-          (sum, item) => sum + item.quantity,
-          0
-        ),
-        totalAmount: sessionData.amount,
-        currency: sessionData.currency,
-      },
-      productIds: sessionData.cartItems.map((item) => item.productId),
-      variantIds: sessionData.cartItems
-        .map((item) => item.variantId)
-        .filter(Boolean) as string[],
-      customerInfo: {
-        email: sessionData.email,
-        name: sessionData.customerName,
-        phone: sessionData.phone,
-      },
-      environment: process.env.POLAR_ENVIRONMENT || "sandbox",
-      createdAt: new Date().toISOString(),
-    };
-  }
-
-  /**
    * Parse metadata from Polar webhook
    */
   static parseMetadata(
@@ -751,18 +712,24 @@ export class PolarService {
     if (!metadata) return {};
 
     try {
+      // Helper to safely parse JSON
+      const safeParse = <T>(json?: string, fallback?: T): T | undefined => {
+        if (!json) return fallback;
+        try {
+          return JSON.parse(json) as T;
+        } catch {
+          return fallback;
+        }
+      };
+
       return {
         userId: metadata.userId,
         orderId: metadata.orderId,
         paymentId: metadata.paymentId,
-        cartSummary: metadata.cartSummary
-          ? JSON.parse(metadata.cartSummary)
-          : undefined,
-        productIds: metadata.productIds ? JSON.parse(metadata.productIds) : [],
-        variantIds: metadata.variantIds ? JSON.parse(metadata.variantIds) : [],
-        customerInfo: metadata.customerInfo
-          ? JSON.parse(metadata.customerInfo)
-          : {},
+        cartSummary: safeParse(metadata.cartSummary),
+        productIds: safeParse(metadata.productIds, []),
+        variantIds: safeParse(metadata.variantIds, []),
+        customerInfo: safeParse(metadata.customerInfo, {}),
         environment: metadata.environment,
         createdAt: metadata.createdAt,
       };
@@ -773,6 +740,43 @@ export class PolarService {
   }
 }
 ```
+
+**Key Differences from Original Plan:**
+
+- ✅ Uses `products: [genericProductId]` (array of strings) instead of objects with `id` and `price`
+- ✅ Uses separate `prices` mapping with `amountType: "fixed"`, `priceAmount`, and `priceCurrency` fields
+- ✅ Currency is **lowercase** in `priceCurrency` (not uppercase)
+- ✅ Removed unused redirect URL defaults and description field
+- ✅ Changed error handling to use `unknown` type with proper type guards
+- ✅ Removed `prepareCheckoutMetadata` method (not used in actual implementation)
+- ✅ Added `parseMetadata` method with safe JSON parsing helper
+  if (!metadata) return {};
+
+      try {
+        return {
+          userId: metadata.userId,
+          orderId: metadata.orderId,
+          paymentId: metadata.paymentId,
+          cartSummary: metadata.cartSummary
+            ? JSON.parse(metadata.cartSummary)
+            : undefined,
+          productIds: metadata.productIds ? JSON.parse(metadata.productIds) : [],
+          variantIds: metadata.variantIds ? JSON.parse(metadata.variantIds) : [],
+          customerInfo: metadata.customerInfo
+            ? JSON.parse(metadata.customerInfo)
+            : {},
+          environment: metadata.environment,
+          createdAt: metadata.createdAt,
+        };
+      } catch (error) {
+        console.error("Failed to parse metadata:", error);
+        return {};
+      }
+
+  }
+  }
+
+````
 
 ### Step 3.5: Update `POLAR_GENERIC_PRODUCT_ID` in `.env` and `.env.example`
 
@@ -788,151 +792,76 @@ POLAR_ENVIRONMENT=sandbox  # or production
 
 # App URLs for checkout redirects
 NEXT_PUBLIC_APP_URL=https://your-domain.com
-
-# Cron job secret for Vercel
-CRON_SECRET=your_random_secret_here
-```
+````
 
 ---
 
-## PHASE 4: Admin & Automation
+## PHASE 4: Admin & Automation (Completed)
 
-### Step 4.1: Cron Job for Rates
+### Step 4.1: Lazy Refresh Strategy (No External Cron Needed)
 
-*   Create an endpoint `/api/cron/refresh-exchange-rates` to refresh rates daily.
-*   Configure Vercel Cron to hit this endpoint.
+The `ExchangeRateService` implements **automatic lazy refresh** - no external cron service required!
 
-```json
-// vercel.json
+**How it works:**
 
-{
-  "crons": [
-    {
-      "path": "/api/cron/refresh-exchange-rates",
-      "schedule": "0 0 * * *"
-    }
-  ]
-}
-```
+1. When `getExchangeRates()` is called (during checkout), it checks if rates are fresh (< 24 hours old)
+2. If rates are stale or missing, it automatically fetches new rates from the API
+3. Fresh rates are saved to the database with a 24-hour expiration
+4. Next checkout uses cached rates until they expire
+
+**Benefits:**
+
+- ✅ No external dependencies (Vercel Cron, etc.)
+- ✅ Automatic refresh on-demand
+- ✅ Zero maintenance required
+- ✅ Works in any hosting environment
+
+**Implementation in `ExchangeRateService.getExchangeRates()`:**
 
 ```typescript
-// src/app/api/cron/refresh-exchange-rates/route.ts
+// Step 1: Try to get fresh rates from database
+const dbRates = await this.getFromDatabase(base);
 
-import { NextRequest, NextResponse } from "next/server";
-
-import { ExchangeRateService } from "@/services/exchange-rate";
-
-export async function GET(req: NextRequest) {
-  try {
-    // Verify cron secret (Vercel provides this)
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    console.log("[Cron] Starting exchange rate refresh...");
-
-    // Refresh rates for all base currencies
-    const currencies: ("MKD" | "USD" | "EUR")[] = ["MKD", "USD", "EUR"];
-
-    const results = await Promise.allSettled(
-      currencies.map((base) => ExchangeRateService.forceRefresh(base))
-    );
-
-    const successful = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
-
-    console.log(
-      `[Cron] Exchange rate refresh complete: ${successful} successful, ${failed} failed`
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: "Exchange rates refreshed",
-      successful,
-      failed,
-    });
-  } catch (error) {
-    console.error("[Cron] Error refreshing exchange rates:", error);
-    return NextResponse.json(
-      { error: "Failed to refresh exchange rates" },
-      { status: 500 }
-    );
-  }
+if (dbRates && this.isRateFresh(dbRates.expiresAt)) {
+  return this.formatDatabaseRates(dbRates); // Use cached rates
 }
+
+// Step 2: Rates are stale - fetch fresh rates from API
+const apiRates = await this.fetchFromAPI(base);
+
+// Step 3: Save to database with 24-hour expiration
+await this.saveToDatabase(base, apiRates);
+
+return apiRates;
 ```
 
 ### Step 4.2: Admin Dashboard
 
-*   Add a section in the Admin Dashboard to view current rates and "Force Refresh".
+Admin endpoint for viewing and manually refreshing rates (already implemented at `src/app/api/admin/exchange-rates/route.ts`):
+
+**Features:**
+
+- View all active exchange rates
+- Manually force refresh rates (bypasses cache)
+- Admin-only access with session validation
+
+**API Endpoints:**
+
+- `GET /api/admin/exchange-rates` - View current rates
+- `POST /api/admin/exchange-rates` - Force refresh rates
 
 ```typescript
-// src/app/api/admin/exchange-rates/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
-
-import { ExchangeRateService } from "@/services/exchange-rate";
-import { getSessionServer } from "@/helpers/getSessionServer";
-
-export async function GET(req: NextRequest) {
-  try {
-    const session = await getSessionServer();
-
-    // Check admin permission
-    if (!session?.user || !session.user.isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rates = await ExchangeRateService.getAllActiveRates();
-
-    return NextResponse.json({ rates });
-  } catch (error) {
-    console.error("Error fetching exchange rates:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch exchange rates" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const session = await getSessionServer();
-
-    // Check admin permission
-    if (!session?.user || !session.user.isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { action, currency } = await req.json();
-
-    if (action === "refresh") {
-      const base = (currency as "MKD" | "USD" | "EUR") || "MKD";
-      const rates = await ExchangeRateService.forceRefresh(base);
-
-      return NextResponse.json({
-        success: true,
-        message: `Exchange rates refreshed for ${base}`,
-        rates,
-      });
-    }
-
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error) {
-    console.error("Error refreshing exchange rates:", error);
-    return NextResponse.json(
-      { error: "Failed to refresh exchange rates" },
-      { status: 500 }
-    );
-  }
+// Example: Force refresh MKD rates
+POST /api/admin/exchange-rates
+{
+  "action": "refresh",
+  "currency": "MKD"
 }
 ```
 
 ---
 
-
-
-## PHASE 5: Checkout Form Enhancement (Current Focus)
+## PHASE 5: Checkout Form Enhancement (Completed)
 
 ### Step 6.1: Create Cart Summary Component
 
@@ -1105,36 +1034,41 @@ export default function CheckoutPageClient() {
 
 ## 🎯 **IMPLEMENTATION CHECKLIST**
 
-### **Phase 3: Currency & Exchange Rate System** ⏳
-- [ ] Add `ExchangeRate` to Prisma Schema & Migrate
-- [ ] Implement `ExchangeRateService` (DB check, API fetch, Fallback)
-- [ ] Implement `CurrencyConverter` utility
-- [ ] Update `POST /api/polar/checkout` to perform conversion before calling Polar
-- [ ] Verify metadata records original currency/amount
-- [ ] Update `PolarService.createCustomAmountCheckout` to accept `genericProductId` and use `polar.checkouts.create` with `products` array and `price` override.
-- [ ] Ensure `POLAR_GENERIC_PRODUCT_ID` is present in `.env` and `.env.example`.
+### **Phase 3: Currency & Exchange Rate System** ✅
 
-### **Phase 4: Admin & Automation** ⏳
-- [x] Implement Lazy Refresh in `ExchangeRateService`
-- [x] Add Admin UI for managing rates
-- [ ] (Removed) External Cron Job
+- [x] Add `ExchangeRate` to Prisma Schema & Migrate
+- [x] Implement `ExchangeRateService` (DB check, API fetch, Fallback)
+- [x] Implement `CurrencyConverter` utility
+- [x] Update `POST /api/polar/checkout` to perform conversion before calling Polar
+- [x] Verify metadata records original currency/amount
+- [x] Update `PolarService.createCustomAmountCheckout` to accept `genericProductId` and use `polar.checkouts.create` with `products` array and `price` override
+- [x] Ensure `POLAR_GENERIC_PRODUCT_ID` is present in `.env` and `.env.example`
 
-### **Phase 5: Checkout Form Enhancement** ⏳
+### **Phase 4: Admin & Automation** ✅
+
+- [x] Implement Lazy Refresh in `ExchangeRateService` (automatic on-demand refresh)
+- [x] Add Admin API endpoint at `/api/admin/exchange-rates` for viewing and manually refreshing rates
+- [x] No external cron service needed - lazy refresh handles everything automatically
+
+### **Phase 5: Checkout Form Enhancement** ✅
+
 - [x] Create `CartSummary` component
   - [x] Display breakdown (subtotal, shipping, tax, discount, total)
   - [x] Use `CartContext` for data
   - [x] Handle currency formatting dynamically
-- [x] Integrate `CartSummary` into `CheckoutPageClient.tsx`
-  - [x] Replace inline summary with component
-  - [x] Ensure responsive layout (mobile/desktop)
+- [x] Integrate `CartSummary` into checkout page
+  - [x] Component created at `src/components/checkout/CartSummary.tsx`
+  - [x] Responsive layout implemented (mobile/desktop)
+  - [x] Dynamic currency support with CartContext integration
 
 ---
 
 ## 💡 **TECHNICAL NOTES**
 
-*   **Polar Limitations**: We accept that Polar Dashboard will only show "Generic Product". This is acceptable because our own Admin Dashboard (fed by webhooks) will show the true order details.
-*   **Currency Safety**: Always store the exchange rate used at the time of purchase in the Payment/Order record. Never recalculate it later using "current" rates.
-*   **Fallback Strategy**: The hardcoded fallback rates in `ExchangeRateService` are critical for ensuring checkout never breaks even if currency APIs go down.
+- **Polar Limitations**: We accept that Polar Dashboard will only show "Generic Product". This is acceptable because our own Admin Dashboard (fed by webhooks) will show the true order details.
+- **Currency Safety**: Always store the exchange rate used at the time of purchase in the Payment/Order record. Never recalculate it later using "current" rates.
+- **Fallback Strategy**: The hardcoded fallback rates in `ExchangeRateService` are critical for ensuring checkout never breaks even if currency APIs go down.
+- **Lazy Refresh**: The system automatically refreshes stale exchange rates (>24 hours old) during checkout - no external cron jobs or scheduled tasks needed.
 
 ---
 
@@ -1212,27 +1146,54 @@ export default function CheckoutPageClient() {
 
 ## 💡 **POLAR API REFERENCE**
 
-### **Checkout Creation with Price Override**
+### **Checkout Creation with Price Override (Actual Implementation)**
 
 ```typescript
-// Polar SDK Method
+// Polar SDK Method - ACTUAL IMPLEMENTATION
 polar.checkouts.create({
-  products: [
-    {
-      id: string,          // POLAR_GENERIC_PRODUCT_ID
-      price: {
-        amount: number,    // Amount in cents (e.g., USD)
-        currency: string,  // Currency code (e.g., "USD")
+  // Products as array of strings (product IDs)
+  products: [string], // e.g., [POLAR_GENERIC_PRODUCT_ID]
+
+  // Prices mapping for ad-hoc price creation
+  prices: {
+    [productId: string]: [
+      {
+        amountType: "fixed",
+        priceAmount: number, // Amount in cents (e.g., 10500 for $105.00)
+        priceCurrency: string, // Currency code in lowercase (e.g., "usd")
       },
-    },
-  ],
+    ],
+  },
+
   customerEmail: string,
   customerName?: string,
-  metadata: Record<string, string>, // Flattened metadata
-  successUrl: string,
-  cancelUrl: string,
-  description?: string,
-})
+  metadata: Record<string, string>, // Flattened metadata (all values must be strings)
+  successUrl?: string,
+});
+```
+
+**Example:**
+
+```typescript
+await polar.checkouts.create({
+  products: ["prod_abc123"],
+  prices: {
+    prod_abc123: [
+      {
+        amountType: "fixed",
+        priceAmount: 10500, // $105.00 in cents
+        priceCurrency: "usd", // lowercase
+      },
+    ],
+  },
+  customerEmail: "customer@example.com",
+  customerName: "John Doe",
+  metadata: {
+    orderId: "order_xyz",
+    cartItems: JSON.stringify([...]),
+  },
+  successUrl: "https://example.com/success",
+});
 ```
 
 ### **Webhook Events**

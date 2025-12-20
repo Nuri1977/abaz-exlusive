@@ -1,8 +1,4 @@
-import {
-  ExchangeRateService,
-  type Currency,
-  type ExchangeRates,
-} from "@/services/exchange-rate";
+import { type Currency, type ExchangeRates } from "@/types/currency";
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
   MKD: "ден",
@@ -17,19 +13,15 @@ export function getCurrencySymbol(currency: Currency) {
 }
 
 /**
- * Fetch exchange rates (uses database-backed service with 24-hour refresh)
+ * Fetch exchange rates via API (compat with client/server)
  */
 export async function fetchExchangeRates(
   base: Currency = "MKD"
 ): Promise<ExchangeRates> {
-  return await ExchangeRateService.getExchangeRates(base);
-}
-
-/**
- * Force refresh exchange rates (bypasses cache)
- */
-export async function forceRefreshExchangeRates(
-  base: Currency = "MKD"
-): Promise<ExchangeRates> {
-  return await ExchangeRateService.forceRefresh(base);
+  const res = await fetch(`/api/exchange-rates?base=${base}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch exchange rates");
+  }
+  const data = (await res.json()) as ExchangeRates;
+  return data;
 }
