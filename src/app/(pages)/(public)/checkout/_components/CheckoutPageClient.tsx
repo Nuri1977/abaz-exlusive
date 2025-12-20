@@ -13,18 +13,20 @@ import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { CartSummary } from "@/components/checkout/CartSummary";
 
 const CheckoutPageClient = () => {
-  const { items, currency, convertPrice, currencySymbol, clearCart, isLoading } =
+  const { items, clearCart, isLoading } =
     useCartContext();
+
   const { data: session } = authClient.useSession();
   const { toast } = useToast();
   const router = useRouter();
 
   // Payment method state
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+  // Payment method state (setter used in submit)
+  const [, setSelectedPaymentMethod] =
     useState<PaymentMethodType>("CASH_ON_DELIVERY");
 
   // Form state using useState
@@ -99,21 +101,9 @@ const CheckoutPageClient = () => {
     return Object.values(errors).every((error) => error === "");
   };
 
-  // Check if form is valid
-  const isFormValid = () => {
-    return (
-      formData.name &&
-      formData.email &&
-      formData.phone &&
-      formData.address.trim().length > 0
-    );
-  };
 
-  const total = items.reduce(
-    (sum, item) =>
-      sum + convertPrice(item.price * item.quantity, "MKD", currency),
-    0
-  );
+
+
 
   const handleSubmit = async (paymentMethod: PaymentMethodType) => {
     if (!validateForm()) {
@@ -405,55 +395,8 @@ const CheckoutPageClient = () => {
 
         </div>
         <div className="space-y-6">
-          <div className="rounded-md border p-4 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Order Summary</h2>
-            <ul className="divide-y">
-              {items.map((item, idx) => (
-                <li
-                  key={item.variantId ?? `${item.productId}-${idx}`}
-                  className="flex items-center gap-3 py-3"
-                >
-                  <div className="relative size-14 shrink-0">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="rounded object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{item.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Qty: {item.quantity}
-                    </div>
-                  </div>
-                  <div className="text-right font-semibold">
-                    {currencySymbol}{" "}
-                    {convertPrice(
-                      item.price * item.quantity,
-                      "MKD",
-                      currency
-                    ).toLocaleString("de-DE", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <Separator className="my-4" />
-            <div className="flex items-center justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>
-                {currencySymbol}{" "}
-                {total.toLocaleString("de-DE", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            </div>
-          </div>
-          
+          <CartSummary />
+
           {/* Payment Action Buttons */}
           <div className="space-y-3">
             <Button

@@ -234,3 +234,45 @@ export interface OrderWithPayments {
   payments: PaymentRecord[];
   items: OrderItemResponse[];
 }
+
+// -----------------------------------------------------------------------------
+// ENHANCED CART METADATA TYPES (For Polar Integration)
+// -----------------------------------------------------------------------------
+
+export interface CartItemMetadata {
+  productId: string;
+  productName: string;
+  productSlug: string;
+  variantId?: string;
+  variantSku?: string;
+  variantOptions?: string; // e.g., "Size: M, Color: Blue"
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  currency: string;
+  imageUrl?: string;
+}
+
+export interface CartMetadata {
+  orderId: string;
+  userId?: string;
+  customerEmail: string;
+  customerName?: string;
+  items: CartItemMetadata[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount: number;
+  total: number;
+  currency: string;
+  itemCount: number;
+  deliveryAddress?: string;
+  deliveryNotes?: string;
+}
+
+export interface PolarCheckoutMetadata {
+  cart: CartMetadata;
+  orderType: "cart_purchase";
+  timestamp: string;
+  appVersion: string;
+}

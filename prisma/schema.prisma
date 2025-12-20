@@ -448,3 +448,22 @@ enum PaymentMethod {
   BANK_TRANSFER
   DIGITAL_WALLET
 }
+
+model ExchangeRate {
+  id             String   @id @default(uuid())
+  baseCurrency   String   // "MKD", "USD", "EUR"
+  targetCurrency String   // "MKD", "USD", "EUR"
+  rate           Decimal  @db.Decimal(10, 6) // Exchange rate with 6 decimal precision
+  source         String   @default("api") // "api", "manual", "fallback"
+  fetchedAt      DateTime @default(now())
+  expiresAt      DateTime // When this rate should be refreshed (24 hours)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([baseCurrency, targetCurrency, isActive])
+  @@index([baseCurrency, targetCurrency])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@map("exchange_rate")
+}
