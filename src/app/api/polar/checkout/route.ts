@@ -10,10 +10,11 @@ import {
   validateCheckoutData,
 } from "@/lib/checkout-utils";
 import { CurrencyConverter } from "@/lib/currency-converter";
-import { fetchExchangeRates } from "@/lib/query/currency";
+import { prisma } from "@/lib/prisma";
 import { OrderService } from "@/services/order";
 import { PaymentService } from "@/services/payment";
 import { PolarService } from "@/services/polar";
+import { ExchangeRateService } from "@/services/exchange-rate";
 import { getSessionServer } from "@/helpers/getSessionServer";
 
 // Handle POST requests for creating checkout sessions
@@ -143,6 +144,20 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Check for app URL configuration
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      if (!appUrl) {
+        return NextResponse.json(
+          {
+            error: "Configuration error",
+            message: "NEXT_PUBLIC_APP_URL is missing in server configuration.",
+          },
+          { status: 500 }
+        );
+      }
+
+
+
       // Create local order first
       const orderData = {
         userId: sessionData.userId,
@@ -162,7 +177,7 @@ export async function POST(req: NextRequest) {
 
       // 1. Fetch Exchange Rates
       // We need exchange rates to convert to USD (if not already USD)
-      const exchangeRates = await fetchExchangeRates("MKD");
+      const exchangeRates = await ExchangeRateService.getExchangeRates("MKD");
 
       // 2. Convert to Polar Currency (USD)
       const conversion = CurrencyConverter.convertToPolarCurrency(
@@ -195,11 +210,76 @@ export async function POST(req: NextRequest) {
 
       const payment = await PaymentService.createPayment(paymentData);
 
-      // 4. Build Metadata for Polar
-      const cartItemsForMetadata = (input.cartItems || []).map((item) => ({
-        ...item,
-        title: item.title || "Unknown Product",
-      })) as InputCartItem[];
+      // 4. Build Metadata for Polar with Enhanced Product Data
+      const cartItemsForMetadata: InputCartItem[] = [];
+
+      // Fetch complete product details for metadata
+      for (const item of input.cartItems || []) {
+        try {
+          const product = await prisma.product.findUnique({
+            where: { id: item.productId },
+            include: {
+              variants: {
+                where: item.variantId ? { id: item.variantId } : undefined,
+                include: {
+                  options: {
+                    include: {
+                      optionValue: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          if (product) {
+            const variant = product.variants?.[0];
+            const variantOptions = variant?.options
+              ?.map((opt) => opt.optionValue?.value)
+              .filter(Boolean)
+              .join(", ");
+
+            // Handle images stored as JSON array
+            const images = Array.isArray(product.images) ? product.images : [];
+            const firstImage = images[0] as { url?: string; key?: string } | undefined;
+            const imageUrl = firstImage?.url || firstImage?.key || "";
+
+            cartItemsForMetadata.push({
+              productId: item.productId,
+              variantId: item.variantId,
+              quantity: item.quantity,
+              price: item.price,
+              title: product.name || item.title || "Unknown Product",
+              color: item.color,
+              size: item.size,
+              // Enhanced metadata
+              productSlug: product.slug || "",
+              imageUrl: imageUrl,
+              variantSku: variant?.sku || "",
+              variantOptions: variantOptions || undefined,
+            });
+          } else {
+            // Fallback if product not found
+            cartItemsForMetadata.push({
+              ...item,
+              title: item.title || "Unknown Product",
+              productSlug: "",
+              imageUrl: "",
+              variantSku: "",
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to fetch product ${item.productId}:`, error);
+          // Fallback if database query fails
+          cartItemsForMetadata.push({
+            ...item,
+            title: item.title || "Unknown Product",
+            productSlug: "",
+            imageUrl: "",
+            variantSku: "",
+          });
+        }
+      }
 
       const metadata = buildCartMetadata(
         cartItemsForMetadata,
@@ -222,8 +302,8 @@ export async function POST(req: NextRequest) {
         metadata,
         sessionData.email || "",
         sessionData.customerName,
-        `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?orderId=${order.id}&paymentId=${payment.id}`,
-        `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel?orderId=${order.id}`
+        `${appUrl}/checkout/success?orderId=${order.id}&paymentId=${payment.id}`,
+        `${appUrl}/checkout/cancel?orderId=${order.id}`
       );
 
       // Update payment with checkout ID

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { SuccessPageContent } from "./_components/SuccessPageContent";
+import { SuccessPageActions } from "./_components/SuccessPageActions";
 
 export default function CheckoutSuccessPage() {
   return (
@@ -38,14 +39,16 @@ export default function CheckoutSuccessPage() {
             <SuccessPageContent />
           </Suspense>
 
-          <div className="space-y-3">
-            <Button asChild className="w-full">
-              <Link href="/products">Continue Shopping</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/account/orders">View Orders</Link>
-            </Button>
-          </div>
+          <Suspense
+            fallback={
+              <div className="space-y-3">
+                <div className="h-10 animate-pulse rounded bg-gray-200" />
+                <div className="h-10 animate-pulse rounded bg-gray-200" />
+              </div>
+            }
+          >
+            <SuccessPageActions />
+          </Suspense>
 
           <div className="text-center text-sm text-gray-500">
             <p>You will receive an email confirmation shortly.</p>

@@ -198,13 +198,12 @@ function DeliveryStep({
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`flex size-6 items-center justify-center rounded-full ${
-          completed
+        className={`flex size-6 items-center justify-center rounded-full ${completed
             ? "bg-green-600 text-white"
             : active
               ? "border-2 border-blue-600 bg-blue-50 dark:bg-blue-950"
               : "border-2 border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-900"
-        }`}
+          }`}
       >
         {completed && <CheckCircle className="size-4" />}
         {active && !completed && (
@@ -212,11 +211,10 @@ function DeliveryStep({
         )}
       </div>
       <p
-        className={`text-sm ${
-          completed || active
+        className={`text-sm ${completed || active
             ? "font-medium text-foreground"
             : "text-muted-foreground"
-        }`}
+          }`}
       >
         {label}
       </p>

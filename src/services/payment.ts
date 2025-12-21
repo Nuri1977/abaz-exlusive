@@ -909,10 +909,30 @@ export class PaymentService {
         skip,
       });
 
-      console.log("✅ [PaymentService.getUserPayments] Payments found:", {
-        count: payments.length,
-        paymentIds: payments.map((p) => p.id),
+
+
+      // Calculate summary statistics from ALL user payments (not just paginated results)
+      const allCompletedPayments = await prisma.payment.findMany({
+        where: {
+          order: {
+            userId,
+          },
+          status: {
+            in: [PaymentStatus.PAID, PaymentStatus.CASH_RECEIVED],
+          },
+        },
+        select: {
+          amount: true,
+          currency: true,
+        },
       });
+
+      const totalSpent = allCompletedPayments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      );
+
+      const completedCount = allCompletedPayments.length;
 
       return {
         payments,
@@ -923,6 +943,11 @@ export class PaymentService {
           totalPages: Math.ceil(totalCount / limit),
           hasNext: page < Math.ceil(totalCount / limit),
           hasPrev: page > 1,
+        },
+        summary: {
+          totalSpent,
+          completedPayments: completedCount,
+          currency: allCompletedPayments[0]?.currency || "MKD",
         },
       };
     } catch (error) {

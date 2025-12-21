@@ -9,6 +9,11 @@ export interface InputCartItem {
   title: string;
   color?: string;
   size?: string;
+  // Enhanced fields for better metadata
+  productSlug?: string;
+  imageUrl?: string;
+  variantSku?: string;
+  variantOptions?: string;
 }
 
 /**
@@ -59,15 +64,15 @@ export function buildCartMetadata(
     return {
       productId: item.productId,
       productName: item.title,
-      productSlug: "", // Not available in simplified checkout input
+      productSlug: item.productSlug || "", // Use enhanced field
       variantId: item.variantId,
-      variantSku: "", // Not available
-      variantOptions: variantOptions || undefined,
+      variantSku: item.variantSku || "", // Use enhanced field
+      variantOptions: item.variantOptions || variantOptions || undefined,
       quantity: item.quantity,
       unitPrice: item.price,
       totalPrice: item.price * item.quantity,
       currency: currency,
-      imageUrl: "", // Not available in simplified input
+      imageUrl: item.imageUrl || "", // Use enhanced field
     };
   });
 

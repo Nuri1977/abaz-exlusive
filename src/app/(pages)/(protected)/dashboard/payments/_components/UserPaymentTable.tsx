@@ -26,6 +26,42 @@ import {
 import { fetchUserPayments } from "@/lib/query/user-payments";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
+// Helper function to extract product name from payment metadata
+function getProductNameFromMetadata(metadata: unknown): string | null {
+  try {
+    if (!metadata || typeof metadata !== 'object') return null;
+
+    const metadataObj = metadata as Record<string, unknown>;
+
+    // Check if cartItems exists in metadata
+    if (metadataObj.cartItems) {
+      let cartItems: unknown;
+
+      // Handle both string and object formats
+      if (typeof metadataObj.cartItems === 'string') {
+        cartItems = JSON.parse(metadataObj.cartItems) as unknown;
+      } else {
+        cartItems = metadataObj.cartItems;
+      }
+
+      // Get the first item's title
+      if (Array.isArray(cartItems) && cartItems.length > 0) {
+        const firstItem = cartItems[0] as unknown;
+        if (firstItem && typeof firstItem === 'object') {
+          const itemObj = firstItem as Record<string, unknown>;
+          return (typeof itemObj.title === 'string' ? itemObj.title : null) ||
+            (typeof itemObj.productName === 'string' ? itemObj.productName : null);
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Failed to parse product name from metadata:', error);
+    return null;
+  }
+}
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -71,11 +107,12 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
     },
     cell: ({ row }) => {
       const orderId = row.getValue<string>("orderId");
+      const paymentId = row.original.id; // Get payment ID from the row data
 
       return (
         <div className="font-mono text-sm">
           <Link
-            href={`/dashboard/orders/${orderId}`}
+            href={`/dashboard/payments/${paymentId}`}
             className="text-primary hover:underline"
           >
             #{orderId.slice(-8)}
@@ -118,7 +155,9 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">
-              {displayItems[0]?.Product?.name || "Unknown Product"}
+              {displayItems[0]?.Product?.name ||
+                getProductNameFromMetadata(row.original.metadata) ||
+                "Unknown Product"}
             </div>
             {remainingCount > 0 && (
               <div className="text-xs text-muted-foreground">
@@ -273,18 +312,14 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
   } = useQuery({
     queryKey: ["user-payments", queryParams],
     queryFn: () => {
-      console.log("🔍 [UserPaymentTable] Query params:", queryParams);
+
       return fetchUserPayments(queryParams);
     },
     retry: 1,
     staleTime: 30000, // 30 seconds
   });
 
-  console.log("📊 [UserPaymentTable] Query result:", {
-    paymentsData,
-    isLoading,
-    error,
-  });
+
 
   const table = useReactTable({
     data: paymentsData?.payments ?? [],
@@ -454,7 +489,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                       <div className="flex items-center justify-between">
                         <div className="font-mono text-sm">
                           <Link
-                            href={`/dashboard/orders/${payment.orderId}`}
+                            href={`/dashboard/payments/${payment.id}`}
                             className="text-primary hover:underline"
                           >
                             #{payment.orderId.slice(-8)}
@@ -494,6 +529,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-medium">
                             {payment.order?.items?.[0]?.Product?.name ||
+                              getProductNameFromMetadata(payment.metadata) ||
                               "Unknown Product"}
                           </div>
                           {(payment.order?.items?.length || 0) > 1 && (
