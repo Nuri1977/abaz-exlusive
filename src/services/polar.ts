@@ -30,6 +30,7 @@ export class PolarService {
 
       // Prepare metadata for Polar (flatten complex objects)
       // Polar metadata values must be strings and cannot be empty
+      // NOTE: Polar has a 500 character limit per metadata field
       const flatMetadata: Record<string, string> = {
         orderId: metadata.cart.orderId,
         userId: metadata.cart.userId || "guest", // Use "guest" instead of empty string
@@ -95,8 +96,6 @@ export class PolarService {
         isBusinessCustomer: false,
       };
 
-      console.log("Creating Polar checkout with data:", JSON.stringify(checkoutData, null, 2));
-
       const checkout = await this.polar.checkouts.create(checkoutData);
 
       return {
@@ -110,11 +109,7 @@ export class PolarService {
 
       // Enhanced error logging for debugging
       if (error && typeof error === "object") {
-        console.error("Error details:", {
-          message: (error as any).message,
-          statusCode: (error as any).statusCode,
-          body: (error as any).body,
-        });
+        console.error("Error details:", error);
       }
 
       // Check if it's an API error with details
