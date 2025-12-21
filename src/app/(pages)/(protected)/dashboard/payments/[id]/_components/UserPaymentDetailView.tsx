@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Calendar, CreditCard, Download, Package } from "lucide-react";
 
 import { fetchUserPaymentById } from "@/lib/query/user-payments";
+import type { UserPaymentTableData } from "@/types/user-payments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,64 @@ import { PaymentStatusBadge } from "@/components/payments/PaymentStatusBadge";
 import { PaymentTimeline } from "@/components/payments/PaymentTimeline";
 import { PricingBreakdown } from "@/components/payments/PricingBreakdown";
 import { ProductDetailCard } from "@/components/payments/ProductDetailCard";
+
+// Helper function to extract cart items from payment metadata
+function getCartItemsFromMetadata(metadata: unknown) {
+  try {
+    // Type guard to check if metadata is an object
+    if (!metadata || typeof metadata !== 'object') return [];
+
+    const metadataObj = metadata as Record<string, unknown>;
+
+    if (!metadataObj.cartItems) return [];
+
+    let cartItems: unknown;
+    if (typeof metadataObj.cartItems === 'string') {
+      cartItems = JSON.parse(metadataObj.cartItems) as unknown;
+    } else {
+      cartItems = metadataObj.cartItems;
+    }
+
+    if (!Array.isArray(cartItems)) return [];
+
+    // Convert cart items to order item format for ProductDetailCard
+    return cartItems.map((item: unknown, index: number) => {
+      // Type guard for item
+      const itemObj = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+
+      return {
+        id: `metadata-item-${index}`,
+        quantity: typeof itemObj.quantity === 'number' ? itemObj.quantity : 1,
+        price: typeof itemObj.price === 'number' ? itemObj.price :
+          typeof itemObj.unitPrice === 'number' ? itemObj.unitPrice : 0,
+        Product: {
+          id: typeof itemObj.productId === 'string' ? itemObj.productId : `unknown-${index}`,
+          name: typeof itemObj.title === 'string' ? itemObj.title :
+            typeof itemObj.productName === 'string' ? itemObj.productName : 'Unknown Product',
+          slug: typeof itemObj.productSlug === 'string' ? itemObj.productSlug : '',
+          images: typeof itemObj.imageUrl === 'string' ? [{ url: itemObj.imageUrl }] : [],
+          brand: typeof itemObj.brand === 'string' ? itemObj.brand : undefined,
+          category: undefined,
+          collection: undefined,
+        },
+        variant: typeof itemObj.variantId === 'string' ? {
+          id: itemObj.variantId,
+          sku: typeof itemObj.variantSku === 'string' ? itemObj.variantSku : '',
+          options: typeof itemObj.variantOptions === 'string' ? [{
+            optionValue: {
+              id: 'metadata-option',
+              value: itemObj.variantOptions,
+              option: { name: 'Options' }
+            }
+          }] : []
+        } : undefined,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to parse cart items from metadata:', error);
+    return [];
+  }
+}
 
 interface UserPaymentDetailViewProps {
   paymentId: string;
@@ -25,10 +84,12 @@ export function UserPaymentDetailView({
     data: payment,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<UserPaymentTableData>({
     queryKey: ["user-payment", paymentId],
     queryFn: () => fetchUserPaymentById(paymentId),
   });
+
+
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -193,22 +254,44 @@ export function UserPaymentDetailView({
           <CardTitle>Order Items</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {payment.order?.items?.map((item) => (
-            <ProductDetailCard
-              key={item.id}
-              item={item}
-              currency={payment.currency}
-            />
-          ))}
+          {(() => {
+            // Try to get items from order first, then fallback to metadata
+            const orderItems = payment.order?.items || [];
+            const hasValidOrderItems = orderItems.some(item => item.Product && item.Product.name);
+            const metadataItems = !hasValidOrderItems ? getCartItemsFromMetadata(payment.metadata) : [];
+            const itemsToDisplay = hasValidOrderItems ? orderItems : metadataItems;
+
+            // Debug logging
+
+
+            if (itemsToDisplay.length === 0) {
+              return (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Package className="mr-2 size-5" />
+                  No items found
+                </div>
+              );
+            }
+
+            return itemsToDisplay.map((item, index) => (
+              <ProductDetailCard
+                key={item.id || `item-${index}`}
+                item={item}
+                currency={payment.currency}
+              />
+            ));
+          })()}
         </CardContent>
       </Card>
 
       {/* Pricing Breakdown */}
-      <PricingBreakdown payment={payment} />
+      <PricingBreakdown payment={payment as unknown} />
 
       {/* Payment Timeline */}
       {payment.timeline && payment.timeline.length > 0 && (
-        <PaymentTimeline events={payment.timeline} />
+        <PaymentTimeline
+          events={payment.timeline}
+        />
       )}
 
       {/* Actions */}

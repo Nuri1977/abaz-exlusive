@@ -2,6 +2,7 @@ import axios from "axios";
 import type {
   AxiosError,
   AxiosResponse,
+  AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from "axios";
 
@@ -82,19 +83,19 @@ axiosInstance.interceptors.response.use(
 
 // Type-safe request methods
 export const api = {
-  get: <T>(url: string, config?: InternalAxiosRequestConfig) =>
+  get: <T>(url: string, config?: AxiosRequestConfig) =>
     axiosInstance.get<T>(url, config).then((res) => res.data),
 
-  post: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
+  post: <T>(url: string, data?: any, config?: AxiosRequestConfig) =>
     axiosInstance.post<T>(url, data, config).then((res) => res.data),
 
-  put: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
+  put: <T>(url: string, data?: any, config?: AxiosRequestConfig) =>
     axiosInstance.put<T>(url, data, config).then((res) => res.data),
 
-  patch: <T>(url: string, data?: any, config?: InternalAxiosRequestConfig) =>
+  patch: <T>(url: string, data?: any, config?: AxiosRequestConfig) =>
     axiosInstance.patch<T>(url, data, config).then((res) => res.data),
 
-  delete: <T>(url: string, config?: InternalAxiosRequestConfig) =>
+  delete: <T>(url: string, config?: AxiosRequestConfig) =>
     axiosInstance.delete<T>(url, config).then((res) => res.data),
 };
 

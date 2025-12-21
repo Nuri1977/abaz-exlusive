@@ -1,14 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PolarCheckoutInputSchema } from "@/schemas/polar-checkout";
 
-import type { UpdatePaymentData } from "@/types/polar";
+import {
+  buildCartMetadata,
+  type InputCartItem,
+} from "@/lib/cart-metadata-builder";
 import {
   prepareCheckoutSessionData,
   validateCheckoutData,
 } from "@/lib/checkout-utils";
+import { CurrencyConverter } from "@/lib/currency-converter";
+import { prisma } from "@/lib/prisma";
 import { OrderService } from "@/services/order";
 import { PaymentService } from "@/services/payment";
 import { PolarService } from "@/services/polar";
+import { ExchangeRateService } from "@/services/exchange-rate";
 import { getSessionServer } from "@/helpers/getSessionServer";
 
 // Handle POST requests for creating checkout sessions
@@ -125,6 +131,34 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Handle card payment - use Polar
+
+      // Check for generic product ID configuration
+      if (!process.env.POLAR_GENERIC_PRODUCT_ID) {
+        return NextResponse.json(
+          {
+            error: "Polar configuration error",
+            message:
+              "POLAR_GENERIC_PRODUCT_ID is missing in server configuration.",
+          },
+          { status: 500 }
+        );
+      }
+
+      // Check for app URL configuration
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      if (!appUrl) {
+        return NextResponse.json(
+          {
+            error: "Configuration error",
+            message: "NEXT_PUBLIC_APP_URL is missing in server configuration.",
+          },
+          { status: 500 }
+        );
+      }
+
+
+
+      // Create local order first
       const orderData = {
         userId: sessionData.userId,
         total: sessionData.amount,
@@ -141,7 +175,19 @@ export async function POST(req: NextRequest) {
 
       const order = await OrderService.createOrder(orderData);
 
-      // Create payment record for card payment
+      // 1. Fetch Exchange Rates
+      // We need exchange rates to convert to USD (if not already USD)
+      const exchangeRates = await ExchangeRateService.getExchangeRates("MKD");
+
+      // 2. Convert to Polar Currency (USD)
+      const conversion = CurrencyConverter.convertToPolarCurrency(
+        sessionData.amount,
+        sessionData.currency as "MKD" | "USD" | "EUR",
+        exchangeRates
+      );
+
+      // 3. Create payment record
+      // Store original currency/amount and conversion details
       const paymentData = {
         orderId: order.id,
         amount: sessionData.amount,
@@ -153,372 +199,136 @@ export async function POST(req: NextRequest) {
         metadata: {
           cartItems: sessionData.cartItems,
           environment: process.env.POLAR_ENVIRONMENT || "sandbox",
+          // Currency conversion info
+          originalAmount: sessionData.amount,
+          originalCurrency: sessionData.currency,
+          convertedAmount: conversion.convertedAmount,
+          convertedCurrency: conversion.convertedCurrency,
+          exchangeRate: conversion.exchangeRate,
         },
       };
 
       const payment = await PaymentService.createPayment(paymentData);
 
-      // Generate checkout URL for Polar NextJS handler
-      // The GET handler will create the actual Polar checkout session
-      const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      const checkoutUrl = new URL(`${baseUrl}/api/polar/checkout`);
+      // 4. Build Metadata for Polar with Enhanced Product Data
+      const cartItemsForMetadata: InputCartItem[] = [];
 
-      // Add required query parameters for Polar NextJS handler
-      // Note: We need a product ID for Polar, but we're using custom amounts
-      // We'll create a dummy product or use a custom amount approach
+      // Fetch complete product details for metadata
+      for (const item of input.cartItems || []) {
+        try {
+          const product = await prisma.product.findUnique({
+            where: { id: item.productId },
+            include: {
+              variants: {
+                where: item.variantId ? { id: item.variantId } : undefined,
+                include: {
+                  options: {
+                    include: {
+                      optionValue: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
 
-      if (sessionData.email) {
-        checkoutUrl.searchParams.set("customerEmail", sessionData.email);
+          if (product) {
+            const variant = product.variants?.[0];
+            const variantOptions = variant?.options
+              ?.map((opt) => opt.optionValue?.value)
+              .filter(Boolean)
+              .join(", ");
+
+            // Handle images stored as JSON array
+            const images = Array.isArray(product.images) ? product.images : [];
+            const firstImage = images[0] as { url?: string; key?: string } | undefined;
+            const imageUrl = firstImage?.url || firstImage?.key || "";
+
+            cartItemsForMetadata.push({
+              productId: item.productId,
+              variantId: item.variantId,
+              quantity: item.quantity,
+              price: item.price,
+              title: product.name || item.title || "Unknown Product",
+              color: item.color,
+              size: item.size,
+              // Enhanced metadata
+              productSlug: product.slug || "",
+              imageUrl: imageUrl,
+              variantSku: variant?.sku || "",
+              variantOptions: variantOptions || undefined,
+            });
+          } else {
+            // Fallback if product not found
+            cartItemsForMetadata.push({
+              ...item,
+              title: item.title || "Unknown Product",
+              productSlug: "",
+              imageUrl: "",
+              variantSku: "",
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to fetch product ${item.productId}:`, error);
+          // Fallback if database query fails
+          cartItemsForMetadata.push({
+            ...item,
+            title: item.title || "Unknown Product",
+            productSlug: "",
+            imageUrl: "",
+            variantSku: "",
+          });
+        }
       }
 
-      if (sessionData.customerName) {
-        checkoutUrl.searchParams.set("customerName", sessionData.customerName);
-      }
-
-      // Prepare metadata for Polar
-      const metadata = PolarService.prepareCheckoutMetadata(
-        sessionData,
+      const metadata = buildCartMetadata(
+        cartItemsForMetadata,
         order.id,
-        payment.id
+        sessionData.email || "",
+        {
+          userId: sessionData.userId,
+          customerName: sessionData.customerName,
+          deliveryAddress: sessionData.shippingAddress,
+          deliveryNotes: sessionData.deliveryNotes,
+          currency: sessionData.currency,
+        }
       );
 
-      // Add metadata as URL-encoded JSON string
-      const encodedMetadata = PolarService.encodeMetadata(metadata);
-      checkoutUrl.searchParams.set("metadata", encodedMetadata);
+      // 5. Create Polar Checkout
+      const checkout = await PolarService.createCustomAmountCheckout(
+        process.env.POLAR_GENERIC_PRODUCT_ID,
+        conversion.convertedAmount, // USD amount
+        "USD",
+        metadata,
+        sessionData.email || "",
+        sessionData.customerName,
+        `${appUrl}/checkout/success?orderId=${order.id}&paymentId=${payment.id}`,
+        `${appUrl}/checkout/cancel?orderId=${order.id}`
+      );
 
-      // Add custom amount and currency (if supported by Polar)
-      checkoutUrl.searchParams.set("amount", sessionData.amount.toString());
-      checkoutUrl.searchParams.set("currency", sessionData.currency);
+      // Update payment with checkout ID
+      if (checkout.checkoutId) {
+        await PaymentService.updatePaymentStatus(payment.id, {
+          checkoutId: checkout.checkoutId,
+        });
+      }
 
-      const response = {
-        url: checkoutUrl.toString(),
+      return NextResponse.json({
+        success: true,
+        url: checkout.checkoutUrl,
         orderId: order.id,
         paymentId: payment.id,
-        success: true,
-      };
-
-      return NextResponse.json(response);
+        checkoutId: checkout.checkoutId,
+      });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Checkout creation error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
         error: "Failed to create checkout session",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Handle GET requests - Create Polar checkout session and redirect
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-
-    // Extract parameters from URL
-    const amount = searchParams.get("amount");
-    const currency = searchParams.get("currency");
-    const customerEmail = searchParams.get("customerEmail");
-    const customerName = searchParams.get("customerName");
-    const metadata = searchParams.get("metadata");
-
-    if (!amount || !currency) {
-      return NextResponse.json(
-        { error: "Missing required parameters: amount, currency" },
-        { status: 400 }
-      );
-    }
-
-    // Check required environment variables
-    if (!process.env.POLAR_ACCESS_TOKEN) {
-      console.error("❌ POLAR_ACCESS_TOKEN not configured");
-      return NextResponse.json(
-        { error: "Payment system not configured" },
-        { status: 500 }
-      );
-    }
-
-    if (!process.env.POLAR_GENERIC_PRODUCT_ID) {
-      console.warn(
-        "⚠️ POLAR_GENERIC_PRODUCT_ID not configured, using fallback"
-      );
-    }
-
-    // Import Polar SDK
-    const { Polar } = await import("@polar-sh/sdk");
-
-    const polar = new Polar({
-      accessToken: process.env.POLAR_ACCESS_TOKEN,
-      server:
-        process.env.POLAR_ENVIRONMENT === "production"
-          ? "production"
-          : "sandbox",
-    });
-
-    // Parse metadata and filter to Polar-compatible types
-    const parsedMetadata: Record<string, string | number | boolean> = {};
-    if (metadata) {
-      try {
-        const parsed: unknown = JSON.parse(decodeURIComponent(metadata));
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          const rawMetadata = parsed as Record<string, unknown>;
-
-          // Filter metadata to only include string, number, boolean values
-          for (const [key, value] of Object.entries(rawMetadata)) {
-            if (
-              typeof value === "string" ||
-              typeof value === "number" ||
-              typeof value === "boolean"
-            ) {
-              parsedMetadata[key] = value;
-            } else if (value !== null && value !== undefined) {
-              // Convert complex types to JSON string for Polar compatibility
-              try {
-                parsedMetadata[key] = JSON.stringify(value);
-              } catch {
-                // Fallback: skip values that can't be serialized
-                console.warn(
-                  `Skipping metadata field '${key}' - cannot serialize value`
-                );
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Failed to parse metadata:", error);
-      }
-    }
-
-    // Create checkout session with custom amount
-
-    // Convert to USD for Polar (Polar only supports USD, EUR, etc.)
-
-    let finalAmount: number;
-    let conversionRate: number;
-
-    // Convert different currencies to USD for Polar
-    if (currency === "MKD") {
-      // MKD to USD: 1 USD = 61.5 MKD (approximate)
-      // Amount comes as MKD (e.g., 110000), convert to USD
-      conversionRate = 61.5;
-      finalAmount = Math.round((parseInt(amount) / conversionRate) * 100) / 100; // Round to 2 decimals
-    } else if (currency === "EUR") {
-      // EUR to USD: 1 EUR = 1.1 USD (approximate)
-      // Amount comes as EUR cents, convert to USD
-      conversionRate = 1.1; // 1 EUR = 1.1 USD
-      finalAmount =
-        Math.round((parseInt(amount) / 100) * conversionRate * 100) / 100;
-    } else if (currency === "USD") {
-      // Already USD - amount comes as cents
-      conversionRate = 1;
-      finalAmount = parseInt(amount) / 100; // Convert from cents to dollars
-    } else {
-      // Fallback: treat as USD cents
-      console.warn("Unknown currency, treating as USD cents:", currency);
-      conversionRate = 1;
-      finalAmount = parseInt(amount) / 100;
-    }
-
-    // Let Polar handle minimum amount validation
-
-    const amountInCents = Math.round(finalAmount * 100);
-
-    // Create checkout session with custom amount
-
-    // Create checkout session using Polar's API
-    // Since Polar requires products, we'll create a dynamic approach
-    let checkoutSession;
-
-    // Check if we have a generic product ID for ad-hoc pricing
-    if (!process.env.POLAR_GENERIC_PRODUCT_ID) {
-      return NextResponse.json(
-        {
-          error: "Polar product configuration required",
-          message:
-            "To enable card payments, create one generic product in your Polar dashboard.",
-          instructions: [
-            "1. Go to https://polar.sh/dashboard",
-            "2. Create a new product (name: 'Generic Payment' or similar)",
-            "3. Set any base price (we'll override it with custom amounts)",
-            "4. Copy the product ID from the URL or product settings",
-            "5. Add POLAR_GENERIC_PRODUCT_ID=your_product_id to your .env file",
-          ],
-          fallbackAvailable: true,
-          suggestion: "Use 'Cash on Delivery' payment method for now",
-        },
-        { status: 503 }
-      );
-    }
-
-    try {
-      // ✅ CORRECT AD-HOC PRICING: Use product_price_overrides for dynamic amounts
-
-      // ✅ Use correct ad-hoc pricing with prices parameter
-      const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?orderId=${parsedMetadata.orderId || ""}&paymentId=${parsedMetadata.paymentId || ""}`;
-      const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel?orderId=${parsedMetadata.orderId || ""}`;
-
-      checkoutSession = await polar.checkouts.create({
-        // Use the generic product
-        products: [process.env.POLAR_GENERIC_PRODUCT_ID],
-
-        // 🎯 KEY: Use prices mapping for ad-hoc price creation (ProductPriceFixedCreate schema)
-        prices: {
-          [process.env.POLAR_GENERIC_PRODUCT_ID]: [
-            {
-              amountType: "fixed", // camelCase as expected by SDK
-              priceAmount: amountInCents, // Amount in cents (USD) - camelCase
-              priceCurrency: "usd", // Must be "usd" as per documentation - camelCase
-            },
-          ],
-        },
-
-        customerEmail: customerEmail || undefined,
-        customerName: customerName || undefined,
-        successUrl: successUrl,
-        returnUrl: cancelUrl,
-        metadata: {
-          ...parsedMetadata,
-          // Store original amounts for reference
-          originalAmount: amount, // Original amount in original currency
-          originalCurrency: currency, // Original currency
-          convertedAmount: finalAmount.toString(), // USD amount
-          conversionRate: conversionRate.toString(), // Conversion rate used
-          polarCurrency: "USD", // Currency sent to Polar
-          // Enhanced cart data for order processing
-          cartData: JSON.stringify({
-            items: (() => {
-              try {
-                if (
-                  parsedMetadata.cartSummary &&
-                  typeof parsedMetadata.cartSummary === "string"
-                ) {
-                  const parsed: unknown = JSON.parse(
-                    parsedMetadata.cartSummary
-                  );
-                  return parsed &&
-                    typeof parsed === "object" &&
-                    !Array.isArray(parsed)
-                    ? parsed
-                    : {};
-                }
-                return {};
-              } catch {
-                return {};
-              }
-            })(),
-            productIds: (() => {
-              try {
-                if (
-                  parsedMetadata.productIds &&
-                  typeof parsedMetadata.productIds === "string"
-                ) {
-                  const parsed: unknown = JSON.parse(parsedMetadata.productIds);
-                  if (Array.isArray(parsed)) {
-                    // Validate that all items are strings (product IDs should be strings)
-                    return parsed.filter(
-                      (item): item is string => typeof item === "string"
-                    );
-                  }
-                }
-                return [];
-              } catch {
-                return [];
-              }
-            })(),
-            variantIds: (() => {
-              try {
-                if (
-                  parsedMetadata.variantIds &&
-                  typeof parsedMetadata.variantIds === "string"
-                ) {
-                  const parsed: unknown = JSON.parse(parsedMetadata.variantIds);
-                  if (Array.isArray(parsed)) {
-                    // Validate that all items are strings (variant IDs should be strings)
-                    return parsed.filter(
-                      (item): item is string => typeof item === "string"
-                    );
-                  }
-                }
-                return [];
-              } catch {
-                return [];
-              }
-            })(),
-            customerInfo: (() => {
-              try {
-                if (
-                  parsedMetadata.customerInfo &&
-                  typeof parsedMetadata.customerInfo === "string"
-                ) {
-                  const parsed: unknown = JSON.parse(
-                    parsedMetadata.customerInfo
-                  );
-                  return parsed &&
-                    typeof parsed === "object" &&
-                    !Array.isArray(parsed)
-                    ? parsed
-                    : {};
-                }
-                return {};
-              } catch {
-                return {};
-              }
-            })(),
-          }),
-        },
-      });
-    } catch (adHocPriceError) {
-      console.error("❌ Ad-hoc pricing failed:", adHocPriceError);
-      console.error("Error details:", JSON.stringify(adHocPriceError, null, 2));
-
-      // Return detailed error for debugging
-      return NextResponse.json(
-        {
-          error: "Card payment configuration error",
-          message: "Unable to create checkout with custom amount",
-          details:
-            adHocPriceError instanceof Error
-              ? adHocPriceError.message
-              : "Polar ad-hoc pricing failed",
-          debugInfo: {
-            productId: process.env.POLAR_GENERIC_PRODUCT_ID,
-            amount: finalAmount,
-            currency: "USD",
-            originalAmount: amount,
-            originalCurrency: currency,
-          },
-          suggestion: "Use 'Cash on Delivery' payment method",
-          fallbackAvailable: true,
-        },
-        { status: 503 }
-      );
-    }
-
-    // Update payment record with checkout ID
-    if (
-      parsedMetadata.paymentId &&
-      typeof parsedMetadata.paymentId === "string"
-    ) {
-      const updateData: UpdatePaymentData = {
-        checkoutId: checkoutSession.id,
-      };
-      await PaymentService.updatePaymentStatus(
-        parsedMetadata.paymentId,
-        updateData
-      );
-    }
-
-    // Redirect to Polar checkout
-
-    return NextResponse.redirect(checkoutSession.url);
-  } catch (error) {
-    console.error("Polar checkout GET error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to create Polar checkout session",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
       },
       { status: 500 }
     );

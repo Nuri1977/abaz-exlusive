@@ -42,10 +42,12 @@ export const initiateCheckout = async (
       );
       return response;
     } else {
-      // Use card payment endpoint (Polar)
+      // Use card payment endpoint (Polar) with extended timeout
+      // Polar checkout can take 10-15 seconds due to external API calls
       const response = await api.post<CheckoutResponse>(
         "/polar/checkout",
-        input
+        input,
+        { timeout: 30000 } // 30 seconds timeout for Polar checkout
       );
 
       if (!response) {
@@ -109,7 +111,11 @@ export const createCardCheckout = async (
   input: PolarCheckoutInput
 ): Promise<CheckoutResponse> => {
   try {
-    const response = await api.post<CheckoutResponse>("/polar/checkout", input);
+    const response = await api.post<CheckoutResponse>(
+      "/polar/checkout",
+      input,
+      { timeout: 30000 } // 30 seconds timeout for Polar checkout
+    );
     return response;
   } catch (err: unknown) {
     const error = err as { response?: { data?: CheckoutError } };

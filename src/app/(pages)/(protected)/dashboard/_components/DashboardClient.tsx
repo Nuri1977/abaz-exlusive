@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User } from "@prisma/client";
+import { type User } from "@prisma/client";
 import { LogOut } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
@@ -38,6 +38,7 @@ const DashboardClient = ({ user }: DashboardClientProps) => {
               duration: 3000,
             });
           },
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           onError: (error) => {
             toast({
               title: "Error",
