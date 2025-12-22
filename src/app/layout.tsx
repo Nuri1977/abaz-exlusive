@@ -9,6 +9,7 @@ import { ConditionalHeader } from "@/components/shared/ConditionalHeader";
 import { Footer } from "@/components/shared/Footer";
 import Providers from "@/providers/providers";
 import { SITE_CONFIG } from "@/lib/metadata";
+import ContactMethods from "@/components/shared/ContactMethods";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -121,6 +122,7 @@ export default function RootLayout({
           <main className="min-h-screen">{children}</main>
           <Footer />
           <Toaster />
+          <ContactMethods variant="floating" />
         </Providers>
         <CookieConsent />
       </body>

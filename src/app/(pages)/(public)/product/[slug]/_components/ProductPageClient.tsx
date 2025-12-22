@@ -7,11 +7,14 @@ import { useUserAccountContext } from "@/context/UserAccountContext";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Heart } from "lucide-react";
+import type { Product } from "@prisma/client";
 
 import type { ProductWithOptionsAndVariants } from "@/types/product";
 import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
+import { ApiError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
+import ContactMethods from "@/components/shared/ContactMethods";
 
 import ProductImageGallery from "./ProductImageGallery";
 import ProductPageSkeleton from "./ProductPageSkeleton";
@@ -29,14 +32,18 @@ export default function ProductPageClient({ slug }: { slug: string }) {
     data: product,
     isLoading,
     isError,
-  } = useQuery({
+  } = useQuery<ProductWithOptionsAndVariants | null>({
     queryKey: [queryKeys.products, slug],
     queryFn: async () => {
-      const res = await api.get<ProductWithOptionsAndVariants>(
-        `/product/${slug}`
-      );
-      if (res.status === 404) notFound();
-      return res.data ?? null;
+      try {
+        const response = await api.get<{ data: ProductWithOptionsAndVariants }>(
+          `/product/${slug}`
+        );
+        return response.data;
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
     },
     enabled: !!slug,
     retry: false,
@@ -206,12 +213,24 @@ export default function ProductPageClient({ slug }: { slug: string }) {
             </Button>
             <button
               onClick={() =>
-                toggleLike({ ...product, images: product.images ?? [] })
+                toggleLike({
+                  ...product,
+                  images: product.images ?? [],
+                } as unknown as Product)
               }
               className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
             >
               <Heart size={30} className={liked ? "fill-current" : ""} />
             </button>
+          </div>
+
+          <div className="pt-4">
+            <h3 className="mb-3 text-sm font-medium">Have a question? Chat with us:</h3>
+            <ContactMethods 
+              productName={product.name} 
+              price={`${currencySymbol}${convertPrice(Number(effectivePrice), "MKD", currency).toLocaleString("de-DE")}`}
+              showViber={true}
+            />
           </div>
 
           <div className="border-t border-gray-200 pt-6">

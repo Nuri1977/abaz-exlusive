@@ -6,7 +6,6 @@ import type {
   ProductOption,
   ProductVariant,
 } from "@prisma/client";
-import type { Decimal } from "@prisma/client/runtime/library";
 
 import type { FileUploadThing } from "./UploadThing";
 
@@ -19,7 +18,11 @@ export interface ProductExt extends Omit<Product, "images"> {
   likes?: Like[];
 }
 
-export type ProductWithOptionsAndVariants = Omit<Product, "images"> & {
+export type ProductWithOptionsAndVariants = Omit<
+  Product,
+  "images" | "price"
+> & {
+  price: string | number | null;
   images: FileUploadThing[] | null;
   category: {
     id: string;
@@ -34,7 +37,7 @@ export type ProductWithOptionsAndVariants = Omit<Product, "images"> & {
   variants: {
     id: string;
     sku: string;
-    price: Decimal | null;
+    price: string | number | null;
     stock: number;
     options: {
       optionValue: {

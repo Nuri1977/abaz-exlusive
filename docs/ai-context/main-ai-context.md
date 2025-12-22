@@ -18,6 +18,7 @@ This repository uses a modular documentation approach with comprehensive helper 
 - **[10-performance-optimization.md](./10-performance-optimization.md)** - Performance optimization
 - **[11-deployment-infrastructure.md](./11-deployment-infrastructure.md)** - Deployment and infrastructure
 - **[12-seo-optimization.md](./12-seo-optimization.md)** - SEO implementation and structured data
+- **[13-payments.md](./13-payments.md)** - Payment system (Polar.sh, COD, and Multi-currency)
 
 ## 🎯 Project Overview
 
@@ -25,6 +26,7 @@ This repository uses a modular documentation approach with comprehensive helper 
 
 - Complete authentication system with Better Auth
 - Shopping cart and checkout functionality with guest support
+- **Integrated Payment System** supporting Card Payments (Polar.sh) and Cash on Delivery (COD)
 - Product management with variants and inventory tracking
 - SEO-friendly slug-based product URLs (`/product/[slug]`) for optimal search engine visibility
 - Admin dashboard with role-based access control
@@ -636,13 +638,23 @@ The project uses UploadThing v7 for file uploads and management:
 - **Email Notifications**: Automated emails for order confirmation and status updates
 - **Mobile Optimization**: Responsive design optimized for mobile commerce
 
+### Payment System Implementation
+
+- **Dual Payment Methods**: Supports both online **Card Payments** (via Polar.sh) and **Cash on Delivery (COD)**.
+- **Hybrid Dynamic Strategy**: Uses a generic Polar product with dynamic price overrides to avoid duplicate product management.
+- **Multi-Currency Support**: Real-time exchange rate management (MKD, USD, EUR) using the `ExchangeRateService`.
+- **Webhook Integration**: Asynchronous payment status synchronization using Polar.sh webhooks.
+- **Manual Reconciliation**: Admin "Sync with Polar" functionality for forced status checks and manual overrides.
+- **Payment Lifecycle Tracking**: Separate `Payment` model linked to `Order` for granular audit trails and refund tracking.
+
 ### Admin Dashboard
 
 - **Role-Based Access**: Admin-only sections with proper authorization
 - **Product CRUD**: Complete product management with variants and images
 - **Order Management**: Order status tracking and customer communication
-- **Analytics**: Sales analytics and performance metrics (planned)
-- **Settings Management**: Company settings and configuration
+- **Payment Management**: Complete table with filtering, Polar syncing, and COD confirmation
+- **Analytics**: Financial performance dashboards, success rates, and method breakdowns
+- **Settings Management**: Company settings, exchange rate configurations, and system defaults
 
 ### SEO Implementation
 
@@ -710,7 +722,7 @@ The project now includes a fully implemented Dynamic Hero Section with Collectio
 
 ### Security Features
 
-- **Payment Security**: Secure payment processing (integration planned)
+- **Payment Security**: Secure online processing via Polar.sh with webhook signature verification
 - **Data Protection**: GDPR-compliant data handling
 - **Fraud Prevention**: Monitor for suspicious activity
 - **Secure Uploads**: Validate and sanitize all file uploads
