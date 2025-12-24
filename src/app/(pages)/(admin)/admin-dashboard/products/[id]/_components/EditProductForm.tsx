@@ -9,12 +9,14 @@ import {
 } from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, X, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { cn } from "@/lib/utils";
 
-import { ProductExt } from "@/types/product";
+import type { ProductWithOptionsAndVariants, CategoryWithParent } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
 import { brandOptions, genderOptions } from "@/constants/options";
+import type { Product } from "@prisma/client";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
@@ -40,52 +42,71 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
+import { Badge } from "@/components/ui/badge";
 
 interface EditProductFormProps {
-  product: ProductExt | null;
+  product: ProductWithOptionsAndVariants | null;
 }
 
 export function EditProductForm({ product }: EditProductFormProps) {
-  const initialImages =
-    (product?.images as any[])?.map((image: any, index: number) => ({
-      url: typeof image === "string" ? image : image?.url || "",
-      key: `existing-${product?.id}-${index}`,
-      name: `Product Image ${index + 1}`,
-      type: "image/jpeg",
-      size: 0,
-      lastModified: Date.now(),
-      serverData: { uploadedBy: "existing" },
-      appUrl: typeof image === "string" ? image : image?.url || "",
-      ufsUrl: typeof image === "string" ? image : image?.url || "",
-      customId: null,
-      fileHash: `existing-${product?.id}-${index}`,
-    })) || [];
-
-  const [productImages, setProductImages] =
-    useState<FileUploadThing[]>(initialImages);
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: categories } = useQuery({
+  const initialImages = (product?.images ?? []).map((img, idx) => ({
+    ...img,
+    key: img.key || `existing-${product?.id}-${idx}`,
+  }));
+
+  const initialOptions = (product?.options ?? []).map((opt) => ({
+    name: opt.name,
+    values: opt.values.map((v) => v.value),
+  }));
+
+  const initialVariants = (product?.variants ?? []).map((v) => ({
+    sku: v.sku,
+    price: v.price?.toString() || "",
+    stock: v.stock.toString(),
+    options: v.options.map((opt) => ({
+      optionName: opt.optionValue.option?.name || (product?.options?.find(o => o.id === opt.optionValue.optionId)?.name ?? ""),
+      value: opt.optionValue.value,
+    })),
+    images: (v.images ?? []).map((img, idx) => ({
+      ...img,
+      key: img.key || `existing-variant-${v.id}-${idx}`,
+    })),
+  }));
+
+  const [productImages, setProductImages] = useState<FileUploadThing[]>(initialImages);
+
+  const { data: categories } = useQuery<CategoryWithParent[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await fetch("/api/admin/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      return response.json();
+      if (!response.ok) throw new Error("Failed to fetch categories");
+      return response.json() as Promise<CategoryWithParent[]>;
     },
   });
 
-  const { data: collections } = useQuery({
+  const { data: collections } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["collections"],
     queryFn: async () => {
       const response = await fetch("/api/collections");
-      if (!response.ok) {
-        throw new Error("Failed to fetch collections");
-      }
-      return response.json();
+      if (!response.ok) throw new Error("Failed to fetch collections");
+      return response.json() as Promise<{ id: string; name: string }[]>;
+    },
+  });
+
+  const { data: optionTemplates } = useQuery<
+    { id: string; name: string; values: { id: string; value: string }[] }[]
+  >({
+    queryKey: ["option-templates"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/option-templates");
+      if (!response.ok) throw new Error("Failed to fetch option templates");
+      return response.json() as Promise<
+        { id: string; name: string; values: { id: string; value: string }[] }[]
+      >;
     },
   });
 
@@ -96,50 +117,45 @@ export function EditProductForm({ product }: EditProductFormProps) {
       description: product?.description || "",
       price: product?.price?.toString() || "",
       brand: product?.brand || "",
-      material: product?.material || "",
       gender: product?.gender || "",
       style: product?.style || "",
-      features: product?.features || [],
       categoryId: product?.categoryId || "",
-      collectionId: (product as any)?.collectionId || "none",
+      collectionId: product?.collectionId || "none",
       images: initialImages,
+      options: initialOptions,
+      variants: initialVariants,
     },
   });
 
-  const { mutate: updateProduct, isPending } = useMutation({
-    mutationFn: async (values: EditProductFormValues) => {
+  const { mutate: updateProduct, isPending } = useMutation<
+    Product,
+    Error,
+    EditProductFormValues
+  >({
+    mutationFn: async (values) => {
       const response = await fetch(`/api/admin/products/${product?.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
           price: parseFloat(values.price),
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update product");
-      }
-
-      return response.json();
+      if (!response.ok) throw new Error(await response.text());
+      return (await response.json()) as Product;
     },
-    onSuccess: () => {
-      // Invalidate products queries to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["product", product?.id] });
-
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-      });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["product", product?.id] });
+      toast({ title: "Success", description: "Product updated successfully" });
       router.push("/admin-dashboard/products");
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update product",
+        description:
+          error instanceof Error ? error.message : "Failed to update product",
         variant: "destructive",
       });
     },
@@ -148,14 +164,99 @@ export function EditProductForm({ product }: EditProductFormProps) {
   const { mutate: createGalleryItem } = useGalleryMutation();
   const { mutate: deleteGalleryItem } = useDeleteGalleryMutation();
 
-  const handleImageChange = (
-    value: FileUploadThing[],
-    newFile?: FileUploadThing
-  ) => {
+  function onSubmit(values: EditProductFormValues) {
+    if (values.variants.length > 0 && !validateVariants()) return;
+    updateProduct(values);
+  }
+
+  const addOption = () => {
+    const options = form.getValues("options") || [];
+    form.setValue("options", [...options, { name: "", values: [] }]);
+  };
+
+  const removeOption = (index: number) => {
+    const options = form.getValues("options") || [];
+    options.splice(index, 1);
+    form.setValue("options", [...options]);
+  };
+
+  const handleTemplateSelect = (index: number, templateName: string) => {
+    const options = form.getValues("options") || [];
+    if (!options[index]) return;
+    options[index].name = templateName;
+    options[index].values = [];
+    form.setValue("options", [...options]);
+  };
+
+  const toggleOptionValue = (optionIndex: number, value: string) => {
+    const options = form.getValues("options") || [];
+    if (!options[optionIndex]) return;
+
+    const currentValues = options[optionIndex].values;
+    if (currentValues.includes(value)) {
+      options[optionIndex].values = currentValues.filter((v) => v !== value);
+    } else {
+      options[optionIndex].values = [...currentValues, value];
+    }
+    form.setValue("options", [...options]);
+  };
+
+  const generateVariants = () => {
+    const options = form.getValues("options") || [];
+    if (options.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one option before generating variants",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const combinations = options.reduce((acc, option) => {
+      if (acc.length === 0)
+        return option.values.map((value) => [{ optionName: option.name, value }]);
+      return acc.flatMap((combination) =>
+        option.values.map((value) => [
+          ...combination,
+          { optionName: option.name, value },
+        ])
+      );
+    }, [] as { optionName: string; value: string }[][]);
+
+    const variants = combinations.map((combination, index) => ({
+      sku: `SKU-${index + 1}`,
+      price: form.getValues("price"),
+      stock: "0",
+      options: combination,
+      images: [],
+    }));
+
+    form.setValue("variants", variants);
+    toast({ title: "Success", description: `Generated ${variants.length} variants` });
+  };
+
+  const clearVariants = () => {
+    form.setValue("variants", []);
+    toast({ title: "Success", description: "Variants cleared" });
+  };
+
+  const validateVariants = () => {
+    const variants = form.getValues("variants") || [];
+    const invalidVariants = variants.filter((v) => !v.sku || !v.stock || v.stock === "0");
+    if (invalidVariants.length > 0) {
+      toast({
+        title: "Error",
+        description: "All variants must have a SKU and stock quantity",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleImageChange = (value: FileUploadThing[], newFile?: FileUploadThing) => {
     setProductImages(value);
     form.setValue("images", [...value]);
-
-    // Only create gallery item for new uploads (not existing images)
     if (newFile && !newFile.key?.startsWith("existing-")) {
       createGalleryItem({
         name: newFile.name,
@@ -184,23 +285,53 @@ export function EditProductForm({ product }: EditProductFormProps) {
   const handleImageRemove = (value: FileUploadThing[], key?: string) => {
     setProductImages(value);
     form.setValue("images", [...value]);
+    if (key && !key.startsWith("existing-")) deleteGalleryItem(key);
+  };
 
-    // Only delete from gallery if it's not an existing image
-    if (key && !key.startsWith("existing-")) {
-      deleteGalleryItem(key);
+  const handleVariantImageChange = (index: number, value: FileUploadThing[], newFile?: FileUploadThing) => {
+    const variants = form.getValues("variants") || [];
+    if (!variants[index]) return;
+    variants[index].images = value;
+    form.setValue("variants", [...variants]);
+    if (newFile && !newFile.key?.startsWith("existing-")) {
+      createGalleryItem({
+        name: newFile.name,
+        size: newFile.size,
+        key: newFile.key,
+        lastModified: Math.floor((newFile.lastModified || Date.now()) / 1000),
+        serverData: newFile.serverData || { uploadedBy: null },
+        url: newFile.url,
+        appUrl: newFile.url,
+        ufsUrl: newFile.url,
+        customId: null,
+        type: newFile.type,
+        fileHash: newFile.key,
+        reference: null,
+        metadata: {},
+        width: null,
+        height: null,
+        tags: [],
+        uploadedBy: newFile.serverData?.uploadedBy || null,
+        usedIn: [],
+        isDeleted: false,
+      });
     }
   };
 
-  function onSubmit(values: EditProductFormValues) {
-    updateProduct(values);
-  }
+  const handleVariantImageRemove = (index: number, value: FileUploadThing[], key?: string) => {
+    const variants = form.getValues("variants") || [];
+    if (!variants[index]) return;
+    variants[index].images = value;
+    form.setValue("variants", [...variants]);
+    if (key && !key.startsWith("existing-")) deleteGalleryItem(key);
+  };
 
   return (
     <div className="max-w-4xl">
       <div className="mb-6">
         <Button variant="ghost" asChild className="gap-2">
           <Link href="/admin-dashboard/products">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             Back to Products
           </Link>
         </Button>
@@ -220,9 +351,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Product name" {...field} />
-                      </FormControl>
+                      <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -233,14 +362,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          {...field}
-                        />
-                      </FormControl>
+                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -253,41 +375,25 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Product description" {...field} />
-                    </FormControl>
+                    <FormControl><Textarea {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="brand"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a brand" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {brandOptions
-                            .filter((opt) => opt.value !== "all")
-                            .map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                          {brandOptions.filter(o => o.value !== "all").map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -296,46 +402,16 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="material"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Material</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Material" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {genderOptions
-                            .filter((opt) => opt.value !== "all")
-                            .map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                          {genderOptions.filter(o => o.value !== "all").map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -348,24 +424,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Style</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select style" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="formal">Formal</SelectItem>
-                          <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="sneakers">Sneakers</SelectItem>
-                          <SelectItem value="boots">Boots</SelectItem>
-                          <SelectItem value="sandals">Sandals</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -379,21 +438,12 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {categories?.map((category: any) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.parent
-                                ? `${category.parent.name} > ${category.name}`
-                                : category.name}
+                          {categories?.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.parent ? `${cat.parent.name} > ${cat.name}` : cat.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -408,21 +458,12 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Collection (Optional)</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select collection" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select collection" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="none">No Collection</SelectItem>
-                          {collections?.map((collection: any) => (
-                            <SelectItem key={collection.id} value={collection.id}>
-                              {collection.name}
-                            </SelectItem>
+                          {collections?.map((col) => (
+                            <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -435,9 +476,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Product Images</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Product Images</CardTitle></CardHeader>
             <CardContent>
               <MultiImageUploader
                 onChange={handleImageChange}
@@ -448,13 +487,136 @@ export function EditProductForm({ product }: EditProductFormProps) {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Options</CardTitle>
+              <Button type="button" onClick={addOption}>
+                <Plus className="mr-2 size-4" /> Add Option
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {form.watch("options")?.map((option, idx) => {
+                const template = optionTemplates?.find(t => t.name === option.name);
+                return (
+                  <div key={idx} className="mb-4 space-y-4 rounded-lg border p-4">
+                    <div className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`options.${idx}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Option Template</FormLabel>
+                            <Select onValueChange={(val) => handleTemplateSelect(idx, val)} value={field.value}>
+                              <FormControl><SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                {optionTemplates?.map(t => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="button" variant="destructive" size="icon" onClick={() => removeOption(idx)} className="mt-8">
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                    {template && (
+                      <div className="space-y-2">
+                        <FormLabel>Select Values</FormLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {template.values.map((v) => {
+                            const isSelected = option.values.includes(v.value);
+                            return (
+                              <Badge
+                                key={v.id}
+                                variant={isSelected ? "default" : "outline"}
+                                className={cn(
+                                  "cursor-pointer px-3 py-1",
+                                  isSelected ? "hover:bg-primary/90" : "hover:bg-accent"
+                                )}
+                                onClick={() => toggleOptionValue(idx, v.value)}
+                              >
+                                {v.value}{" "}
+                                {isSelected && <Check className="ml-2 size-3" />}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {form.watch("options")?.length > 0 && (
+                <Button type="button" onClick={generateVariants} className="mt-4">Generate Variants</Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {form.watch("variants")?.length > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle>Product Variants</CardTitle>
+                <Button type="button" variant="destructive" size="sm" onClick={clearVariants}>Clear Variants</Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {form.watch("variants").map((variant, idx) => (
+                    <div key={idx} className="space-y-4 rounded-lg border p-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name={`variants.${idx}.sku`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>SKU</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`variants.${idx}.price`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>Price (Optional)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`variants.${idx}.stock`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                      </div>
+                      <div>
+                        <FormLabel>Variant Options</FormLabel>
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          {variant.options.map((opt, oIdx) => (
+                            <div key={oIdx} className="rounded bg-muted p-2 text-sm">
+                              <span className="font-medium">{opt.optionName}:</span> {opt.value}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <FormLabel>Variant Images</FormLabel>
+                        <div className="mt-2">
+                          <MultiImageUploader
+                            onChange={(val, newFile) => handleVariantImageChange(idx, val, newFile)}
+                            onRemove={(val, key) => handleVariantImageRemove(idx, val, key)}
+                            value={variant.images || []}
+                            maxLimit={5}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" asChild>
-              <Link href="/admin-dashboard/products">Cancel</Link>
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Updating..." : "Update Product"}
-            </Button>
+            <Button type="button" variant="outline" asChild><Link href="/admin-dashboard/products">Cancel</Link></Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Updating..." : "Update Product"}</Button>
           </div>
         </form>
       </Form>

@@ -9,9 +9,12 @@ import {
 } from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, X, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { cn } from "@/lib/utils";
 
+import type { Product } from "@prisma/client";
+import type { CategoryWithParent } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
 import { brandOptions, genderOptions } from "@/constants/options";
 import {
@@ -39,31 +42,47 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
+import { Badge } from "@/components/ui/badge";
 
 export function AddProductForm() {
   const [productImages, setProductImages] = useState<FileUploadThing[]>([]);
   const { toast } = useToast();
   const router = useRouter();
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<CategoryWithParent[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await fetch("/api/admin/categories");
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
       }
-      return response.json();
+      return response.json() as Promise<CategoryWithParent[]>;
     },
   });
 
-  const { data: collections } = useQuery({
+  const { data: collections } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["collections"],
     queryFn: async () => {
       const response = await fetch("/api/collections");
       if (!response.ok) {
         throw new Error("Failed to fetch collections");
       }
-      return response.json();
+      return response.json() as Promise<{ id: string; name: string }[]>;
+    },
+  });
+
+  const { data: optionTemplates } = useQuery<
+    { id: string; name: string; values: { id: string; value: string }[] }[]
+  >({
+    queryKey: ["option-templates"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/option-templates");
+      if (!response.ok) {
+        throw new Error("Failed to fetch option templates");
+      }
+      return response.json() as Promise<
+        { id: string; name: string; values: { id: string; value: string }[] }[]
+      >;
     },
   });
 
@@ -101,7 +120,7 @@ export function AddProductForm() {
         throw new Error("Failed to create product");
       }
 
-      return response.json();
+      return response.json() as Promise<Product>;
     },
     onSuccess: () => {
       toast({
@@ -132,7 +151,7 @@ export function AddProductForm() {
 
   const addOption = () => {
     const options = form.getValues("options");
-    form.setValue("options", [...options, { name: "", values: [""] }]);
+    form.setValue("options", [...options, { name: "", values: [] }]);
   };
 
   const removeOption = (index: number) => {
@@ -141,23 +160,28 @@ export function AddProductForm() {
     form.setValue("options", options);
   };
 
-  const addOptionValue = (optionIndex: number) => {
-    const options = form.getValues("options") || [];
-    const option = options[optionIndex];
-    if (option) {
-      option.values = option.values || [];
-      option.values.push("");
-      form.setValue("options", options);
-    }
+  const handleTemplateSelect = (index: number, templateName: string) => {
+    const options = form.getValues("options");
+    if (!options?.[index]) return;
+    
+    options[index].name = templateName;
+    options[index].values = []; // Reset values when template changes
+    form.setValue("options", options);
   };
 
-  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
-    const options = form.getValues("options") || [];
-    const option = options[optionIndex];
-    if (option?.values) {
-      option.values.splice(valueIndex, 1);
-      form.setValue("options", options);
+  const toggleOptionValue = (optionIndex: number, value: string) => {
+    const options = form.getValues("options");
+    if (!options?.[optionIndex]) return;
+
+    const currentValues = options[optionIndex].values;
+    
+    if (currentValues.includes(value)) {
+      options[optionIndex].values = currentValues.filter((v) => v !== value);
+    } else {
+      options[optionIndex].values = [...currentValues, value];
     }
+    
+    form.setValue("options", [...options]);
   };
 
   const generateVariants = () => {
@@ -210,12 +234,21 @@ export function AddProductForm() {
       price: form.getValues("price"),
       stock: "0",
       options: combination,
+      images: [],
     }));
 
     form.setValue("variants", variants);
     toast({
       title: "Success",
       description: `Generated ${variants.length} variants`,
+    });
+  };
+
+  const clearVariants = () => {
+    form.setValue("variants", []);
+    toast({
+      title: "Success",
+      description: "Variants cleared",
     });
   };
 
@@ -284,12 +317,65 @@ export function AddProductForm() {
     }
   };
 
+  const handleVariantImageChange = (
+    index: number,
+    value: FileUploadThing[],
+    newFile?: FileUploadThing
+  ) => {
+    const variants = form.getValues("variants");
+    if (!variants || !variants[index]) return;
+
+    variants[index].images = value;
+    form.setValue("variants", [...variants]);
+
+    // Create gallery item for new uploads
+    if (newFile) {
+      createGalleryItem({
+        name: newFile.name,
+        size: newFile.size,
+        key: newFile.key,
+        lastModified: Math.floor((newFile.lastModified || Date.now()) / 1000),
+        serverData: newFile.serverData || { uploadedBy: null },
+        url: newFile.url,
+        appUrl: newFile.url,
+        ufsUrl: newFile.url,
+        customId: null,
+        type: newFile.type,
+        fileHash: newFile.key,
+        reference: null,
+        metadata: {},
+        width: null,
+        height: null,
+        tags: [],
+        uploadedBy: newFile.serverData?.uploadedBy || null,
+        usedIn: [],
+        isDeleted: false,
+      });
+    }
+  };
+
+  const handleVariantImageRemove = (
+    index: number,
+    value: FileUploadThing[],
+    key?: string
+  ) => {
+    const variants = form.getValues("variants");
+    if (!variants || !variants[index]) return;
+
+    variants[index].images = value;
+    form.setValue("variants", [...variants]);
+
+    if (key) {
+      deleteGalleryItem(key);
+    }
+  };
+
   return (
     <div className="max-w-4xl">
       <div className="mb-6">
         <Button variant="ghost" asChild className="gap-2">
           <Link href="/admin-dashboard/products">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             Back to Products
           </Link>
         </Button>
@@ -442,7 +528,7 @@ export function AddProductForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {categories?.map((category: any) => (
+                          {categories?.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.parent
                                 ? `${category.parent.name} > ${category.name}`
@@ -472,7 +558,7 @@ export function AddProductForm() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No Collection</SelectItem>
-                          {collections?.map((collection: any) => (
+                          {collections?.map((collection) => (
                             <SelectItem key={collection.id} value={collection.id}>
                               {collection.name}
                             </SelectItem>
@@ -505,83 +591,101 @@ export function AddProductForm() {
             <CardHeader>
               <CardTitle>Product Options</CardTitle>
               <Button type="button" onClick={addOption}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 size-4" />
                 Add Option
               </Button>
             </CardHeader>
             <CardContent>
-              {form.watch("options").map((option, optionIndex) => (
-                <div
-                  key={optionIndex}
-                  className="mb-4 space-y-4 rounded-lg border p-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`options.${optionIndex}.name`}
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel>Option Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="e.g., Size, Color" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeOption(optionIndex)}
-                      className="mt-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <FormLabel>Option Values</FormLabel>
-                    {option.values.map((_, valueIndex) => (
-                      <div key={valueIndex} className="flex items-center gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`options.${optionIndex}.values.${valueIndex}`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
+              {form.watch("options").map((option, optionIndex) => {
+                const selectedTemplate = optionTemplates?.find(
+                  (t) => t.name === option.name
+                );
+
+                return (
+                  <div
+                    key={optionIndex}
+                    className="mb-4 space-y-4 rounded-lg border p-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`options.${optionIndex}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Option Template</FormLabel>
+                            <Select
+                              onValueChange={(value) =>
+                                handleTemplateSelect(optionIndex, value)
+                              }
+                              value={field.value}
+                            >
                               <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="e.g., Large, Red"
-                                />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a template" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() =>
-                            removeOptionValue(optionIndex, valueIndex)
-                          }
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                              <SelectContent>
+                                {optionTemplates?.map((template) => (
+                                  <SelectItem
+                                    key={template.id}
+                                    value={template.name}
+                                  >
+                                    {template.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeOption(optionIndex)}
+                        className="mt-8"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+
+                    {selectedTemplate && (
+                      <div className="space-y-2">
+                        <FormLabel>Select Values</FormLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTemplate.values.map((v) => {
+                            const isSelected = option.values.includes(v.value);
+                            return (
+                              <Badge
+                                key={v.id}
+                                variant={isSelected ? "default" : "outline"}
+                                className={cn(
+                                  "cursor-pointer px-3 py-1 hover:bg-primary/90",
+                                  !isSelected && "hover:bg-accent"
+                                )}
+                                onClick={() =>
+                                  toggleOptionValue(optionIndex, v.value)
+                                }
+                              >
+                                {v.value}
+                                {isSelected && (
+                                  <Check className="ml-2 size-3" />
+                                )}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                        {option.values.length === 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            Please select at least one value
+                          </p>
+                        )}
                       </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addOptionValue(optionIndex)}
-                    >
-                      <Plus className="mr-2 h-3 w-3" />
-                      Add Value
-                    </Button>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {form.watch("options").length > 0 && (
                 <Button
                   type="button"
@@ -596,8 +700,16 @@ export function AddProductForm() {
 
           {form.watch("variants").length > 0 && (
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <CardTitle>Product Variants</CardTitle>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={clearVariants}
+                >
+                  Clear Variants
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -661,6 +773,26 @@ export function AddProductForm() {
                               {option.value}
                             </div>
                           ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <FormLabel>Variant Images</FormLabel>
+                        <div className="mt-2">
+                          <MultiImageUploader
+                            onChange={(val, newFile) =>
+                              handleVariantImageChange(
+                                variantIndex,
+                                val,
+                                newFile
+                              )
+                            }
+                            onRemove={(val, key) =>
+                              handleVariantImageRemove(variantIndex, val, key)
+                            }
+                            value={variant.images || []}
+                            maxLimit={5}
+                          />
                         </div>
                       </div>
                     </div>

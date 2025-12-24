@@ -20,8 +20,7 @@ interface OrderItem {
   };
   variant?: {
     id: string;
-    color?: string;
-    size?: string;
+    variantOptions?: { name: string; value: string }[];
   };
 }
 
@@ -193,7 +192,17 @@ export function SuccessPageContent() {
                 key={index}
                 className="flex justify-between rounded bg-gray-50 p-2 text-sm"
               >
-                <span>{item?.Product?.name || "Product"}</span>
+                <div className="flex flex-col">
+                  <span>{item?.Product?.name || "Product"}</span>
+                  {/* Dynamic Variant Options */}
+                  {item.variant?.variantOptions && item.variant.variantOptions.length > 0 && (
+                    <div className="mt-0.5 flex flex-wrap gap-2 text-[10px] uppercase text-gray-500">
+                      {item.variant.variantOptions.map((opt, idx) => (
+                        <span key={idx}>{opt.name}: {opt.value}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <span>
                   {item?.quantity}x{" "}
                   {formatCurrency(

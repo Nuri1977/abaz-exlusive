@@ -75,18 +75,39 @@ Located in: `src/app/(pages)/(admin)/admin-dashboard/products/add/_components/Ad
 Located in: `src/app/(pages)/(public)/product/[slug]/_components/ProductPageClient.tsx`
 
 ### Implementation Logic:
-1. **Dynamic Extractors**: Parses the `product.variants` array to identify unique color and size lists.
-2. **Interactive Selection**: Uses local state (`selectedColor`, `selectedSize`) to track user choices.
-3. **Real-time Pricing**:
-   - `effectivePrice` is calculated by checking if the current selection matches a `matchedVariant`.
-   - If a variant has a specific price, it overrides the product's base price in the UI.
+1. **Dynamic Attribute Extractor**: Automatically parses the `product.options` and `product.variants` to render selection controls for any combination of attributes (Color, Size, Material, etc.).
+2. **Interactive Selection**: Uses a localized `selectedOptions` state (mapped by `optionId`) to track user choices.
+3. **Real-time Pricing & Stock**:
+   - `effectivePrice` and `effectiveStock` are dynamically calculated based on the `matchedVariant` found from the current option combination.
+   - If a variant has a specific price override, it is reflected in the UI and passed to the cart.
 4. **Cart Integration**:
-   - The "Add to Cart" button is disabled until a valid selection is made.
-   - When added, the `variantId` is stored in the `CartContext`, ensuring the correct SKU is processed during checkout.
+   - The "Add to Cart" button is only enabled when a valid combination of all required options is selected.
+   - The selection is stored as a `variantOptions` array in the `CartContext`, allowing for infinite attribute flexibility.
 
 ---
 
-## 6. Phase 2: Global Option Templates (Reusable Options)
+## 6. Frontend: Cart, Checkout & Orders Integration
+
+The application has been unified to treat all variants dynamically, removing legacy hardcoded logic.
+
+### Key Implementation Details:
+1. **Unified Cart State**:
+   - `CartItem` types now use a `variantOptions: { name: string; value: string }[]` array.
+   - The `getKey` function in `CartContext` generates unique identifiers by sorting and stringifying these options, ensuring items with different attributes are tracked separately.
+2. **Dynamic UI Rendering**:
+   - `CartSheet`, `CartPageClient`, and `CartSummary` (at checkout) use a generic mapping logic to display attributes.
+   - Removed all hardcoded checks for "color" or "size" in favor of iterating over the `variantOptions` array.
+3. **Checkout & Polar Metadata**:
+   - The checkout API (`/api/polar/checkout`) deeply includes variant option names from the database to build rich, human-readable metadata for external payment providers.
+   - `InputCartItem` types support both structured objects and pre-formatted strings for maximum resilience during state transitions.
+4. **Order History**:
+   - The `Order` and `Payment` success pages dynamically render the attributes of the purchased items, ensuring the user sees exactly what they ordered (e.g., "Size: M, Material: Cotton").
+5. **Checkout Interactivity**:
+   - The checkout page includes an "Editable" mode for the `CartSummary`, allowing users to adjust quantities or remove items directly within the final payment step.
+
+---
+
+## 7. Phase 2: Global Option Templates (Reusable Options)
 
 ### Rationale
 In the current implementation, administrators must manually type option names (e.g., "Size") and values (e.g., "S, M, L, XL") for every individual product. This is inefficient for large catalogs and prone to data entry errors (e.g., "Size" vs "size"). Global templates solve this by providing a standardized "source of truth".
@@ -133,11 +154,27 @@ model OptionValueTemplate {
 - [x] Admin Variant Generator (Frontend)
 - [x] Admin Variant CRUD (Backend)
 - [x] Public Selection Logic
-- [ ] **Phase 2: Global Option Templates (Strict Enforcement)**
-  - [ ] Database Schema Update (`OptionTemplate`, `OptionValueTemplate`)
-  - [ ] API for Template CRUD (`/api/admin/templates`)
-  - [ ] Template Management UI in Admin Dashboard
-  - [ ] **Update `AddProductForm` to disable manual entry and use Template Picker only**
-  - [ ] Implement Value Selection (Multiselect) from chosen template
-- [ ] Multi-image support per variant (planned)
+- [x] **Phase 2: Global Option Templates (Strict Enforcement)**
+  - [x] Database Schema Update (`OptionTemplate`, `OptionValueTemplate`)
+  - [x] API for Template CRUD (`/api/admin/templates`)
+  - [x] Template Management UI in Admin Dashboard
+  - [x] **Update `AddProductForm` to disable manual entry and use Template Picker only**
+  - [x] Implement Value Selection (Multiselect) from chosen template
+- [x] **Phase 3: Multi-Image Support per Variant**
+  - [x] Schema Update: Add `images` field to `ProductVariant`
+  - [x] Admin API Update: Handle variant-specific images in `POST /api/admin/products`
+  - [x] Admin UI Update: Add image uploader to Variant cards in `AddProductForm`
+  - [x] Public UI Update: Switch `ProductImageGallery` based on selected variant
+- [x] **Phase 4: Product Edit Support & Transaction Optimization**
+  - [x] Update `EditProductForm` to support Options and Variants management
+  - [x] Implement API for Product Update (PATCH) with full variant syncing
+  - [x] Optimize Prisma transactions with increased timeouts and nested creates
+- [x] **Phase 5: Cart & Checkout Refinement (Dynamic Variations)**
+  - [x] Remove hardcoded `color` and `size` fields from `CartItem` and `OrderItem` types
+  - [x] Implement dynamic `variantOptions` rendering in `CartSheet` and `CartPageClient`
+  - [x] Update `getKey` logic in `CartContext` to use attribute-based identification
+  - [x] Refactor `/api/orders/[id]` and Success pages to render dynamic attributes
+  - [x] Update Polar Checkout API to build rich variant metadata from database joins
+  - [x] Add quantity controls and item removal functionality to the Checkout summary
 - [ ] Low stock notifications (planned)
+- [ ] Variant-specific analytics in Admin Dashboard (planned)

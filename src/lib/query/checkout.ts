@@ -199,8 +199,7 @@ export const checkout = async (
     price: number;
     title: string;
     image: string;
-    color?: string;
-    size?: string;
+    variantOptions?: { name: string; value: string }[];
   }>
 ) => {
   // Convert legacy form data to new checkout format
@@ -222,8 +221,7 @@ export const checkout = async (
         quantity: item.quantity,
         price: item.price,
         title: item.title,
-        color: item.color,
-        size: item.size,
+        variantOptions: item.variantOptions,
       })) || [],
   };
 

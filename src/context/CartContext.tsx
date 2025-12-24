@@ -2,7 +2,7 @@
 
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -20,8 +20,8 @@ import {
   removeFromCart,
 } from "@/lib/query/cart";
 import {
-  Currency,
-  ExchangeRates,
+  type Currency,
+  type ExchangeRates,
   fetchExchangeRates,
   getCurrencySymbol,
 } from "@/lib/query/currency";
@@ -33,14 +33,13 @@ export type CartItem = {
   image: string;
   title: string;
   variantId?: string;
-  color?: string;
-  size?: string;
+  variantOptions?: { name: string; value: string }[];
 };
 
 type CartContextType = {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (variantId: string) => void;
+  removeItem: (id: string, variantId?: string) => void;
   clearCart: () => void;
   open: boolean;
   setOpen: (value: boolean) => void;
@@ -53,6 +52,21 @@ type CartContextType = {
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+type ServerCartItem = {
+  quantity: number;
+  price: number | string;
+  productId: string | null;
+  variantId: string | null;
+  Product?: {
+    id: string;
+    name: string;
+    images?: { url: string; key: string }[];
+  } | null;
+  variantOptions?: { name: string; value: string }[];
+  title?: string;
+  image?: string;
+};
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -77,12 +91,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (session?.user) {
       // Fetch user cart currency from API
-      axios.get("/api/cart").then((res) => {
-        const userCurrency = res?.data?.currency as Currency;
-        if (userCurrency && ["MKD", "USD", "EUR"].includes(userCurrency)) {
-          setCurrencyState(userCurrency);
-        }
-      });
+      axios
+        .get<{ currency: string }>("/api/cart")
+        .then((res) => {
+          const userCurrency = res.data.currency as Currency;
+          if (userCurrency && ["MKD", "USD", "EUR"].includes(userCurrency)) {
+            setCurrencyState(userCurrency);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch cart currency:", err));
     } else {
       const stored = localStorage.getItem("cartCurrency");
       if (stored && ["MKD", "USD", "EUR"].includes(stored)) {
@@ -96,7 +113,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (cur: Currency) => {
       setCurrencyState(cur);
       if (session?.user) {
-        axios.patch("/api/cart", { currency: cur });
+      axios
+        .patch("/api/cart", { currency: cur })
+        .catch((err) => console.error("Failed to update cart currency:", err));
       } else {
         localStorage.setItem("cartCurrency", cur);
       }
@@ -150,8 +169,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         queryClient.setQueryData(cartKeys.all, context.previousItems);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
   const removeMutation = useMutation({
@@ -176,13 +195,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         queryClient.setQueryData(cartKeys.all, context.previousItems);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
   const clearMutation = useMutation({
     mutationFn: clearCartApi,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    },
   });
 
   // Sync guest cart from localStorage
@@ -190,7 +211,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!session?.user) {
       const stored = localStorage.getItem("guestCart");
       if (stored) {
-        setGuestItems(JSON.parse(stored));
+        setGuestItems(JSON.parse(stored) as CartItem[]);
       }
     }
   }, [session?.user]);
@@ -204,10 +225,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // On login, optionally migrate guest cart to user cart (not implemented here)
 
-  const getKey = (item: CartItem) =>
-    [item.variantId, item.productId, item.color, item.size]
+  const getKey = (item: CartItem) => {
+    const optionsKey = item.variantOptions
+      ? item.variantOptions
+          .map((opt) => `${opt.name}:${opt.value}`)
+          .sort()
+          .join("|")
+      : "";
+    return [item.productId, item.variantId, optionsKey]
       .filter(Boolean)
       .join(":");
+  };
 
   // Cart actions
   const addItem = useCallback(
@@ -240,7 +268,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeMutation.mutate({ id, variantId });
       } else {
         setGuestItems((prev) =>
-          prev.filter((i) => (i.variantId ?? i.productId) !== id)
+          prev.filter((i) => {
+            if (variantId) {
+              return !(i.productId === id && i.variantId === variantId);
+            }
+            return i.productId !== id;
+          })
         );
       }
     },
@@ -257,23 +290,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Normalize userItems for logged-in users (API returns CartItem with Product)
   const normalizedUserItems = Array.isArray(userItems)
-    ? userItems.map((item: any) => {
+    ? (userItems as unknown as ServerCartItem[]).map((item) => {
         return {
-          quantity: Number(item?.quantity) || 1,
-          price: Number(item?.price) || 0,
-          productId: item?.productId ?? item?.Product?.id ?? "",
+          quantity: Number(item.quantity) || 1,
+          price: Number(item.price) || 0,
+          productId: item.productId ?? item.Product?.id ?? "",
           image:
-            item?.image ??
-            item?.Product?.images?.[0]?.url ??
-            item?.Product?.images?.[0]?.key ??
+            item.image ??
+            item.Product?.images?.[0]?.url ??
+            item.Product?.images?.[0]?.key ??
             "/placeholder.jpg",
-          title: item?.title ?? item?.Product?.name ?? "",
+          title: item.title ?? item.Product?.name ?? "",
           variantId:
-            typeof item?.variantId === "string" && item?.variantId !== "null"
-              ? item?.variantId
+            typeof item.variantId === "string" && item.variantId !== "null"
+              ? item.variantId
               : undefined,
-          color: item?.color ?? undefined,
-          size: item?.size ?? undefined,
+          variantOptions: item.variantOptions ?? undefined,
         };
       })
     : [];

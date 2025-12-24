@@ -29,8 +29,10 @@ export type ProductWithOptionsAndVariants = Omit<
     name: string;
   } | null;
   options: {
+    id: string;
     name: string;
     values: {
+      id: string;
       value: string;
     }[];
   }[];
@@ -39,10 +41,15 @@ export type ProductWithOptionsAndVariants = Omit<
     sku: string;
     price: string | number | null;
     stock: number;
+    images?: FileUploadThing[] | null;
     options: {
       optionValue: {
         id: string;
         value: string;
+        optionId: string;
+        option?: {
+          name: string;
+        };
       };
     }[];
   }[];
@@ -54,6 +61,7 @@ export type ProductWithVariants = Product & {
     sku: string;
     price: number | null;
     stock: number;
+    images?: FileUploadThing[] | null;
     options: Array<{
       optionValue: {
         id: string;

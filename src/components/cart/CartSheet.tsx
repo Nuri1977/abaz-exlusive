@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCartContext } from "@/context/CartContext";
+import { useCartContext, type CartItem } from "@/context/CartContext";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ export function CartSheet({
     isLoading,
   } = useCartContext();
 
-  const handleQuantityChange = (item: any, delta: any) => {
+  const handleQuantityChange = (item: CartItem, delta: number) => {
     const newQty = item.quantity + delta;
     if (newQty < 1) return;
     addItem({ ...item, quantity: delta }); // addItem merges by key and adds delta
@@ -66,7 +66,7 @@ export function CartSheet({
         >
           <ShoppingCart size={24} />
           {isLoading ? (
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/50 animate-pulse">
+            <span className="absolute -right-1 -top-1 flex size-5 animate-pulse items-center justify-center rounded-full bg-primary/50">
               <span className="sr-only">Loading cart...</span>
             </span>
           ) : itemCount > 0 ? (
@@ -133,9 +133,19 @@ export function CartSheet({
                       className="rounded-md object-cover"
                     />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium leading-none">{item.title}</p>
+                    {/* Dynamic Variant Options */}
+                    {item.variantOptions && item.variantOptions.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] uppercase tracking-wider text-muted-foreground/80">
+                        {item.variantOptions.map((opt, idx) => (
+                          <span key={idx} className="flex items-center gap-1">
+                            <span className="font-semibold text-muted-foreground">{opt.name}:</span> {opt.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
@@ -146,7 +156,7 @@ export function CartSheet({
                       >
                         <Minus className="size-4" />
                       </Button>
-                      <span className="w-6 select-none text-center">
+                      <span className="w-6 select-none text-center text-sm">
                         {item.quantity}
                       </span>
                       <Button
@@ -174,8 +184,10 @@ export function CartSheet({
                     })}
                   </p>
                   <Button
-                    variant="destructive"
-                    onClick={() => removeItem(item.variantId ?? item.productId)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-destructive hover:bg-transparent hover:text-destructive/80"
+                    onClick={() => removeItem(item.productId, item.variantId)}
                   >
                     Remove
                   </Button>

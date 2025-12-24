@@ -62,12 +62,37 @@ export async function GET(
               images: item.Product.images,
             }
           : null,
-        variant: item.variant
-          ? {
-              id: item.variant.id,
-              sku: item.variant.sku,
-            }
-          : null,
+        variant: (() => {
+          const variant = item.variant as unknown as {
+            id: string;
+            sku: string;
+            options?: Array<{
+              optionValue: {
+                value: string;
+                option: {
+                  name: string;
+                };
+              };
+            }>;
+          };
+
+          if (!variant) return null;
+
+          const variantOptions: { name: string; value: string }[] = [];
+
+          if (variant.options) {
+            variant.options.forEach((opt) => {
+              const name = opt.optionValue?.option?.name ?? "";
+              const value = opt.optionValue?.value ?? "";
+              variantOptions.push({ name, value });
+            });
+          }
+          return {
+            id: variant.id,
+            sku: variant.sku,
+            variantOptions,
+          };
+        })(),
       })),
       payments: order.payments?.map((payment) => ({
         id: payment.id,
@@ -75,7 +100,7 @@ export async function GET(
         currency: payment.currency,
         status: payment.status,
         provider: payment.provider,
-        paymentMethod: payment.paymentMethod,
+        paymentMethod: payment.method,
         createdAt: payment.createdAt,
         updatedAt: payment.updatedAt,
       })),
@@ -84,7 +109,7 @@ export async function GET(
         ? {
             id: order.payments[0].id,
             status: order.payments[0].status,
-            paymentMethod: order.payments[0].paymentMethod,
+            paymentMethod: order.payments[0].method,
             createdAt: order.payments[0].createdAt,
           }
         : null,

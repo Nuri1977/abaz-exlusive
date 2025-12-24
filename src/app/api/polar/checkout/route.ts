@@ -11,10 +11,10 @@ import {
 } from "@/lib/checkout-utils";
 import { CurrencyConverter } from "@/lib/currency-converter";
 import { prisma } from "@/lib/prisma";
+import { ExchangeRateService } from "@/services/exchange-rate";
 import { OrderService } from "@/services/order";
 import { PaymentService } from "@/services/payment";
 import { PolarService } from "@/services/polar";
-import { ExchangeRateService } from "@/services/exchange-rate";
 import { getSessionServer } from "@/helpers/getSessionServer";
 
 // Handle POST requests for creating checkout sessions
@@ -156,8 +156,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-
-
       // Create local order first
       const orderData = {
         userId: sessionData.userId,
@@ -224,7 +222,11 @@ export async function POST(req: NextRequest) {
                 include: {
                   options: {
                     include: {
-                      optionValue: true,
+                      optionValue: {
+                        include: {
+                          option: true,
+                        },
+                      },
                     },
                   },
                 },
@@ -235,13 +237,18 @@ export async function POST(req: NextRequest) {
           if (product) {
             const variant = product.variants?.[0];
             const variantOptions = variant?.options
-              ?.map((opt) => opt.optionValue?.value)
+              ?.map(
+                (opt) =>
+                  `${opt.optionValue?.option?.name}: ${opt.optionValue?.value}`
+              )
               .filter(Boolean)
               .join(", ");
 
             // Handle images stored as JSON array
             const images = Array.isArray(product.images) ? product.images : [];
-            const firstImage = images[0] as { url?: string; key?: string } | undefined;
+            const firstImage = images[0] as
+              | { url?: string; key?: string }
+              | undefined;
             const imageUrl = firstImage?.url || firstImage?.key || "";
 
             cartItemsForMetadata.push({
@@ -250,8 +257,6 @@ export async function POST(req: NextRequest) {
               quantity: item.quantity,
               price: item.price,
               title: product.name || item.title || "Unknown Product",
-              color: item.color,
-              size: item.size,
               // Enhanced metadata
               productSlug: product.slug || "",
               imageUrl: imageUrl,

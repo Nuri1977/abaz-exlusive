@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-
-import { ProductExt } from "@/types/product";
+import type { Prisma } from "@prisma/client";
+import type { ProductWithOptionsAndVariants } from "@/types/product";
+import type { FileUploadThing } from "@/types/UploadThing";
 import { prisma } from "@/lib/prisma";
 
 import { EditProductForm } from "./_components/EditProductForm";
@@ -9,17 +10,61 @@ interface EditProductPageProps {
   params: Promise<{ id: string }>;
 }
 
+type ProductWithDetails = Prisma.ProductGetPayload<{
+  include: {
+    category: true;
+    collection: true;
+    options: {
+      include: {
+        values: true;
+      };
+    };
+    variants: {
+      include: {
+        options: {
+          include: {
+            optionValue: {
+              include: {
+                option: true;
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+}>;
+
+// Explicitly type the variant to include base fields and relations
+type VariantWithDetails = ProductWithDetails["variants"][number];
+
 // Function to serialize product data and convert Decimal to number
-const serializeProduct = (product: any) => {
+const serializeProduct = (
+  product: ProductWithDetails
+): ProductWithOptionsAndVariants => {
   return {
     ...product,
     price: product.price ? parseFloat(product.price.toString()) : null,
+    images: (product.images as unknown as FileUploadThing[]) || [],
     variants:
-      product.variants?.map((variant: any) => ({
-        ...variant,
-        price: variant.price ? parseFloat(variant.price.toString()) : null,
-      })) || [],
-  };
+      product.variants?.map((variant: VariantWithDetails) => {
+        // Use unknown cast to access images if TS is being stubborn about model fields
+        const variantImages = (variant as unknown as { images: Prisma.JsonValue[] })
+          .images;
+
+        return {
+          ...variant,
+          price: variant.price ? parseFloat(variant.price.toString()) : null,
+          images: (variantImages as unknown as FileUploadThing[]) || [],
+          options: variant.options.map((opt) => ({
+            optionValue: {
+              ...opt.optionValue,
+              option: opt.optionValue.option,
+            },
+          })),
+        };
+      }) || [],
+  } as ProductWithOptionsAndVariants;
 };
 
 export default async function EditProductPage({
@@ -42,7 +87,11 @@ export default async function EditProductPage({
         include: {
           options: {
             include: {
-              optionValue: true,
+              optionValue: {
+                include: {
+                  option: true,
+                },
+              },
             },
           },
         },
@@ -55,7 +104,7 @@ export default async function EditProductPage({
   }
 
   // Serialize the product data to handle Decimal values
-  const serializedProduct = serializeProduct(product) as ProductExt | null;
+  const serializedProduct = serializeProduct(product);
 
   return (
     <div className="space-y-6">

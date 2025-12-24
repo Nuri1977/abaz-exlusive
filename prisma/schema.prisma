@@ -149,6 +149,7 @@ model ProductVariant {
   sku        String                 @unique
   price      Decimal?               @db.Decimal(10, 2)
   stock      Int                    @default(0)
+  images     Json[]
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
   cartItems  CartItem[]
@@ -466,4 +467,25 @@ enum PaymentMethod {
   CASH_ON_DELIVERY
   BANK_TRANSFER
   DIGITAL_WALLET
+}
+
+model OptionTemplate {
+  id        String                @id @default(uuid())
+  name      String                @unique
+  values    OptionValueTemplate[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@map("option_template")
+}
+
+model OptionValueTemplate {
+  id         String         @id @default(uuid())
+  value      String
+  templateId String
+  template   OptionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("option_value_template")
 }
