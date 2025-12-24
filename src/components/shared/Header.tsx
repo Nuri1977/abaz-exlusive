@@ -111,7 +111,7 @@ export function Header() {
     <header
       className={cn(
         "top-0 z-50 w-full transition-all duration-300",
-        hasHeroSection ? "fixed left-0 right-0" : "sticky border-b",
+        hasHeroSection ? "fixed inset-x-0" : "sticky border-b",
         hasHeroSection && !scrolled
           ? "bg-transparent"
           : "bg-background/70 shadow-sm supports-[backdrop-filter]:backdrop-blur-md"
@@ -216,59 +216,109 @@ export function Header() {
             </Select>
           </div>
 
-          {/* Auth Section - Simplified to prevent infinite loops */}
+          {/* Auth Section */}
           <div className="hidden lg:block">
-            {!mounted || isPending ? (
-              <div
-                className={cn(
-                  "size-9 animate-pulse rounded-full border p-2",
-                  hasHeroSection && !scrolled
-                    ? "border-white/20 bg-white/20"
-                    : "border-input bg-muted/20"
-                )}
-              />
-            ) : session ? (
-              <Link
-                href="/dashboard"
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-full border p-0 transition-colors",
-                  hasHeroSection && !scrolled
-                    ? "border-white/20 hover:bg-white/10"
-                    : "border-input hover:bg-primary/10"
-                )}
-                title={`Welcome, ${session?.user?.name || "User"}`}
-              >
-                <Avatar className="size-8">
-                  <AvatarFallback
-                    className={cn(
-                      hasHeroSection && !scrolled
-                        ? "bg-white/20 text-white"
-                        : "bg-primary text-primary-foreground"
-                    )}
-                  >
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-full border p-0 transition-colors",
-                  hasHeroSection && !scrolled
-                    ? "border-white/20 hover:bg-white/10"
-                    : "border-input hover:bg-primary/10"
-                )}
-                title="Sign in"
-              >
-                <User
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className={cn(
-                    "size-5",
-                    hasHeroSection && !scrolled ? "text-white" : "text-primary"
+                    "flex size-9 items-center justify-center rounded-full border p-0 transition-colors",
+                    hasHeroSection && !scrolled
+                      ? "border-white/20 hover:bg-white/10"
+                      : "border-input hover:bg-primary/10"
                   )}
-                />
-              </Link>
-            )}
+                >
+                  {!mounted || isPending ? (
+                    <Skeleton
+                      className={cn(
+                        "size-8 rounded-full",
+                        hasHeroSection && !scrolled
+                          ? "bg-white/20"
+                          : "bg-muted/20"
+                      )}
+                    />
+                  ) : session ? (
+                    <Avatar className="size-8">
+                      <AvatarFallback
+                        className={cn(
+                          hasHeroSection && !scrolled
+                            ? "bg-white/20 text-white"
+                            : "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <User
+                      className={cn(
+                        "size-5",
+                        hasHeroSection && !scrolled
+                          ? "text-white"
+                          : "text-primary"
+                      )}
+                    />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {!isPending && session ? (
+                  <>
+                    <div className="p-2 text-center">
+                      <p className="font-medium">
+                        {session?.user?.name || "User"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {session?.user?.email || "No email"}
+                      </p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/dashboard"
+                        className="flex w-full cursor-pointer items-center"
+                      >
+                        <LayoutDashboard className="mr-2 size-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/admin-dashboard"
+                          className="flex w-full cursor-pointer items-center"
+                        >
+                          <Settings className="mr-2 size-4" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer"
+                    >
+                      <LogOut className="mr-2 size-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login" className="w-full cursor-pointer">
+                        Sign in
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/register" className="w-full cursor-pointer">
+                        Create account
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Sidebar */}
