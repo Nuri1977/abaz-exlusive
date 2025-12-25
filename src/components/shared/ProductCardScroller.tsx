@@ -1,25 +1,20 @@
 "use client";
 
-import Autoplay from "embla-carousel-autoplay";
-
 import React from "react";
-import Link from "next/link";
+import type { Category } from "@prisma/client";
+import type { ProductExt } from "@/types/product";
 import {
   Award,
   Clock,
   Gift,
-  Heart,
   Package,
   ShoppingBag,
-  ShoppingCart,
   Sparkles,
-  Star,
   ThumbsUp,
   TrendingUp,
   Zap,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
@@ -29,33 +24,10 @@ import {
 } from "@/components/ui/carousel";
 
 import { ProductCard } from "./ProductCard";
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  images: any[];
-  category?: {
-    id: string;
-    name: string;
-    image: any;
-    slug: string;
-    description: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    parentId: string | null;
-    isActive: boolean;
-    level: number;
-  };
-  brand?: string;
-  description?: string;
-  variants?: any[];
-  features?: string[];
-}
+import Autoplay from "embla-carousel-autoplay";
 
 interface ProductCardScrollerProps {
-  products: Product[];
+  products: (ProductExt & { category: Category })[];
   title?: string;
   linkProp?: string;
   loading?: boolean;
@@ -66,7 +38,7 @@ interface ProductCardScrollerProps {
 }
 
 // Icon mapping object
-const iconMap: { [key: string]: React.ComponentType<any> } = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   sparkles: Sparkles,
   trendingUp: TrendingUp,
   package: Package,
@@ -81,19 +53,11 @@ const iconMap: { [key: string]: React.ComponentType<any> } = {
 const ProductCardScroller = ({
   products,
   title,
-  linkProp,
   loading,
-  showViewAll = false,
   iconName,
   enableAutoPlay = true,
   autoPlayDelay = 3000,
 }: ProductCardScrollerProps) => {
-  if (loading) return <div>Loading...</div>;
-
-  if (!products || products.length === 0) return null;
-
-  const IconComponent = iconName ? iconMap[iconName] : null;
-
   const plugins = React.useMemo(() => {
     if (!enableAutoPlay) return [];
     return [
@@ -105,13 +69,19 @@ const ProductCardScroller = ({
     ];
   }, [enableAutoPlay, autoPlayDelay]);
 
+  if (loading) return <div>Loading...</div>;
+
+  if (!products || products.length === 0) return null;
+
+  const IconComponent = iconName ? iconMap[iconName] : null;
+
   return (
     <div className="container mx-auto px-4 py-16">
       {title && (
         <div className="mb-12 text-center">
           <div className="mb-2 flex items-center justify-center gap-2">
             {IconComponent && (
-              <IconComponent className="h-8 w-8 text-primary" />
+              <IconComponent className="size-8 text-primary" />
             )}
             <h2 className="text-3xl font-bold">{title}</h2>
           </div>
@@ -134,32 +104,14 @@ const ProductCardScroller = ({
                 className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3 xl:basis-1/4"
               >
                 <ProductCard
-                  product={
-                    {
-                      ...product,
-                      category: product.category || {
-                        id: "",
-                        name: "",
-                        image: null,
-                        slug: "",
-                        description: null,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        parentId: null,
-                        isActive: true,
-                        level: 0,
-                      },
-                      variants: product.variants || [],
-                      features: product.features || [],
-                    } as any
-                  }
+                  product={product}
                 />
               </CarouselItem>
             ))}
           </CarouselContent>
           {/* Mobile arrows - inside carousel */}
-          <CarouselPrevious className="absolute left-2 top-1/2 h-12 w-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:h-8 [&>svg]:w-8" />
-          <CarouselNext className="absolute right-2 top-1/2 h-12 w-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:h-8 [&>svg]:w-8" />
+          <CarouselPrevious className="absolute left-2 top-1/2 size-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:size-8" />
+          <CarouselNext className="absolute right-2 top-1/2 size-12 -translate-y-1/2 border-none bg-black/10 text-white backdrop-blur-sm hover:bg-black/20 hover:text-white md:hidden [&>svg]:size-8" />
           {/* Desktop arrows - outside carousel */}
           <CarouselPrevious className="absolute -left-12 top-1/2 hidden -translate-y-1/2 md:flex" />
           <CarouselNext className="absolute -right-12 top-1/2 hidden -translate-y-1/2 md:flex" />

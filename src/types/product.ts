@@ -1,18 +1,16 @@
-import type {
-  CartItem,
-  Like,
-  OrderItem,
-  Product,
-  ProductOption,
-  ProductVariant,
-} from "@prisma/client";
+import type { CartItem, Like, OrderItem, Product } from "@prisma/client";
 
 import type { FileUploadThing } from "./UploadThing";
 
-export interface ProductExt extends Omit<Product, "images"> {
+export interface ProductExt extends Omit<
+  Product,
+  "images" | "price" | "compareAtPrice" | "options" | "variants"
+> {
   images: FileUploadThing[] | null;
-  options?: ProductOption[];
-  variants?: ProductVariant[];
+  price: number | string | null;
+  compareAtPrice?: number | string | null;
+  options?: unknown[];
+  variants?: unknown[];
   cartItems?: CartItem[];
   orderItems?: OrderItem[];
   likes?: Like[];
@@ -20,9 +18,10 @@ export interface ProductExt extends Omit<Product, "images"> {
 
 export type ProductWithOptionsAndVariants = Omit<
   Product,
-  "images" | "price"
+  "images" | "price" | "compareAtPrice"
 > & {
   price: string | number | null;
+  compareAtPrice?: string | number | null;
   images: FileUploadThing[] | null;
   category: {
     id: string;
@@ -40,6 +39,7 @@ export type ProductWithOptionsAndVariants = Omit<
     id: string;
     sku: string;
     price: string | number | null;
+    compareAtPrice?: string | number | null;
     stock: number;
     images?: FileUploadThing[] | null;
     options: {
@@ -60,6 +60,7 @@ export type ProductWithVariants = Product & {
     id: string;
     sku: string;
     price: number | null;
+    compareAtPrice?: number | null;
     stock: number;
     images?: FileUploadThing[] | null;
     options: Array<{

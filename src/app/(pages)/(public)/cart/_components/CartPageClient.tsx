@@ -99,6 +99,19 @@ const CartPageClient = () => {
             </div>
 
             <div className="w-full text-right md:w-1/3">
+              {item.compareAtPrice && Number(item.compareAtPrice) > Number(item.price) && (
+                <p className="text-xs text-muted-foreground line-through">
+                  {currencySymbol}{" "}
+                  {convertPrice(
+                    Number(item.compareAtPrice) * item.quantity,
+                    "MKD",
+                    currency
+                  ).toLocaleString("de-DE", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                </p>
+              )}
               <p className="font-semibold">
                 {currencySymbol}{" "}
                 {convertPrice(

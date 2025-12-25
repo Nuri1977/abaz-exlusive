@@ -1,11 +1,10 @@
 import {
   createContext,
-  PropsWithChildren,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useMemo,
 } from "react";
-import { Product } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { toastPresets } from "@/constants/toasts";
@@ -16,13 +15,14 @@ import {
   unlikeProduct,
 } from "@/lib/query/likes";
 import { useToast } from "@/hooks/useToast";
+import type { ProductExt } from "@/types/product";
 
 type UserAccountContextType = {
-  likedProducts: Product[];
+  likedProducts: ProductExt[];
   isLiked: (productId: string) => boolean;
-  like: (product: Product) => void;
-  unlike: (product: Product) => void;
-  toggleLike: (product: Product) => void;
+  like: (product: ProductExt) => void;
+  unlike: (product: ProductExt) => void;
+  toggleLike: (product: ProductExt) => void;
   areLikedProductsLoading: boolean;
 };
 
@@ -38,23 +38,26 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   const { data: likedProducts = [], isLoading: areLikedProductsLoading } =
     useQuery({
       queryKey: ["likedProductDetails"],
-      queryFn: fetchLikedProducts,
+      queryFn: async () => {
+        const products = await fetchLikedProducts();
+        return products as unknown as ProductExt[];
+      },
       enabled: !!session?.user,
       staleTime: 1000 * 60 * 5,
     });
 
   const likeMutation = useMutation({
-    mutationFn: (product: Product) => likeProduct(product.id),
-    onMutate: async (product: Product) => {
+    mutationFn: (product: ProductExt) => likeProduct(product.id),
+    onMutate: async (product: ProductExt) => {
       await queryClient.cancelQueries({ queryKey: ["likedProducts"] });
       await queryClient.cancelQueries({ queryKey: ["likedProductDetails"] });
 
       const prevLikedIds =
         queryClient.getQueryData<string[]>(["likedProducts"]) || [];
       const prevLikedProducts =
-        queryClient.getQueryData<Product[]>(["likedProductDetails"]) || [];
+        queryClient.getQueryData<ProductExt[]>(["likedProductDetails"]) || [];
 
-      queryClient.setQueryData<Product[]>(
+      queryClient.setQueryData<ProductExt[]>(
         ["likedProductDetails"],
         [...prevLikedProducts, product]
       );
@@ -74,28 +77,28 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
         );
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
-      queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
+      await queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
     },
   });
 
   const unlikeMutation = useMutation({
-    mutationFn: (product: Product) => unlikeProduct(product.id),
-    onMutate: async (product: Product) => {
+    mutationFn: (product: ProductExt) => unlikeProduct(product.id),
+    onMutate: async (product: ProductExt) => {
       await queryClient.cancelQueries({ queryKey: ["likedProducts"] });
       await queryClient.cancelQueries({ queryKey: ["likedProductDetails"] });
 
       const prevLikedIds =
         queryClient.getQueryData<string[]>(["likedProducts"]) || [];
       const prevLikedProducts =
-        queryClient.getQueryData<Product[]>(["likedProductDetails"]) || [];
+        queryClient.getQueryData<ProductExt[]>(["likedProductDetails"]) || [];
 
       queryClient.setQueryData<string[]>(
         ["likedProducts"],
         prevLikedIds.filter((id) => id !== product.id)
       );
-      queryClient.setQueryData<Product[]>(
+      queryClient.setQueryData<ProductExt[]>(
         ["likedProductDetails"],
         prevLikedProducts.filter((p) => p.id !== product.id)
       );
@@ -111,9 +114,9 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
         );
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
-      queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["likedProducts"] });
+      await queryClient.invalidateQueries({ queryKey: ["likedProductDetails"] });
     },
   });
 
@@ -124,7 +127,7 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   );
 
   const like = useCallback(
-    (product: Product) => {
+    (product: ProductExt) => {
       if (!session?.user) {
         toast(toastPresets.mustBeLoggedInForLike);
         return;
@@ -135,7 +138,7 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   );
 
   const unlike = useCallback(
-    (product: Product) => {
+    (product: ProductExt) => {
       if (!session?.user) {
         toast(toastPresets.mustBeLoggedInForLike);
         return;
@@ -146,7 +149,7 @@ export const UserAccountProvider = ({ children }: PropsWithChildren) => {
   );
 
   const toggleLike = useCallback(
-    (product: Product) => {
+    (product: ProductExt) => {
       if (isLiked(product.id)) {
         unlike(product);
       } else {

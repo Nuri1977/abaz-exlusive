@@ -172,6 +172,19 @@ export function CartSheet({
                   </div>
                 </div>
                 <div className="text-right">
+                  {item.compareAtPrice && Number(item.compareAtPrice) > Number(item.price) && (
+                    <p className="text-[10px] text-muted-foreground line-through">
+                      {currencySymbol}{" "}
+                      {convertPrice(
+                        Number(item.compareAtPrice) * item.quantity,
+                        "MKD",
+                        currency
+                      ).toLocaleString("de-DE", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}
+                    </p>
+                  )}
                   <p className="text-sm font-semibold">
                     {currencySymbol}{" "}
                     {convertPrice(

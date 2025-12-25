@@ -33,8 +33,7 @@ type CartItem = {
   image: string;
   title: string;
   variantId?: string;
-  color?: string;
-  size?: string;
+  variantOptions?: { name: string; value: string }[];
 };
 ```
 
@@ -112,13 +111,14 @@ export async function generateMetadata({
 - Stock availability indicators
 - Related product recommendations
 
-**Product Variants:**
+**Product Variants (Dynamic Variations):**
 
-- Size and color options
-- SKU management per variant
-- Individual pricing per variant
-- Stock tracking per variant
-- Variant-specific images
+- Multi-dimensional selection (e.g., Color + Size + Material)
+- Global Option Templates for standardized attribute sets (e.g., "Men's Shoe Sizes")
+- SKU-level management per variant combination
+- Individual pricing overrides per variant
+- Real-time stock tracking per SKU
+- Variant-specific image switching in product gallery
 
 **Product Search & Filtering:**
 
@@ -134,12 +134,12 @@ export async function generateMetadata({
 
 **Product Creation:**
 
-- Multi-step product form
-- Image upload and gallery management
-- Category assignment
-- Variant generation from options
-- SEO-friendly slug generation
-- Feature tagging system
+- Multi-step product form with variant generator
+- Image upload and gallery management (Global + Variant-specific)
+- Category and Collection assignment
+- **Option Templates Manager**: Reusable templates for names and values
+- Automatic Cartesian Product generation for all variant combinations
+- SEO-friendly slug generation with duplicate prevention
 
 **Inventory Management:**
 

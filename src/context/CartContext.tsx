@@ -29,6 +29,7 @@ import {
 export type CartItem = {
   quantity: number;
   price: number;
+  compareAtPrice?: number | null;
   productId: string;
   image: string;
   title: string;
@@ -56,12 +57,14 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 type ServerCartItem = {
   quantity: number;
   price: number | string;
+  compareAtPrice?: number | string | null;
   productId: string | null;
   variantId: string | null;
   Product?: {
     id: string;
     name: string;
     images?: { url: string; key: string }[];
+    compareAtPrice?: number | string | null;
   } | null;
   variantOptions?: { name: string; value: string }[];
   title?: string;
@@ -294,6 +297,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return {
           quantity: Number(item.quantity) || 1,
           price: Number(item.price) || 0,
+          compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : (item.Product?.compareAtPrice ? Number(item.Product.compareAtPrice) : undefined),
           productId: item.productId ?? item.Product?.id ?? "",
           image:
             item.image ??

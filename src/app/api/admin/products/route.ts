@@ -17,6 +17,7 @@ export async function GET() {
             id: true,
             sku: true,
             price: true,
+            compareAtPrice: true,
             stock: true,
             options: {
               select: {
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
       name: string;
       description: string;
       price: string;
+      compareAtPrice?: string;
       brand: string;
       gender: string;
       style: string;
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
       variants: {
         sku: string;
         price: string;
+        compareAtPrice?: string;
         stock: string;
         images: Record<string, unknown>[];
         options: { optionName: string; value: string }[];
@@ -78,6 +81,7 @@ export async function POST(req: Request) {
       name,
       description,
       price,
+      compareAtPrice,
       brand,
       gender,
       style,
@@ -124,6 +128,7 @@ export async function POST(req: Request) {
         slug,
         description,
         price: parseFloat(price),
+        compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
         brand,
         gender,
         style,
@@ -223,6 +228,9 @@ export async function POST(req: Request) {
               },
               sku: uniqueSku,
               price: variant.price ? parseFloat(variant.price) : null,
+              compareAtPrice: variant.compareAtPrice
+                ? parseFloat(variant.compareAtPrice)
+                : null,
               stock: parseInt(variant.stock),
               images: (variant.images ?? []) as Prisma.InputJsonValue[],
               options: {

@@ -110,11 +110,15 @@ export function ProductTable() {
       return data?.map((product: any) => ({
         ...product,
         price: product?.price ? parseFloat(product?.price?.toString()) : null,
+        compareAtPrice: product?.compareAtPrice ? parseFloat(product?.compareAtPrice?.toString()) : null,
         variants:
           product?.variants?.map((variant: any) => ({
             ...variant,
             price: variant?.price
               ? parseFloat(variant?.price?.toString())
+              : null,
+            compareAtPrice: variant?.compareAtPrice
+              ? parseFloat(variant?.compareAtPrice?.toString())
               : null,
           })) || [],
       }));
@@ -1024,8 +1028,15 @@ function ProductCard({
               mobile && "mt-2"
             )}
           >
-            <div className="font-semibold">
-              {formatPrice(product?.price ? Number(product?.price) : 0)}
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-semibold text-primary">
+                {formatPrice(product?.price ? Number(product?.price) : 0)}
+              </p>
+              {product?.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) && (
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatPrice(Number(product.compareAtPrice))}
+                </p>
+              )}
             </div>
 
             {mobile && (
