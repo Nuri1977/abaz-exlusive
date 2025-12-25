@@ -73,7 +73,7 @@ export default function ContactMethods({
 
   if (variant === "floating") {
     return (
-      <div className={cn("fixed bottom-6 right-6 z-50 flex flex-col gap-3", className)}>
+      <div className={cn("fixed bottom-4 right-4 z-50 flex flex-col gap-3 md:bottom-6 md:right-6", className)}>
         {methods.map((method) => (
           <a
             key={method.name}
@@ -81,7 +81,7 @@ export default function ContactMethods({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex size-12 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110",
+              "flex size-10 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 md:size-12",
               method.color
             )}
             title={`Contact us on ${method.name}`}
