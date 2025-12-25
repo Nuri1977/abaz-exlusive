@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Eye, Pencil } from "lucide-react";
 
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
-import type { ProductWithVariants } from "./ProductTable";
+import { type ProductWithVariants } from "@/types/product";
 
 interface ProductPreviewDialogProps {
   product: ProductWithVariants;
@@ -130,9 +130,16 @@ export function ProductPreviewDialog({
               <div className="space-y-4">
                 <div>
                   <h3 className="text-2xl font-bold">{product?.name}</h3>
-                  <p className="text-lg font-semibold text-primary">
-                    {formatPrice(product?.price ? Number(product?.price) : 0)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-semibold text-primary">
+                      {formatPrice(product?.price ? Number(product?.price) : 0)}
+                    </p>
+                    {product?.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) && (
+                      <p className="text-sm text-muted-foreground line-through">
+                        {formatPrice(Number(product.compareAtPrice))}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -242,10 +249,17 @@ export function ProductPreviewDialog({
                           </div>
 
                           <div className="font-medium">
-                            {formatPrice(
-                              variant?.price
-                                ? Number(variant?.price)
-                                : Number(product?.price)
+                            <span className="font-semibold text-primary">
+                              {formatPrice(
+                                variant?.price
+                                  ? Number(variant?.price)
+                                  : Number(product?.price)
+                              )}
+                            </span>
+                            {variant?.compareAtPrice && Number(variant.compareAtPrice) > Number(variant?.price || product?.price) && (
+                              <span className="ml-2 text-xs text-muted-foreground line-through">
+                                {formatPrice(Number(variant.compareAtPrice))}
+                              </span>
                             )}
                           </div>
                         </div>

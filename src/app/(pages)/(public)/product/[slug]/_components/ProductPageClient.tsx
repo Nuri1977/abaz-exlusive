@@ -7,8 +7,6 @@ import { useUserAccountContext } from "@/context/UserAccountContext";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Heart } from "lucide-react";
-import type { Product } from "@prisma/client";
-
 import type { ProductWithOptionsAndVariants } from "@/types/product";
 import { queryKeys } from "@/config/tanstackConfig";
 import api from "@/lib/axios";
@@ -78,7 +76,9 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   }, [product, hasVariants, selectedOptions]);
 
   const effectivePrice = matchedVariant?.price ?? product?.price ?? 0;
+  const effectiveCompareAtPrice = matchedVariant?.compareAtPrice ?? product?.compareAtPrice ?? null;
   const effectiveStock = matchedVariant?.stock ?? (hasVariants ? 0 : 99);
+  const hasDiscount = effectiveCompareAtPrice && Number(effectiveCompareAtPrice) > Number(effectivePrice);
 
   // Early returns MUST be after all hooks
   if (isLoading) return <ProductPageSkeleton />;
@@ -105,6 +105,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
       variantId: matchedVariant?.id,
       quantity,
       price: +effectivePrice,
+      compareAtPrice: effectiveCompareAtPrice ? +effectiveCompareAtPrice : null,
       productId: product.id,
       title: product.name,
       image: matchedVariant?.images?.[0]?.url ?? product.images?.[0]?.url ?? "/placeholder.jpg",
@@ -130,7 +131,19 @@ export default function ProductPageClient({ slug }: { slug: string }) {
         <div className="space-y-6">
           <h1 className="text-4xl font-bold">{product.name}</h1>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-3">
+            {hasDiscount && (
+              <span className="text-xl text-muted-foreground line-through">
+                {currencySymbol}{" "}
+                {convertPrice(Number(effectiveCompareAtPrice), "MKD", currency).toLocaleString(
+                  "de-DE",
+                  {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }
+                )}
+              </span>
+            )}
             <span className="text-3xl font-semibold">
               {currencySymbol}{" "}
               {convertPrice(Number(effectivePrice), "MKD", currency).toLocaleString(
@@ -141,6 +154,11 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                 }
               )}
             </span>
+            {hasDiscount && (
+              <span className="rounded-full bg-destructive px-3 py-1 text-sm font-semibold text-destructive-foreground">
+                SALE
+              </span>
+            )}
           </div>
 
           <div className="prose max-w-none">
@@ -224,7 +242,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                 toggleLike({
                   ...product,
                   images: product.images ?? [],
-                } as unknown as Product)
+                })
               }
               className={`transition-colors ${liked ? "text-red-500" : "text-black hover:text-red-500"}`}
             >

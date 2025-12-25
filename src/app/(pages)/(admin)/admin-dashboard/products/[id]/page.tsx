@@ -45,6 +45,7 @@ const serializeProduct = (
   return {
     ...product,
     price: product.price ? parseFloat(product.price.toString()) : null,
+    compareAtPrice: product.compareAtPrice ? parseFloat(product.compareAtPrice.toString()) : null,
     images: (product.images as unknown as FileUploadThing[]) || [],
     variants:
       product.variants?.map((variant: VariantWithDetails) => {
@@ -55,6 +56,7 @@ const serializeProduct = (
         return {
           ...variant,
           price: variant.price ? parseFloat(variant.price.toString()) : null,
+          compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.toString()) : null,
           images: (variantImages as unknown as FileUploadThing[]) || [],
           options: variant.options.map((opt) => ({
             optionValue: {

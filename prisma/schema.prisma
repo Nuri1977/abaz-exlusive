@@ -90,21 +90,22 @@ model Category {
 }
 
 model Product {
-  id           String           @id @default(uuid())
-  name         String
-  slug         String           @unique
-  description  String?
-  price        Decimal          @db.Decimal(10, 2)
-  categoryId   String
-  brand        String?
-  material     String?
-  gender       String?
-  style        String?
-  features     String[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  images       Json[]
-  collectionId String?
+  id             String           @id @default(uuid())
+  name           String
+  slug           String           @unique
+  description    String?
+  price          Decimal          @db.Decimal(10, 2)
+  compareAtPrice Decimal?         @db.Decimal(10, 2)
+  categoryId     String
+  brand          String?
+  material       String?
+  gender         String?
+  style          String?
+  features       String[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  images         Json[]
+  collectionId   String?
   bestSellers  BestSellers[]
   cartItems    CartItem[]
   likes        Like[]
@@ -144,14 +145,15 @@ model ProductOptionValue {
 }
 
 model ProductVariant {
-  id         String                 @id @default(uuid())
-  productId  String
-  sku        String                 @unique
-  price      Decimal?               @db.Decimal(10, 2)
-  stock      Int                    @default(0)
-  images     Json[]
-  createdAt  DateTime               @default(now())
-  updatedAt  DateTime               @updatedAt
+  id             String                 @id @default(uuid())
+  productId      String
+  sku            String                 @unique
+  price          Decimal?               @db.Decimal(10, 2)
+  compareAtPrice Decimal?               @db.Decimal(10, 2)
+  stock          Int                    @default(0)
+  images         Json[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   cartItems  CartItem[]
   inventory  InventoryItem?
   orderItems OrderItem[]

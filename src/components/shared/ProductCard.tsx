@@ -9,6 +9,7 @@ import { type Category } from "@prisma/client";
 import { Heart, ShoppingCart } from "lucide-react";
 
 import { type ProductExt } from "@/types/product";
+import type { FileUploadThing } from "@/types/UploadThing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -29,10 +30,10 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const hasVariants = product?.variants && product.variants.length > 0;
 
-  const getImageUrl = (image: any) => {
+  const getImageUrl = (image: FileUploadThing | string | null | undefined): string => {
     if (!image) return "/placeholder.png";
     if (typeof image === "string") return image;
-    return image?.url || image?.appUrl || "/placeholder.png";
+    return image.url || image.appUrl || "/placeholder.png";
   };
 
   const handleAddToCart = () => {
@@ -46,6 +47,7 @@ export function ProductCard({ product }: ProductCardProps) {
     addItem({
       quantity: 1,
       price: Number(product?.price),
+      compareAtPrice: product?.compareAtPrice ? Number(product.compareAtPrice) : null,
       productId: product?.id,
       title: product?.name,
       image: getImageUrl(product?.images?.[0]),
@@ -62,12 +64,12 @@ export function ProductCard({ product }: ProductCardProps) {
         className="absolute inset-0 z-10"
       />
 
-      <div className="relative aspect-[3/4]">
+      <div className="relative aspect-[3/4] overflow-hidden">
         <Image
           src={getImageUrl(product?.images?.[0])}
           alt={product?.name || ""}
           fill
-          className="object-cover transition-transform group-hover:scale-105"
+          className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
         {product?.features?.length > 0 && (
@@ -86,6 +88,14 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="absolute left-2 top-2">
             <span className="rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
               {product?.variants?.length ?? 0} options
+            </span>
+          </div>
+        )}
+        {/* Sale Badge */}
+        {product?.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) && (
+          <div className="absolute bottom-3 left-3">
+            <span className="flex items-center justify-center bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-black shadow-md transition-transform group-hover:scale-110">
+              Sale
             </span>
           </div>
         )}
@@ -108,16 +118,30 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardContent>
 
       <CardFooter className="flex w-full items-center justify-between px-3 pb-3 pt-0">
-        <p className="font-semibold">
-          {currencySymbol}{" "}
-          {convertPrice(Number(product?.price), "MKD", currency).toLocaleString(
-            "de-DE",
-            {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }
+        <div className="flex flex-col gap-0.5">
+          {product?.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) && (
+            <p className="text-xs text-muted-foreground line-through">
+              {currencySymbol}{" "}
+              {convertPrice(Number(product.compareAtPrice), "MKD", currency).toLocaleString(
+                "de-DE",
+                {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }
+              )}
+            </p>
           )}
-        </p>
+          <p className="font-semibold">
+            {currencySymbol}{" "}
+            {convertPrice(Number(product?.price), "MKD", currency).toLocaleString(
+              "de-DE",
+              {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }
+            )}
+          </p>
+        </div>
 
         <div className="relative z-20 flex items-center gap-3">
           <Button

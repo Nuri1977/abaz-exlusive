@@ -66,6 +66,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
   const initialVariants = (product?.variants ?? []).map((v) => ({
     sku: v.sku,
     price: v.price?.toString() || "",
+    compareAtPrice: v.compareAtPrice?.toString() || "",
     stock: v.stock.toString(),
     options: v.options.map((opt) => ({
       optionName: opt.optionValue.option?.name || (product?.options?.find(o => o.id === opt.optionValue.optionId)?.name ?? ""),
@@ -116,6 +117,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
       name: product?.name || "",
       description: product?.description || "",
       price: product?.price?.toString() || "",
+      compareAtPrice: product?.compareAtPrice?.toString() || "",
       brand: product?.brand || "",
       gender: product?.gender || "",
       style: product?.style || "",
@@ -358,11 +360,44 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 />
                 <FormField
                   control={form.control}
+                  name="brand"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brand</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {brandOptions.filter(o => o.value !== "all").map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price</FormLabel>
+                      <FormLabel>Price (MKD)</FormLabel>
                       <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="compareAtPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Compare at Price (Optional)</FormLabel>
+                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                      <p className="text-xs text-muted-foreground">Original price for showing discounts</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -381,25 +416,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="brand"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Brand</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {brandOptions.filter(o => o.value !== "all").map(o => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="gender"
@@ -563,7 +580,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 <div className="space-y-4">
                   {form.watch("variants").map((variant, idx) => (
                     <div key={idx} className="space-y-4 rounded-lg border p-4">
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                         <FormField
                           control={form.control}
                           name={`variants.${idx}.sku`}
@@ -576,6 +593,13 @@ export function EditProductForm({ product }: EditProductFormProps) {
                           name={`variants.${idx}.price`}
                           render={({ field }) => (
                             <FormItem><FormLabel>Price (Optional)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`variants.${idx}.compareAtPrice`}
+                          render={({ field }) => (
+                            <FormItem><FormLabel>Compare Price</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                           )}
                         />
                         <FormField

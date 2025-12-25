@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
             name: true,
             slug: true,
             price: true,
+            compareAtPrice: true,
             category: {
               select: {
                 name: true,
@@ -216,6 +217,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
             select: {
               id: true,
               price: true,
+              compareAtPrice: true,
               stock: true,
             },
           },
@@ -240,9 +242,11 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   const serializedProducts = collection.products.map((product) => ({
     ...product,
     price: product.price ? parseFloat(product.price.toString()) : 0,
+    compareAtPrice: product.compareAtPrice ? parseFloat(product.compareAtPrice.toString()) : null,
     variants: product.variants?.map((variant) => ({
       ...variant,
       price: variant.price ? parseFloat(variant.price.toString()) : null,
+      compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.toString()) : null,
     })) || [],
     images: product.images, // Keep original images
   }));

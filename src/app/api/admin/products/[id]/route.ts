@@ -71,6 +71,7 @@ export async function PATCH(
       name: string;
       description: string;
       price: string;
+      compareAtPrice?: string;
       brand: string;
       material?: string;
       gender: string;
@@ -83,6 +84,7 @@ export async function PATCH(
       variants?: {
         sku: string;
         price: string;
+        compareAtPrice?: string;
         stock: string | number;
         options: { optionName: string; value: string }[];
         images?: Prisma.InputJsonValue[];
@@ -93,6 +95,7 @@ export async function PATCH(
       name,
       description,
       price,
+      compareAtPrice,
       brand,
       material,
       gender,
@@ -151,6 +154,7 @@ export async function PATCH(
             slug,
             description,
             price: price ? parseFloat(price) : undefined,
+            compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
             brand,
             material,
             gender,
@@ -222,6 +226,7 @@ export async function PATCH(
               const variant = variants[i] as {
                 sku: string;
                 price: string;
+                compareAtPrice?: string;
                 stock: string | number;
                 options: { optionName: string; value: string }[];
                 images?: Prisma.InputJsonValue[];
@@ -258,6 +263,9 @@ export async function PATCH(
                   sku: uniqueSku,
                   price: variant.price
                     ? parseFloat(variant.price.toString())
+                    : null,
+                  compareAtPrice: variant.compareAtPrice
+                    ? parseFloat(variant.compareAtPrice.toString())
                     : null,
                   stock: parseInt(variant.stock.toString()),
                   images: variant.images ?? [],

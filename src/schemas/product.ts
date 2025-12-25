@@ -17,6 +17,7 @@ export const productOptionSchema = z.object({
 export const productVariantSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
   price: priceSchema.optional(),
+  compareAtPrice: priceSchema.optional(),
   stock: z.string().min(1, "Stock is required"),
   options: z.array(productOptionValueSchema),
   images: z.array(imageSchema).optional().default([]),
@@ -27,6 +28,7 @@ export const baseProductFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
   price: priceSchema,
+  compareAtPrice: priceSchema.optional(),
   brand: z.string().min(1, "Brand is required"),
   material: z.string().optional(),
   gender: z.string().min(1, "Gender is required"),
