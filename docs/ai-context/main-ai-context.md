@@ -27,8 +27,9 @@ This repository uses a modular documentation approach with comprehensive helper 
 - Complete authentication system with Better Auth
 - Shopping cart and checkout functionality with guest support
 - **Integrated Payment System** supporting Card Payments (Polar.sh) and Cash on Delivery (COD)
-- Product management with variants and inventory tracking
-- SEO-friendly slug-based product URLs (`/product/[slug]`) for optimal search engine visibility
+- **Advanced Dynamic Variations**: Support for n-way product variants (e.g., Color, Size, Material) with SKU-level tracking
+- **Global Option Templates**: Reusable templates for standard size runs and attribute sets to ensure data consistency
+- **SEO-friendly slug-based product URLs** (`/product/[slug]`) for optimal search engine visibility
 - Admin dashboard with role-based access control
 - File uploads and gallery management with UploadThing v7
 - Email communication system with React Email and Nodemailer
@@ -623,9 +624,10 @@ The project uses UploadThing v7 for file uploads and management:
 
 ### Product Management
 
-- **Product Variants**: Support size and color variants with individual pricing and stock
-- **Image Galleries**: Multiple product images with optimized loading
-- **Inventory Tracking**: Real-time stock management and low stock alerts
+- **Advanced Dynamic Variants**: Fully dynamic attribute system supporting infinite variations (Color, Size, Material, etc.)
+- **Global Option Templates**: Reusable templates for standardizing variants across the catalog
+- **Image Galleries**: Multiple product images with optimized loading and variant-specific image support
+- **Inventory Tracking**: Real-time SKU-level stock management and low stock alerts
 - **SEO Optimization**: SEO-friendly slug-based URLs (`/product/[slug]`) and comprehensive meta tags for product pages
 - **Search and Filtering**: Advanced product search and category filtering
 - **Slug-Based Routing**: All product URLs use descriptive slugs instead of UUIDs for better SEO and user experience
