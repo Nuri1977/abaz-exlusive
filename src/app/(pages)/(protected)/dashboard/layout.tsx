@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 
 import UserSidebar from "./_components/UserSidebar";
@@ -16,7 +16,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <UserSidebar />
-      <main className="flex-1 overflow-y-auto p-6 pt-4 md:pt-6">
+      <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-10">
         {children}
       </main>
     </div>

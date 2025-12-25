@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartContext } from "@/context/CartContext";
 import { useQuery } from "@tanstack/react-query";
+import { Filter } from "lucide-react";
 
 import {
   brandOptions,
@@ -11,6 +12,7 @@ import {
   materialOptions,
   styleOptions,
 } from "@/constants/options";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DualRangeSlider } from "@/components/ui/dual-range-slider";
@@ -22,6 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const featureOptions = [
   "Waterproof",
@@ -33,20 +44,26 @@ const featureOptions = [
   "Memory foam",
 ];
 
+interface CollectionOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export function ProductFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currency, convertPrice, currencySymbol } = useCartContext();
 
   // Fetch collections for filtering
-  const { data: collections = [] } = useQuery({
+  const { data: collections = [] } = useQuery<CollectionOption[]>({
     queryKey: ["collections"],
     queryFn: async () => {
       const response = await fetch("/api/collections");
       if (!response.ok) {
         throw new Error("Failed to fetch collections");
       }
-      return response.json();
+      return response.json() as Promise<CollectionOption[]>;
     },
   });
 
@@ -124,8 +141,8 @@ export function ProductFilters() {
     router.push(`/products?${params.toString()}`);
   };
 
-  return (
-    <Card className="space-y-6 p-4">
+  const FilterContent = () => (
+    <div className="space-y-6">
       <div className="space-y-4">
         <h3 className="font-semibold">Price Range</h3>
         <div className="space-y-4">
@@ -136,7 +153,7 @@ export function ProductFilters() {
             value={priceRange}
             onValueChange={handlePriceChange}
             onValueCommit={handlePriceChangeEnd}
-            className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:border-2 [&_[role=slider]]:bg-white"
+            className="[&_[role=slider]]:size-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:border-2 [&_[role=slider]]:bg-white"
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>
@@ -198,7 +215,7 @@ export function ProductFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Collections</SelectItem>
-            {collections.map((collection: any) => (
+            {collections.map((collection: CollectionOption) => (
               <SelectItem key={collection.id} value={collection.slug}>
                 {collection.name}
               </SelectItem>
@@ -264,6 +281,45 @@ export function ProductFilters() {
           ))}
         </div>
       </div>
-    </Card>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Filter Trigger */}
+      <div className="block md:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <Filter className="mr-2 size-4" />
+              Show Filters
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] overflow-y-auto sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>
+                Refine your search with the following options.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-8">
+              <FilterContent />
+            </div>
+            <div className="mt-6 flex justify-end">
+              <SheetClose asChild>
+                <Button className="w-full">
+                  Apply Filters
+                </Button>
+              </SheetClose>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Filters */}
+      <Card className="hidden space-y-6 p-4 md:block">
+        <FilterContent />
+      </Card>
+    </>
   );
 }

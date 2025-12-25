@@ -98,15 +98,27 @@ const CheckoutPageClient = () => {
     }
 
     setFormErrors(errors);
-    return Object.values(errors).every((error) => error === "");
+    return errors;
   };
 
-
-
-
-
   const handleSubmit = async (paymentMethod: PaymentMethodType) => {
-    if (!validateForm()) {
+    const errors = validateForm();
+    const hasErrors = Object.values(errors).some((error) => error !== "");
+
+    if (hasErrors) {
+
+      // Find the first field with an error and focus it
+      const firstErrorField = Object.keys(errors).find(
+        (key) => errors[key as keyof typeof errors]
+      );
+
+      if (firstErrorField) {
+        const element = document.getElementById(firstErrorField);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.focus();
+        }
+      }
       return;
     }
 
@@ -197,7 +209,7 @@ const CheckoutPageClient = () => {
   // Show loading state while cart is being fetched
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-3xl py-10">
+      <div className="container mx-auto max-w-3xl pb-32 pt-10">
         <div className="mb-6 h-9 w-32 animate-pulse rounded bg-muted" />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="space-y-6">
@@ -278,7 +290,7 @@ const CheckoutPageClient = () => {
 
   if (!items?.length) {
     return (
-      <div className="container mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center py-20">
+      <div className="container mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center pb-32 pt-20">
         <Image
           src="/logo/logo.jpg"
           alt="Abaz Exclusive Logo"
@@ -301,7 +313,7 @@ const CheckoutPageClient = () => {
   }
 
   return (
-    <div className="container mx-auto max-w-3xl py-10">
+    <div className="container mx-auto max-w-3xl px-4 pb-32 pt-4 md:pt-10">
       <h1 className="mb-6 text-3xl font-bold">Checkout</h1>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="space-y-6">
