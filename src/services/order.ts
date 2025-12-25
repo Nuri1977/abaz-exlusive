@@ -1,11 +1,7 @@
+import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
+
 import { type CheckoutCartItem, type CreateOrderData } from "@/types/polar";
 import { prisma } from "@/lib/prisma";
-
-import {
-  OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
-} from "@prisma/client";
 
 export class OrderService {
   /**
@@ -33,10 +29,8 @@ export class OrderService {
               : PaymentStatus.PENDING,
           items: {
             create: orderData.items.map((item) => ({
-              // Don't reference actual Product/Variant records - just store the IDs as strings
-              // The actual product data will be in metadata
-              productId: null, // We'll store product info in metadata instead
-              variantId: null, // We'll store variant info in metadata instead
+              productId: item.productId,
+              variantId: item.variantId || null,
               quantity: item.quantity,
               price: item.price,
             })),
@@ -46,7 +40,19 @@ export class OrderService {
           items: {
             include: {
               Product: true,
-              variant: true,
+              variant: {
+                include: {
+                  options: {
+                    include: {
+                      optionValue: {
+                        include: {
+                          option: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           payments: true,
@@ -107,7 +113,19 @@ export class OrderService {
           items: {
             include: {
               Product: true,
-              variant: true,
+              variant: {
+                include: {
+                  options: {
+                    include: {
+                      optionValue: {
+                        include: {
+                          option: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           user: {
@@ -144,7 +162,19 @@ export class OrderService {
               items: {
                 include: {
                   Product: true,
-                  variant: true,
+                  variant: {
+                    include: {
+                      options: {
+                        include: {
+                          optionValue: {
+                            include: {
+                              option: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
               },
               user: {
@@ -183,7 +213,19 @@ export class OrderService {
           items: {
             include: {
               Product: true,
-              variant: true,
+              variant: {
+                include: {
+                  options: {
+                    include: {
+                      optionValue: {
+                        include: {
+                          option: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           payments: {
@@ -216,7 +258,19 @@ export class OrderService {
           items: {
             include: {
               Product: true,
-              variant: true,
+              variant: {
+                include: {
+                  options: {
+                    include: {
+                      optionValue: {
+                        include: {
+                          option: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           user: {

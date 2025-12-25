@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -26,7 +27,11 @@ export async function GET(
           include: {
             options: {
               include: {
-                optionValue: true,
+                optionValue: {
+                  include: {
+                    option: true,
+                  },
+                },
               },
             },
           },
@@ -62,7 +67,28 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name: string;
+      description: string;
+      price: string;
+      brand: string;
+      material?: string;
+      gender: string;
+      style: string;
+      categoryId: string;
+      collectionId?: string;
+      images: Prisma.InputJsonValue[];
+      features?: string[];
+      options?: { name: string; values: string[] }[];
+      variants?: {
+        sku: string;
+        price: string;
+        stock: string | number;
+        options: { optionName: string; value: string }[];
+        images?: Prisma.InputJsonValue[];
+      }[];
+    };
+
     const {
       name,
       description,
@@ -75,11 +101,21 @@ export async function PATCH(
       collectionId,
       images,
       features,
+      options,
+      variants,
     } = body;
 
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: {
+        options: {
+          include: {
+            values: true,
+          },
+        },
+        variants: true,
+      },
     });
 
     if (!existingProduct) {
@@ -88,66 +124,184 @@ export async function PATCH(
 
     // Generate new slug if name changed
     let slug = existingProduct.slug;
-    if (name !== existingProduct.name) {
+    if (name && name !== existingProduct.name) {
       const baseSlug = name.toLowerCase().replace(/\s+/g, "-");
       slug = baseSlug;
-      
-      // Check if slug exists and append timestamp if it does
-      while (await prisma.product.findFirst({ 
-        where: { 
-          slug,
-          NOT: { id }
-        } 
-      })) {
+
+      while (
+        await prisma.product.findFirst({
+          where: {
+            slug,
+            NOT: { id },
+          },
+        })
+      ) {
         slug = `${baseSlug}-${Date.now()}`;
       }
     }
 
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        name,
-        slug,
-        description,
-        price: parseFloat(price),
-        brand,
-        material,
-        gender,
-        style,
-        images,
-        features,
-        category: {
-          connect: {
-            id: categoryId,
+    // Update product in a transaction
+    const updatedProduct = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // 1. Update basic info
+        await tx.product.update({
+          where: { id },
+          data: {
+            name,
+            slug,
+            description,
+            price: price ? parseFloat(price) : undefined,
+            brand,
+            material,
+            gender,
+            style,
+            images: images,
+            features,
+            category: categoryId
+              ? {
+                  connect: { id: categoryId },
+                }
+              : undefined,
+            collection:
+              collectionId && collectionId !== "none"
+                ? {
+                    connect: { id: collectionId },
+                  }
+                : {
+                    disconnect: true,
+                  },
           },
-        },
-        collection: collectionId && collectionId !== "none" ? {
-          connect: {
-            id: collectionId,
-          },
-        } : {
-          disconnect: true,
-        },
-      },
-      include: {
-        category: true,
-        collection: true,
-        options: {
+        });
+
+        // 2. If options are provided, sync them
+        if (options) {
+          // Delete existing options (cascades to values and variant options)
+          await tx.productOption.deleteMany({
+            where: { productId: id },
+          });
+
+          // Delete existing variants (cascades to inventory items)
+          await tx.productVariant.deleteMany({
+            where: { productId: id },
+          });
+
+          // Create new options
+          await tx.product.update({
+            where: { id },
+            data: {
+              options: {
+                create: options.map((option) => ({
+                  name: option.name,
+                  values: {
+                    create: option.values.map((value: string) => ({
+                      value,
+                    })),
+                  },
+                })),
+              },
+            },
+          });
+          // Fetch created options to link variants
+          const productWithOptions = await tx.product.findUnique({
+            where: { id },
+            include: {
+              options: {
+                include: {
+                  values: true,
+                },
+              },
+            },
+          });
+
+          if (!productWithOptions)
+            throw new Error("Failed to fetch product with options");
+
+          // Create new variants
+          if (variants && variants.length > 0) {
+            for (let i = 0; i < variants.length; i++) {
+              const variant = variants[i] as {
+                sku: string;
+                price: string;
+                stock: string | number;
+                options: { optionName: string; value: string }[];
+                images?: Prisma.InputJsonValue[];
+              };
+              const optionConnections = variant.options.map(
+                (opt: { optionName: string; value: string }) => {
+                  const productOption = productWithOptions.options.find(
+                    (o: { name: string }) => o.name === opt.optionName
+                  );
+                  const optionValue = productOption?.values.find(
+                    (v: { value: string }) => v.value === opt.value
+                  );
+
+                  if (!optionValue)
+                    throw new Error(
+                      `Option value not found: ${opt.optionName} - ${opt.value}`
+                    );
+
+                  return {
+                    optionValue: {
+                      connect: { id: optionValue.id },
+                    },
+                  };
+                }
+              );
+
+              const uniqueSku = `${variant.sku}-${id}-${i}`;
+
+              await tx.productVariant.create({
+                data: {
+                  product: {
+                    connect: { id },
+                  },
+                  sku: uniqueSku,
+                  price: variant.price
+                    ? parseFloat(variant.price.toString())
+                    : null,
+                  stock: parseInt(variant.stock.toString()),
+                  images: variant.images ?? [],
+                  options: {
+                    create: optionConnections,
+                  },
+                  inventory: {
+                    create: {
+                      sku: uniqueSku,
+                      quantity: parseInt(variant.stock.toString()),
+                    },
+                  },
+                } as Prisma.ProductVariantCreateInput,
+              });
+            }
+          }
+        }
+
+        return tx.product.findUnique({
+          where: { id },
           include: {
-            values: true,
-          },
-        },
-        variants: {
-          include: {
+            category: true,
+            collection: true,
             options: {
               include: {
-                optionValue: true,
+                values: true,
+              },
+            },
+            variants: {
+              include: {
+                options: {
+                  include: {
+                    optionValue: true,
+                  },
+                },
               },
             },
           },
-        },
+        });
       },
-    });
+      {
+        timeout: 20000,
+      }
+    );
 
     return NextResponse.json(updatedProduct);
   } catch (error) {
@@ -188,7 +342,9 @@ export async function DELETE(
 
     // Check if product has orders
     if (existingProduct.orderItems.length > 0) {
-      return new NextResponse("Cannot delete product with existing orders", { status: 400 });
+      return new NextResponse("Cannot delete product with existing orders", {
+        status: 400,
+      });
     }
 
     // Delete product (this will cascade delete variants and options)

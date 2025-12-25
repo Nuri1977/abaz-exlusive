@@ -48,20 +48,8 @@ export async function GET(
       return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            Product: true,
-            variant: true,
-          },
-        },
-        user: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-    });
+    const { OrderService } = await import("@/services/order");
+    const order = await OrderService.findOrderById(id);
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });

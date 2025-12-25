@@ -149,6 +149,7 @@ model ProductVariant {
   sku        String                 @unique
   price      Decimal?               @db.Decimal(10, 2)
   stock      Int                    @default(0)
+  images     Json[]
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
   cartItems  CartItem[]
@@ -218,13 +219,9 @@ model Order {
   userId          String?
   status          OrderStatus   @default(PENDING)
   total           Decimal       @db.Decimal(10, 2)
-  currency        String        @default("MKD")
   shippingAddress String?
   billingAddress  String?
   paymentStatus   PaymentStatus @default(PENDING)
-  paymentMethod   PaymentMethod @default(CARD)
-  deliveryDate    DateTime?
-  deliveryNotes   String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   phone           String?
@@ -232,6 +229,10 @@ model Order {
   customerName    String?
   deletedAt       DateTime?
   isDeleted       Boolean       @default(false)
+  currency        String        @default("MKD")
+  deliveryDate    DateTime?
+  deliveryNotes   String?
+  paymentMethod   PaymentMethod @default(CARD)
   user            User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
   payments        Payment[]
@@ -245,24 +246,24 @@ model Payment {
   amount               Decimal       @db.Decimal(10, 2)
   currency             String        @default("MKD")
   status               PaymentStatus @default(PENDING)
-  method               PaymentMethod @default(CARD)
-  provider             String        @default("polar") // polar, stripe, cash, etc.
-  providerPaymentId    String? // Polar payment ID
-  providerOrderId      String? // Polar order ID (if using orders)
-  checkoutId           String? // Polar checkout ID
-  paymentMethodDetails String? // card, bank_transfer, etc. (provider-specific)
+  provider             String        @default("polar")
+  providerPaymentId    String?
+  providerOrderId      String?
+  checkoutId           String?
   customerEmail        String?
   customerName         String?
-  deliveryAddress      String? // For cash payments
-  deliveryNotes        String? // Special delivery instructions
-  metadata             Json? // Provider-specific metadata
-  failureReason        String? // Reason for failed payments
+  metadata             Json?
+  failureReason        String?
   refundedAmount       Decimal?      @db.Decimal(10, 2)
   refundedAt           DateTime?
-  confirmedAt          DateTime? // When cash payment was confirmed
-  confirmedBy          String? // Admin who confirmed cash payment
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  confirmedAt          DateTime?
+  confirmedBy          String?
+  deliveryAddress      String?
+  deliveryNotes        String?
+  method               PaymentMethod @default(CARD)
+  paymentMethodDetails String?
   order                Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
@@ -416,12 +417,31 @@ model BestSellers {
 model PromoBanner {
   id           String      @id @default(cuid())
   collectionId String?     @unique
-  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   isActive     Boolean     @default(true)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  collection   Collection? @relation(fields: [collectionId], references: [id])
 
   @@map("promo_banners")
+}
+
+model ExchangeRate {
+  id             String   @id @default(uuid())
+  baseCurrency   String
+  targetCurrency String
+  rate           Decimal  @db.Decimal(10, 6)
+  source         String   @default("api")
+  fetchedAt      DateTime @default(now())
+  expiresAt      DateTime
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([baseCurrency, targetCurrency, isActive])
+  @@index([baseCurrency, targetCurrency])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@map("exchange_rate")
 }
 
 enum OrderStatus {
@@ -449,21 +469,23 @@ enum PaymentMethod {
   DIGITAL_WALLET
 }
 
-model ExchangeRate {
-  id             String   @id @default(uuid())
-  baseCurrency   String   // "MKD", "USD", "EUR"
-  targetCurrency String   // "MKD", "USD", "EUR"
-  rate           Decimal  @db.Decimal(10, 6) // Exchange rate with 6 decimal precision
-  source         String   @default("api") // "api", "manual", "fallback"
-  fetchedAt      DateTime @default(now())
-  expiresAt      DateTime // When this rate should be refreshed (24 hours)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model OptionTemplate {
+  id        String                @id @default(uuid())
+  name      String                @unique
+  values    OptionValueTemplate[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
 
-  @@unique([baseCurrency, targetCurrency, isActive])
-  @@index([baseCurrency, targetCurrency])
-  @@index([expiresAt])
-  @@index([isActive])
-  @@map("exchange_rate")
+  @@map("option_template")
+}
+
+model OptionValueTemplate {
+  id         String         @id @default(uuid())
+  value      String
+  templateId String
+  template   OptionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("option_value_template")
 }

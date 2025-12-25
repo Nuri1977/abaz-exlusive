@@ -139,8 +139,7 @@ const CheckoutPageClient = () => {
           quantity: item.quantity,
           price: item.price,
           title: item.title,
-          color: item.color || undefined,
-          size: item.size || undefined,
+          variantOptions: item.variantOptions || undefined,
         })),
       };
 
@@ -395,7 +394,7 @@ const CheckoutPageClient = () => {
 
         </div>
         <div className="space-y-6">
-          <CartSummary />
+          <CartSummary editable={true} />
 
           {/* Payment Action Buttons */}
           <div className="space-y-3">

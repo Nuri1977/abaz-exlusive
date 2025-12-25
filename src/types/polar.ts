@@ -84,8 +84,7 @@ export interface CheckoutCartItem {
   quantity: number;
   price: number;
   title: string;
-  color?: string;
-  size?: string;
+  variantOptions?: { name: string; value: string }[];
 }
 
 // Checkout session data

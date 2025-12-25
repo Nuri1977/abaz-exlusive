@@ -61,6 +61,16 @@ const CartPageClient = () => {
               </div>
               <div className="flex-1">
                 <p className="font-medium">{item.title}</p>
+                {/* Dynamic Variant Options */}
+                {item.variantOptions && item.variantOptions.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] uppercase tracking-wider text-muted-foreground/80">
+                    {item.variantOptions.map((opt, idx) => (
+                      <span key={idx} className="flex items-center gap-1.5">
+                        <span className="font-semibold text-muted-foreground">{opt.name}:</span> {opt.value}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-1 flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -102,13 +112,7 @@ const CartPageClient = () => {
               </p>
               <Button
                 variant="destructive"
-                onClick={() => {
-                  if (item.variantId) {
-                    removeItem(item.variantId);
-                  } else {
-                    removeItem(item.productId);
-                  }
-                }}
+                onClick={() => removeItem(item.productId, item.variantId)}
               >
                 Remove
               </Button>

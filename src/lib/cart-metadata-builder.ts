@@ -7,13 +7,11 @@ export interface InputCartItem {
   quantity: number;
   price: number;
   title: string;
-  color?: string;
-  size?: string;
   // Enhanced fields for better metadata
   productSlug?: string;
   imageUrl?: string;
   variantSku?: string;
-  variantOptions?: string;
+  variantOptions?: string | { name: string; value: string }[];
 }
 
 /**
@@ -59,7 +57,9 @@ export function buildCartMetadata(
 
   // Map items to metadata format
   const items: CartItemMetadata[] = cartItems.map((item) => {
-    const variantOptions = [item.size, item.color].filter(Boolean).join(", ");
+    const variantOptionsString = Array.isArray(item.variantOptions)
+      ? item.variantOptions.map((opt) => `${opt.name}: ${opt.value}`).join(", ")
+      : item.variantOptions;
 
     return {
       productId: item.productId,
@@ -67,7 +67,7 @@ export function buildCartMetadata(
       productSlug: item.productSlug || "", // Use enhanced field
       variantId: item.variantId,
       variantSku: item.variantSku || "", // Use enhanced field
-      variantOptions: item.variantOptions || variantOptions || undefined,
+      variantOptions: variantOptionsString || undefined,
       quantity: item.quantity,
       unitPrice: item.price,
       totalPrice: item.price * item.quantity,

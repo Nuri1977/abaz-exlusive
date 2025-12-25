@@ -18,8 +18,7 @@ export function convertCartItemsToCheckout(
     quantity: item.quantity,
     price: item.price,
     title: item.title,
-    color: item.color,
-    size: item.size,
+    variantOptions: item.variantOptions,
   }));
 }
 
@@ -241,8 +240,7 @@ export function generateOrderSummary(cartItems: CartItem[], currency: string) {
       quantity: item.quantity,
       price: item.price,
       total: item.price * item.quantity,
-      color: item.color,
-      size: item.size,
+      variantOptions: item.variantOptions,
     })),
   };
 }

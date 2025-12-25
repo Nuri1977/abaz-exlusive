@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { type CartItem } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { getSessionServer } from "@/helpers/getSessionServer";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getSessionServer();
 
   if (!session) {
@@ -16,7 +17,19 @@ export async function GET(req: NextRequest) {
       items: {
         include: {
           Product: true,
-          variant: true,
+          variant: {
+            include: {
+              options: {
+                include: {
+                  optionValue: {
+                    include: {
+                      option: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -27,13 +40,39 @@ export async function GET(req: NextRequest) {
     let image = "/placeholder.jpg";
     const images = item.Product?.images ?? [];
     if (Array.isArray(images) && images.length > 0) {
-      const first = images[0];
+      const first = images[0] as unknown as
+        | string
+        | { url?: string; key?: string };
       if (typeof first === "string") {
         image = first;
-      } else if (typeof first === "object" && first !== null) {
-        image = (first as any).url || (first as any).key || image;
+      } else if (first && typeof first === "object") {
+        image = first.url || first.key || image;
       }
     }
+
+    // Extract all variant options dynamically
+    const variantOptions: { name: string; value: string }[] = [];
+    if (item.variant) {
+      const variantWithDetails = item.variant as unknown as {
+        options: Array<{
+          optionValue: {
+            value: string;
+            option: {
+              name: string;
+            };
+          };
+        }>;
+      };
+
+      if (variantWithDetails.options) {
+        variantWithDetails.options.forEach((opt) => {
+          const name = opt.optionValue?.option?.name ?? "";
+          const value = opt.optionValue?.value ?? "";
+          variantOptions.push({ name, value });
+        });
+      }
+    }
+
     return {
       quantity: item.quantity,
       price: Number(item.price),
@@ -44,6 +83,7 @@ export async function GET(req: NextRequest) {
         typeof item.variantId === "string" && item.variantId !== "null"
           ? item.variantId
           : undefined,
+      variantOptions,
     };
   });
 
@@ -57,7 +97,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = (await req.json()) as unknown as {
+    productId: string;
+    variantId?: string;
+    quantity: number;
+    price: number;
+  };
   const { productId, variantId, quantity, price } = body;
 
   if (!productId || !quantity || !price) {
@@ -67,7 +112,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let cart = await prisma.cart.upsert({
+  const cart = await prisma.cart.upsert({
     where: { userId: session.user.id },
     update: {},
     create: { userId: session.user.id, total: 0 },
@@ -83,7 +128,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    let item;
+    let item: CartItem;
     if (existingCartItem) {
       // Update existing cart item
       item = await prisma.cartItem.update({
@@ -139,7 +184,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { currency } = await req.json();
+  const { currency } = (await req.json()) as unknown as { currency: string };
 
   if (!["MKD", "USD", "EUR"].includes(currency)) {
     return NextResponse.json({ message: "Invalid currency" }, { status: 400 });
@@ -170,7 +215,14 @@ export async function DELETE(req: NextRequest) {
       where: { userId: session.user.id },
     });
     if (!cart) return new NextResponse(null, { status: 204 });
-    const where: any = { cartId: cart.id, productId };
+    const where: {
+      cartId: string;
+      productId: string;
+      variantId?: string | null;
+    } = {
+      cartId: cart.id,
+      productId,
+    };
     if (variantId) {
       where.variantId = variantId;
     } else {

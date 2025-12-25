@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { imageSchema, priceSchema, timestampsSchema } from "./common";
 
 // Product option schemas
@@ -18,6 +19,7 @@ export const productVariantSchema = z.object({
   price: priceSchema.optional(),
   stock: z.string().min(1, "Stock is required"),
   options: z.array(productOptionValueSchema),
+  images: z.array(imageSchema).optional().default([]),
 });
 
 // Base product form schema
@@ -41,8 +43,8 @@ export const addProductFormSchema = baseProductFormSchema.extend({
   variants: z.array(productVariantSchema).optional().default([]),
 });
 
-// Edit product form schema (no options/variants management)
-export const editProductFormSchema = baseProductFormSchema;
+// Edit product form schema (now identical to add product form)
+export const editProductFormSchema = addProductFormSchema;
 
 // Complete product schema including database fields
 export const productSchema = baseProductFormSchema

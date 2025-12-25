@@ -60,8 +60,14 @@ export const PolarCheckoutInputSchema = z.object({
         quantity: z.number().positive(),
         price: z.number().positive(),
         title: z.string(),
-        color: z.string().optional(),
-        size: z.string().optional(),
+        variantOptions: z
+          .array(
+            z.object({
+              name: z.string(),
+              value: z.string(),
+            })
+          )
+          .optional(),
       })
     )
     .optional(),

@@ -154,7 +154,10 @@ export default function AdminOrderDetailPage() {
   };
 
   type VariantOption = {
-    optionValue?: { value?: string };
+    optionValue?: {
+      value?: string;
+      option?: { name?: string };
+    };
   };
 
   type OrderItem = {
@@ -179,7 +182,11 @@ export default function AdminOrderDetailPage() {
 
     return (
       item?.variant?.options
-        ?.map((opt) => opt?.optionValue?.value)
+        ?.map((opt) => {
+          const name = opt?.optionValue?.option?.name;
+          const value = opt?.optionValue?.value;
+          return name ? `${name}: ${value}` : value;
+        })
         ?.filter((v): v is string => Boolean(v))
         ?.join(" / ") ?? "-"
     );

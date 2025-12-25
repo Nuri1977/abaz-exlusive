@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +55,25 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      name: string;
+      description: string;
+      price: string;
+      brand: string;
+      gender: string;
+      style: string;
+      images: Record<string, unknown>[];
+      options: { name: string; values: string[] }[];
+      variants: {
+        sku: string;
+        price: string;
+        stock: string;
+        images: Record<string, unknown>[];
+        options: { optionName: string; value: string }[];
+      }[];
+      categoryId: string;
+      collectionId?: string;
+    };
     const {
       name,
       description,
@@ -93,7 +112,6 @@ export async function POST(req: Request) {
 
     const baseSlug = name.toLowerCase().replace(/\s+/g, "-");
     let slug = baseSlug;
-    let counter = 1;
 
     // Check if slug exists and append timestamp if it does
     while (await prisma.product.findUnique({ where: { slug } })) {
@@ -109,19 +127,22 @@ export async function POST(req: Request) {
         brand,
         gender,
         style,
-        images,
+        images: images as Prisma.InputJsonValue[],
         category: {
           connect: {
             id: categoryId || category.id,
           },
         },
-        collection: collectionId && collectionId !== "none" ? {
-          connect: {
-            id: collectionId,
-          },
-        } : undefined,
+        collection:
+          collectionId && collectionId !== "none"
+            ? {
+                connect: {
+                  id: collectionId,
+                },
+              }
+            : undefined,
         options: {
-          create: options.map((option: any) => ({
+          create: options.map((option) => ({
             name: option.name,
             values: {
               create: option.values
@@ -161,9 +182,9 @@ export async function POST(req: Request) {
 
       // Create variants with proper option value connections
       await Promise.all(
-        variants.map(async (variant: any, index: number) => {
+        variants.map(async (variant, index: number) => {
           const optionConnections = await Promise.all(
-            variant.options.map(async (option: any) => {
+            variant.options.map(async (option) => {
               const productOption = createdProduct.options.find(
                 (o) => o.name === option.optionName
               );
@@ -193,7 +214,7 @@ export async function POST(req: Request) {
           // Generate unique SKU using product ID and index
           const uniqueSku = `${variant.sku}-${product.id}-${index}`;
 
-          return prisma.productVariant.create({
+          const newVariant = await prisma.productVariant.create({
             data: {
               product: {
                 connect: {
@@ -203,11 +224,23 @@ export async function POST(req: Request) {
               sku: uniqueSku,
               price: variant.price ? parseFloat(variant.price) : null,
               stock: parseInt(variant.stock),
+              images: (variant.images ?? []) as Prisma.InputJsonValue[],
               options: {
                 create: optionConnections,
               },
+            } as unknown as Prisma.ProductVariantCreateInput,
+          });
+
+          // Create localized inventory item
+          await prisma.inventoryItem.create({
+            data: {
+              sku: uniqueSku,
+              quantity: parseInt(variant.stock),
+              variantId: newVariant.id,
             },
           });
+
+          return newVariant;
         })
       );
     }

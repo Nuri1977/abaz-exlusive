@@ -8,6 +8,7 @@ import {
   Info,
   KeyRound,
   LayoutDashboard,
+  ListTree,
   Mail,
   Megaphone,
   Package,
@@ -40,6 +41,13 @@ export const adminLinks = [
     icon: Tags,
     value: "Manage",
     description: "Manage product categories",
+  },
+  {
+    name: "Option Templates",
+    href: "/admin-dashboard/option-templates",
+    icon: ListTree,
+    value: "Manage",
+    description: "Manage global option templates",
   },
   {
     name: "Collections",
