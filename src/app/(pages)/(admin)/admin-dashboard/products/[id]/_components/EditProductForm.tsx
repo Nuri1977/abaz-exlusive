@@ -8,20 +8,24 @@ import {
   type EditProductFormValues,
 } from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Product } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X, Check } from "lucide-react";
+import { ArrowLeft, Check, Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { cn } from "@/lib/utils";
 
-import type { ProductWithOptionsAndVariants, CategoryWithParent } from "@/types/product";
+import type {
+  CategoryWithParent,
+  ProductWithOptionsAndVariants,
+} from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
 import { brandOptions, genderOptions } from "@/constants/options";
-import type { Product } from "@prisma/client";
+import { cn } from "@/lib/utils";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
 } from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -42,7 +46,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
-import { Badge } from "@/components/ui/badge";
 
 interface EditProductFormProps {
   product: ProductWithOptionsAndVariants | null;
@@ -53,23 +56,67 @@ export function EditProductForm({ product }: EditProductFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const initialImages = (product?.images ?? []).map((img, idx) => ({
-    ...img,
-    key: img.key || `existing-${product?.id}-${idx}`,
-  }));
+  // Temporary interfaces to handle potential upstream type issues
+  interface RawImage {
+    key?: string;
+    url: string;
+    name: string;
+    size: number;
+  }
 
-  const initialOptions = (product?.options ?? []).map((opt) => ({
+  interface RawOptionValue {
+    value: string;
+    optionId: string;
+    option?: { name: string };
+  }
+
+  interface RawOption {
+    name: string;
+    values: { value: string }[];
+    id: string;
+  }
+
+  interface RawVariant {
+    id: string;
+    sku: string;
+    price: string | number | null;
+    compareAtPrice: string | number | null;
+    stock: number;
+    options: { optionValue: RawOptionValue }[];
+    images: RawImage[];
+  }
+
+  const initialImages = ((product?.images as unknown as RawImage[]) ?? []).map(
+    (img, idx) => ({
+      ...img,
+      key: img.key || `existing-${product?.id}-${idx}`,
+    })
+  );
+
+  const initialOptions = (
+    (product?.options as unknown as RawOption[]) ?? []
+  ).map((opt) => ({
     name: opt.name,
     values: opt.values.map((v) => v.value),
   }));
 
-  const initialVariants = (product?.variants ?? []).map((v) => ({
+  const initialVariants = (
+    (product?.variants as unknown as RawVariant[]) ?? []
+  ).map((v) => ({
     sku: v.sku,
-    price: v.price?.toString() || "",
-    compareAtPrice: v.compareAtPrice?.toString() || "",
-    stock: v.stock.toString(),
+    price: v.price != null ? String(v.price) : "",
+    compareAtPrice:
+      v.compareAtPrice != null && Number(v.compareAtPrice) > 0
+        ? String(v.compareAtPrice)
+        : "",
+    stock: String(v.stock),
     options: v.options.map((opt) => ({
-      optionName: opt.optionValue.option?.name || (product?.options?.find(o => o.id === opt.optionValue.optionId)?.name ?? ""),
+      optionName:
+        opt.optionValue.option?.name ||
+        ((product?.options as unknown as RawOption[])?.find(
+          (o) => o.id === opt.optionValue.optionId
+        )?.name ??
+          ""),
       value: opt.optionValue.value,
     })),
     images: (v.images ?? []).map((img, idx) => ({
@@ -78,7 +125,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
     })),
   }));
 
-  const [productImages, setProductImages] = useState<FileUploadThing[]>(initialImages);
+  const [productImages, setProductImages] = useState<FileUploadThing[]>(
+    initialImages as FileUploadThing[]
+  );
 
   const { data: categories } = useQuery<CategoryWithParent[]>({
     queryKey: ["categories"],
@@ -116,8 +165,11 @@ export function EditProductForm({ product }: EditProductFormProps) {
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
-      price: product?.price?.toString() || "",
-      compareAtPrice: product?.compareAtPrice?.toString() || "",
+      price: product?.price != null ? String(product.price) : "",
+      compareAtPrice:
+        product?.compareAtPrice != null && Number(product.compareAtPrice) > 0
+          ? String(product.compareAtPrice)
+          : "",
       brand: product?.brand || "",
       gender: product?.gender || "",
       style: product?.style || "",
@@ -149,7 +201,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["product", product?.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["product", product?.id],
+      });
       toast({ title: "Success", description: "Product updated successfully" });
       router.push("/admin-dashboard/products");
     },
@@ -208,33 +262,43 @@ export function EditProductForm({ product }: EditProductFormProps) {
     if (options.length === 0) {
       toast({
         title: "Error",
-        description: "Please add at least one option before generating variants",
+        description:
+          "Please add at least one option before generating variants",
         variant: "destructive",
       });
       return;
     }
 
-    const combinations = options.reduce((acc, option) => {
-      if (acc.length === 0)
-        return option.values.map((value) => [{ optionName: option.name, value }]);
-      return acc.flatMap((combination) =>
-        option.values.map((value) => [
-          ...combination,
-          { optionName: option.name, value },
-        ])
-      );
-    }, [] as { optionName: string; value: string }[][]);
+    const combinations = options.reduce(
+      (acc, option) => {
+        if (acc.length === 0)
+          return option.values.map((value) => [
+            { optionName: option.name, value },
+          ]);
+        return acc.flatMap((combination) =>
+          option.values.map((value) => [
+            ...combination,
+            { optionName: option.name, value },
+          ])
+        );
+      },
+      [] as { optionName: string; value: string }[][]
+    );
 
     const variants = combinations.map((combination, index) => ({
       sku: `SKU-${index + 1}`,
       price: form.getValues("price"),
+      compareAtPrice: "",
       stock: "0",
       options: combination,
       images: [],
     }));
 
     form.setValue("variants", variants);
-    toast({ title: "Success", description: `Generated ${variants.length} variants` });
+    toast({
+      title: "Success",
+      description: `Generated ${variants.length} variants`,
+    });
   };
 
   const clearVariants = () => {
@@ -244,7 +308,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
   const validateVariants = () => {
     const variants = form.getValues("variants") || [];
-    const invalidVariants = variants.filter((v) => !v.sku || !v.stock || v.stock === "0");
+    const invalidVariants = variants.filter(
+      (v) => !v.sku || !v.stock || v.stock === "0"
+    );
     if (invalidVariants.length > 0) {
       toast({
         title: "Error",
@@ -256,7 +322,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
     return true;
   };
 
-  const handleImageChange = (value: FileUploadThing[], newFile?: FileUploadThing) => {
+  const handleImageChange = (
+    value: FileUploadThing[],
+    newFile?: FileUploadThing
+  ) => {
     setProductImages(value);
     form.setValue("images", [...value]);
     if (newFile && !newFile.key?.startsWith("existing-")) {
@@ -290,7 +359,11 @@ export function EditProductForm({ product }: EditProductFormProps) {
     if (key && !key.startsWith("existing-")) deleteGalleryItem(key);
   };
 
-  const handleVariantImageChange = (index: number, value: FileUploadThing[], newFile?: FileUploadThing) => {
+  const handleVariantImageChange = (
+    index: number,
+    value: FileUploadThing[],
+    newFile?: FileUploadThing
+  ) => {
     const variants = form.getValues("variants") || [];
     if (!variants[index]) return;
     variants[index].images = value;
@@ -320,7 +393,11 @@ export function EditProductForm({ product }: EditProductFormProps) {
     }
   };
 
-  const handleVariantImageRemove = (index: number, value: FileUploadThing[], key?: string) => {
+  const handleVariantImageRemove = (
+    index: number,
+    value: FileUploadThing[],
+    key?: string
+  ) => {
     const variants = form.getValues("variants") || [];
     if (!variants[index]) return;
     variants[index].images = value;
@@ -353,7 +430,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -364,12 +443,23 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger></FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          {brandOptions.filter(o => o.value !== "all").map(o => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
+                          {brandOptions
+                            .filter((o) => o.value !== "all")
+                            .map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -385,7 +475,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Price (MKD)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -396,8 +488,12 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Compare at Price (Optional)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                      <p className="text-xs text-muted-foreground">Original price for showing discounts</p>
+                      <FormControl>
+                        <Input type="number" step="0.01" min="0" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Original price for showing discounts
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -410,7 +506,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
-                    <FormControl><Textarea {...field} /></FormControl>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -423,12 +521,23 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger></FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          {genderOptions.filter(o => o.value !== "all").map(o => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
+                          {genderOptions
+                            .filter((o) => o.value !== "all")
+                            .map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -441,7 +550,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Style</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -455,12 +566,21 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           {categories?.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>
-                              {cat.parent ? `${cat.parent.name} > ${cat.name}` : cat.name}
+                              {cat.parent
+                                ? `${cat.parent.name} > ${cat.name}`
+                                : cat.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -475,12 +595,21 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Collection (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select collection" /></SelectTrigger></FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select collection" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No Collection</SelectItem>
                           {collections?.map((col) => (
-                            <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
+                            <SelectItem key={col.id} value={col.id}>
+                              {col.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -493,7 +622,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Product Images</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Product Images</CardTitle>
+            </CardHeader>
             <CardContent>
               <MultiImageUploader
                 onChange={handleImageChange}
@@ -513,9 +644,14 @@ export function EditProductForm({ product }: EditProductFormProps) {
             </CardHeader>
             <CardContent>
               {form.watch("options")?.map((option, idx) => {
-                const template = optionTemplates?.find(t => t.name === option.name);
+                const template = optionTemplates?.find(
+                  (t) => t.name === option.name
+                );
                 return (
-                  <div key={idx} className="mb-4 space-y-4 rounded-lg border p-4">
+                  <div
+                    key={idx}
+                    className="mb-4 space-y-4 rounded-lg border p-4"
+                  >
                     <div className="flex items-center gap-2">
                       <FormField
                         control={form.control}
@@ -523,17 +659,36 @@ export function EditProductForm({ product }: EditProductFormProps) {
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormLabel>Option Template</FormLabel>
-                            <Select onValueChange={(val) => handleTemplateSelect(idx, val)} value={field.value}>
-                              <FormControl><SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger></FormControl>
+                            <Select
+                              onValueChange={(val) =>
+                                handleTemplateSelect(idx, val)
+                              }
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select template" />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                {optionTemplates?.map(t => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
+                                {optionTemplates?.map((t) => (
+                                  <SelectItem key={t.id} value={t.name}>
+                                    {t.name}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button type="button" variant="destructive" size="icon" onClick={() => removeOption(idx)} className="mt-8">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeOption(idx)}
+                        className="mt-8"
+                      >
                         <X className="size-4" />
                       </Button>
                     </div>
@@ -549,12 +704,16 @@ export function EditProductForm({ product }: EditProductFormProps) {
                                 variant={isSelected ? "default" : "outline"}
                                 className={cn(
                                   "cursor-pointer px-3 py-1",
-                                  isSelected ? "hover:bg-primary/90" : "hover:bg-accent"
+                                  isSelected
+                                    ? "hover:bg-primary/90"
+                                    : "hover:bg-accent"
                                 )}
                                 onClick={() => toggleOptionValue(idx, v.value)}
                               >
                                 {v.value}{" "}
-                                {isSelected && <Check className="ml-2 size-3" />}
+                                {isSelected && (
+                                  <Check className="ml-2 size-3" />
+                                )}
                               </Badge>
                             );
                           })}
@@ -565,7 +724,13 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 );
               })}
               {form.watch("options")?.length > 0 && (
-                <Button type="button" onClick={generateVariants} className="mt-4">Generate Variants</Button>
+                <Button
+                  type="button"
+                  onClick={generateVariants}
+                  className="mt-4"
+                >
+                  Generate Variants
+                </Button>
               )}
             </CardContent>
           </Card>
@@ -574,73 +739,142 @@ export function EditProductForm({ product }: EditProductFormProps) {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <CardTitle>Product Variants</CardTitle>
-                <Button type="button" variant="destructive" size="sm" onClick={clearVariants}>Clear Variants</Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={clearVariants}
+                >
+                  Clear Variants
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {form.watch("variants").map((variant, idx) => (
-                    <div key={idx} className="space-y-4 rounded-lg border p-4">
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                        <FormField
-                          control={form.control}
-                          name={`variants.${idx}.sku`}
-                          render={({ field }) => (
-                            <FormItem><FormLabel>SKU</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${idx}.price`}
-                          render={({ field }) => (
-                            <FormItem><FormLabel>Price (Optional)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${idx}.compareAtPrice`}
-                          render={({ field }) => (
-                            <FormItem><FormLabel>Compare Price</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${idx}.stock`}
-                          render={({ field }) => (
-                            <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <FormLabel>Variant Options</FormLabel>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          {variant.options.map((opt, oIdx) => (
-                            <div key={oIdx} className="rounded bg-muted p-2 text-sm">
-                              <span className="font-medium">{opt.optionName}:</span> {opt.value}
+                  {form
+                    .watch("variants")
+                    .map(
+                      (
+                        variant: EditProductFormValues["variants"][number],
+                        idx
+                      ) => (
+                        <div
+                          key={idx}
+                          className="space-y-4 rounded-lg border p-4"
+                        >
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <FormField
+                              control={form.control}
+                              name={`variants.${idx}.sku`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>SKU</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${idx}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Price (Optional)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${idx}.compareAtPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Compare Price</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${idx}.stock`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Stock</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <FormLabel>Variant Options</FormLabel>
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {variant.options.map(
+                                (
+                                  opt: { optionName: string; value: string },
+                                  oIdx
+                                ) => (
+                                  <div
+                                    key={oIdx}
+                                    className="rounded bg-muted p-2 text-sm"
+                                  >
+                                    <span className="font-medium">
+                                      {opt.optionName}:
+                                    </span>{" "}
+                                    {opt.value}
+                                  </div>
+                                )
+                              )}
                             </div>
-                          ))}
+                          </div>
+                          <div>
+                            <FormLabel>Variant Images</FormLabel>
+                            <div className="mt-2">
+                              <MultiImageUploader
+                                onChange={(val, newFile) =>
+                                  handleVariantImageChange(idx, val, newFile)
+                                }
+                                onRemove={(val, key) =>
+                                  handleVariantImageRemove(idx, val, key)
+                                }
+                                value={variant.images || []}
+                                maxLimit={5}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <FormLabel>Variant Images</FormLabel>
-                        <div className="mt-2">
-                          <MultiImageUploader
-                            onChange={(val, newFile) => handleVariantImageChange(idx, val, newFile)}
-                            onRemove={(val, key) => handleVariantImageRemove(idx, val, key)}
-                            value={variant.images || []}
-                            maxLimit={5}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      )
+                    )}
                 </div>
               </CardContent>
             </Card>
           )}
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" asChild><Link href="/admin-dashboard/products">Cancel</Link></Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Updating..." : "Update Product"}</Button>
+            <Button type="button" variant="outline" asChild>
+              <Link href="/admin-dashboard/products">Cancel</Link>
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Updating..." : "Update Product"}
+            </Button>
           </div>
         </form>
       </Form>

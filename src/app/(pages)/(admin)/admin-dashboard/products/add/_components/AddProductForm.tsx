@@ -8,20 +8,21 @@ import {
   type AddProductFormValues,
 } from "@/schemas/product";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X, Check } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { cn } from "@/lib/utils";
-
 import type { Product } from "@prisma/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Check, Plus, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+
 import type { CategoryWithParent } from "@/types/product";
 import type { FileUploadThing } from "@/types/UploadThing";
 import { brandOptions, genderOptions } from "@/constants/options";
+import { cn } from "@/lib/utils";
 import {
   useDeleteGalleryMutation,
   useGalleryMutation,
 } from "@/hooks/useGallery";
 import { useToast } from "@/hooks/useToast";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -42,7 +43,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import MultiImageUploader from "@/components/shared/MultiImageUploader";
-import { Badge } from "@/components/ui/badge";
 
 export function AddProductForm() {
   const [productImages, setProductImages] = useState<FileUploadThing[]>([]);
@@ -92,6 +92,7 @@ export function AddProductForm() {
       name: "",
       description: "",
       price: "",
+      compareAtPrice: "",
       brand: "",
       gender: "",
       style: "",
@@ -163,7 +164,7 @@ export function AddProductForm() {
   const handleTemplateSelect = (index: number, templateName: string) => {
     const options = form.getValues("options");
     if (!options?.[index]) return;
-    
+
     options[index].name = templateName;
     options[index].values = []; // Reset values when template changes
     form.setValue("options", options);
@@ -174,13 +175,13 @@ export function AddProductForm() {
     if (!options?.[optionIndex]) return;
 
     const currentValues = options[optionIndex].values;
-    
+
     if (currentValues.includes(value)) {
       options[optionIndex].values = currentValues.filter((v) => v !== value);
     } else {
       options[optionIndex].values = [...currentValues, value];
     }
-    
+
     form.setValue("options", [...options]);
   };
 
@@ -232,6 +233,7 @@ export function AddProductForm() {
     const variants = combinations.map((combination, index) => ({
       sku: `SKU-${index + 1}`,
       price: form.getValues("price"),
+      compareAtPrice: "",
       stock: "0",
       options: combination,
       images: [],
@@ -457,7 +459,7 @@ export function AddProductForm() {
                     <FormItem>
                       <FormLabel>Compare at Price (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} />
+                        <Input type="number" step="0.01" min="0" {...field} />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">
                         Original price for showing discounts
@@ -578,7 +580,10 @@ export function AddProductForm() {
                         <SelectContent>
                           <SelectItem value="none">No Collection</SelectItem>
                           {collections?.map((collection) => (
-                            <SelectItem key={collection.id} value={collection.id}>
+                            <SelectItem
+                              key={collection.id}
+                              value={collection.id}
+                            >
                               {collection.name}
                             </SelectItem>
                           ))}
@@ -732,103 +737,128 @@ export function AddProductForm() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {form.watch("variants").map((variant, variantIndex) => (
-                    <div
-                      key={variantIndex}
-                      className="space-y-4 rounded-lg border p-4"
-                    >
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                        <FormField
-                          control={form.control}
-                          name={`variants.${variantIndex}.sku`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>SKU</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${variantIndex}.price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price (Optional)</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${variantIndex}.compareAtPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Compare Price</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`variants.${variantIndex}.stock`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Stock</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <FormLabel>Variant Options</FormLabel>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          {variant.options.map((option, optionIndex) => (
-                            <div
-                              key={optionIndex}
-                              className="rounded bg-muted p-2 text-sm"
-                            >
-                              <span className="font-medium">
-                                {option.optionName}:
-                              </span>{" "}
-                              {option.value}
+                  {form
+                    .watch("variants")
+                    .map(
+                      (
+                        variant: AddProductFormValues["variants"][number],
+                        variantIndex
+                      ) => (
+                        <div
+                          key={variantIndex}
+                          className="space-y-4 rounded-lg border p-4"
+                        >
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <FormField
+                              control={form.control}
+                              name={`variants.${variantIndex}.sku`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>SKU</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${variantIndex}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Price (Optional)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${variantIndex}.compareAtPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Compare Price</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`variants.${variantIndex}.stock`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Stock</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <FormLabel>Variant Options</FormLabel>
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {variant.options.map(
+                                (
+                                  option: { optionName: string; value: string },
+                                  optionIndex
+                                ) => (
+                                  <div
+                                    key={optionIndex}
+                                    className="rounded bg-muted p-2 text-sm"
+                                  >
+                                    <span className="font-medium">
+                                      {option.optionName}:
+                                    </span>{" "}
+                                    {option.value}
+                                  </div>
+                                )
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      </div>
+                          </div>
 
-                      <div>
-                        <FormLabel>Variant Images</FormLabel>
-                        <div className="mt-2">
-                          <MultiImageUploader
-                            onChange={(val, newFile) =>
-                              handleVariantImageChange(
-                                variantIndex,
-                                val,
-                                newFile
-                              )
-                            }
-                            onRemove={(val, key) =>
-                              handleVariantImageRemove(variantIndex, val, key)
-                            }
-                            value={variant.images || []}
-                            maxLimit={5}
-                          />
+                          <div>
+                            <FormLabel>Variant Images</FormLabel>
+                            <div className="mt-2">
+                              <MultiImageUploader
+                                onChange={(val, newFile) =>
+                                  handleVariantImageChange(
+                                    variantIndex,
+                                    val,
+                                    newFile
+                                  )
+                                }
+                                onRemove={(val, key) =>
+                                  handleVariantImageRemove(
+                                    variantIndex,
+                                    val,
+                                    key
+                                  )
+                                }
+                                value={variant.images || []}
+                                maxLimit={5}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      )
+                    )}
                 </div>
               </CardContent>
             </Card>

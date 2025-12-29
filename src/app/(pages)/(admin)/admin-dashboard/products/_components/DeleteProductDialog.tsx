@@ -54,7 +54,7 @@ export function DeleteProductDialog({
         let errorMessage = "Failed to delete product";
 
         try {
-          const parsedError = JSON.parse(errorData);
+          const parsedError = JSON.parse(errorData) as { message?: string };
           errorMessage = parsedError?.message || errorMessage;
         } catch {
           // If it's not JSON, use the text as error message
@@ -64,9 +64,23 @@ export function DeleteProductDialog({
         throw new Error(errorMessage);
       }
 
-      const result = await response?.json();
-      console.log("Delete success response:", result);
-      return result;
+      // Handle 204 No Content response (successful deletion with no body)
+      if (response.status === 204) {
+        console.log("Delete success: 204 No Content");
+        return { message: "Product deleted successfully" };
+      }
+
+      // Only try to parse JSON if there's content
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const result = (await response.json()) as { message?: string };
+        console.log("Delete success response:", result);
+        return result;
+      }
+
+      // Fallback for successful non-JSON responses
+      console.log("Delete success: non-JSON response");
+      return { message: "Product deleted successfully" };
     },
     onSuccess: (data) => {
       console.log("Delete mutation success:", data);
@@ -74,7 +88,7 @@ export function DeleteProductDialog({
         title: "Success",
         description: data?.message || "Product deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
       setOpen(false);
     },
     onError: (error: Error) => {
@@ -105,8 +119,8 @@ export function DeleteProductDialog({
             <DialogHeader>
               <DialogTitle>Delete Product</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{product?.name}"? This action
-                cannot be undone.
+                Are you sure you want to delete &quot;{product?.name}&quot;?
+                This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -151,8 +165,8 @@ export function DeleteProductDialog({
         <DialogHeader>
           <DialogTitle>Delete Product</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{product?.name}"? This action
-            cannot be undone.
+            Are you sure you want to delete &quot;{product?.name}&quot;? This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
