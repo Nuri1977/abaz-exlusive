@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 
 import RegisterForm from "./_components/RegisterForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Register | Abaz Exclusive",
   description: "Create a new account for Abaz Exclusive",

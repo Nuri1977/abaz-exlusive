@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 
 import UserSidebar from "./_components/UserSidebar";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "User Dashboard",

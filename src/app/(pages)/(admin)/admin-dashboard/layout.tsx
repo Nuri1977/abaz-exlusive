@@ -6,6 +6,8 @@ import { isAdminServer } from "@/helpers/isAdminServer";
 
 import AdminSidebar from "./_components/AdminSidebar";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description: "Administrative dashboard of the Shopping App",
