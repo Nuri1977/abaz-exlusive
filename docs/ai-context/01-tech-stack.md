@@ -10,6 +10,7 @@
   - API routes for backend functionality
   - Image optimization with `next/image`
   - Enhanced forms with `next/form`
+  - Dynamic rendering (`force-dynamic`) for session-dependent routes
   - TypeScript support with `next.config.ts`
 
 ### React Ecosystem

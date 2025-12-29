@@ -187,6 +187,10 @@ The project uses Next.js 15.2.3 with React 18.3.1, which includes several import
     // Use slug value here
   }
   ```
+- **Dynamic Rendering for Sessions**: Routes that use `headers()` or `cookies()` (like Better Auth session checks) MUST be marked as dynamic to prevent static generation errors:
+  ```tsx
+  export const dynamic = "force-dynamic";
+  ```
 - **Page Components**: Never convert a Next.js page (e.g. files in `src/app/**/page.tsx`) into a client component by adding the `"use client"` directive. Instead, always create a new child component (e.g. in a `_components/` directory) and mark that child with `"use client"` if you need client-side features like React hooks.
 
 ### URL Structure and Routing
@@ -510,9 +514,11 @@ The project uses TanStack Query (React Query) for data fetching and state manage
 
 ### Caching and Revalidation Rules
 
-- **No Time-Based Revalidation**: Never use time-based revalidation (e.g., `revalidate: 3600`) in `unstable_cache` configurations. Always rely on tag-based revalidation for explicit cache invalidation control.
+- **No Time-Based Revalidation**: Never use time-based revalidation (e.g., `revalidate: 3600`) in `unstable_cache` configurations for public content. Always rely on tag-based revalidation for explicit cache invalidation control.
+- **Backend Caching**: Use `unstable_cache` for expensive server-side operations like exchange rate fetching.
 - **Tag-Based Invalidation**: Use cache tags for explicit invalidation when data changes through admin operations or user actions.
 - **Cache Strategy**: Implement cache invalidation triggers in API routes that modify data to ensure consistency.
+- **Exchange Rates Caching**: The exchange rate system uses `SSGCacheKeys.exchangeRates` with a 24-hour revalidation and manual `revalidateTag` support.
 - **Hero Items Caching**: The hero items system uses `SSGCacheKeys.heroItems` for tag-based cache invalidation.
 
 ### Form and Modal Best Practices
@@ -636,9 +642,10 @@ The project uses UploadThing v7 for file uploads and management:
 
 - **Checkout Flow**: Multi-step checkout with validation at each step
 - **Guest Checkout**: Allow purchases without account creation
-- **Order Management**: Admin interface for order status updates
+- **Order Management**: Admin interface with tabbed views (All, New, Finished), mobile-responsive card layouts, and consolidated action menus.
+- **Print Functionality**: Integrated printing for order lists, individual orders, and receipts with optimized CSS print styles.
 - **Email Notifications**: Automated emails for order confirmation and status updates
-- **Mobile Optimization**: Responsive design optimized for mobile commerce
+- **Mobile Optimization**: Responsive design optimized for mobile commerce with touch-friendly card views for orders and payments.
 
 ### Payment System Implementation
 

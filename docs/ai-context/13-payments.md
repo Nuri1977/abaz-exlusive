@@ -156,15 +156,18 @@ The application implements a robust multi-currency system with automated rate fe
 - **Base Currency**: MKD (Macedonian Denar).
 - **Supported Targets**: USD, EUR.
 - **Fetch Strategy**: The system attempts to resolve rates in the following order:
-    1.  **Local Database**: Uses active rates if they are less than 24 hours old.
-    2.  **External API**: Fetches from `@fawazahmed0/currency-api` with a fallback to `latest.currency-api.pages.dev`.
-    3.  **Expired Cache**: Uses the latest available rate in the DB if the API is unreachable.
-    4.  **Hardcoded Fallback**: Last-resort rates stored in the code (Updated: Dec 2025).
+    1.  **Server Cache**: Uses Next.js `unstable_cache` (24-hour TTL) for instant retrieval.
+    2.  **Local Database**: Uses active rates if they are less than 24 hours old.
+    3.  **External API**: Fetches from `@fawazahmed0/currency-api` with a fallback to `latest.currency-api.pages.dev`.
+    4.  **Expired Cache**: Uses the latest available rate in the DB if the API is unreachable.
+    5.  **Hardcoded Fallback**: Last-resort rates stored in the code (Updated: Dec 2025).
 
 ### 7.2 Storage & Refresh
 - **Data Model**: The `ExchangeRate` model tracks `baseCurrency`, `targetCurrency`, `rate`, `fetchedAt`, and `isActive`.
+- **Unique Constraint**: Uses `@@unique([baseCurrency, targetCurrency, fetchedAt])` to allow historical tracking without collisions.
 - **Auto-Refresh**: Rates are automatically refreshed upon the first request after expiry (24-hour TTL).
-- **Admin Control**: Admins can force a manual refresh through the `/admin-dashboard/exchange-rates` interface and view historical rate data to monitor currency stability.
+- **Backend Caching**: Implemented via `unstable_cache` with `SSGCacheKeys.exchangeRates` tag.
+- **Admin Control**: Admins can force a manual refresh through the `/admin-dashboard/exchange-rates` interface, which triggers `revalidateTag` to clear the server cache.
 
 ---
 

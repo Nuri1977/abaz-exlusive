@@ -227,11 +227,13 @@ const checkoutSchema = z.object({
 
 **Admin Order Management:**
 
-- Order status updates
-- Customer communication
-- Order item management
-- Shipping tracking
-- Refund processing
+- **Tabbed Views**: Organized orders into "All", "New", and "Finished" tabs for better workflow.
+- **Mobile Card Layout**: Responsive card-based view for managing orders on small screens.
+- **Consolidated Actions**: 3-dot dropdown menu for order status updates and deletions.
+- **Print System**: Integrated printing for order lists, individual orders, and receipts.
+- **Product Images**: Visual order items with variant-specific image support.
+- **Status Tracking**: Real-time updates with color-coded badges.
+- **Refund Processing**: Integrated refund management.
 
 **Customer Order Experience:**
 
