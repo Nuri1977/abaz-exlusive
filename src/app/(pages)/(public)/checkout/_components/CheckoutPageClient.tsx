@@ -17,8 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CartSummary } from "@/components/checkout/CartSummary";
 
 const CheckoutPageClient = () => {
-  const { items, clearCart, isLoading } =
-    useCartContext();
+  const { items, isLoading } = useCartContext();
 
   const { data: session } = authClient.useSession();
   const { toast } = useToast();
@@ -106,7 +105,6 @@ const CheckoutPageClient = () => {
     const hasErrors = Object.values(errors).some((error) => error !== "");
 
     if (hasErrors) {
-
       // Find the first field with an error and focus it
       const firstErrorField = Object.keys(errors).find(
         (key) => errors[key as keyof typeof errors]
@@ -125,7 +123,7 @@ const CheckoutPageClient = () => {
     setIsSubmitting(true);
     // Update the selected payment method for validation purposes
     setSelectedPaymentMethod(paymentMethod);
-    
+
     try {
       // Prepare checkout data for new payment system
       // Calculate the original MKD total (base currency)
@@ -167,8 +165,7 @@ const CheckoutPageClient = () => {
         // Use window.location.href for external URLs (Polar checkout)
         window.location.href = result.url;
       } else {
-        // Cash payment - show success and redirect
-        clearCart();
+        // Cash payment - redirect to success page (cart will be cleared there)
         toast({
           title: "Order placed successfully!",
           description:
@@ -216,19 +213,19 @@ const CheckoutPageClient = () => {
             {/* Customer Information Skeleton */}
             <div className="space-y-4">
               <div className="h-6 w-48 animate-pulse rounded bg-muted" />
-              
+
               {/* Name field */}
               <div className="space-y-2">
                 <div className="h-4 w-12 animate-pulse rounded bg-muted" />
                 <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
               </div>
-              
+
               {/* Email field */}
               <div className="space-y-2">
                 <div className="h-4 w-12 animate-pulse rounded bg-muted" />
                 <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
               </div>
-              
+
               {/* Phone field */}
               <div className="space-y-2">
                 <div className="h-4 w-14 animate-pulse rounded bg-muted" />
@@ -239,13 +236,13 @@ const CheckoutPageClient = () => {
             {/* Shipping Address Skeleton */}
             <div className="space-y-4">
               <div className="h-6 w-40 animate-pulse rounded bg-muted" />
-              
+
               {/* Address field */}
               <div className="space-y-2">
                 <div className="h-4 w-16 animate-pulse rounded bg-muted" />
                 <div className="h-24 w-full animate-pulse rounded-md bg-muted" />
               </div>
-              
+
               {/* Note field */}
               <div className="space-y-2">
                 <div className="h-4 w-24 animate-pulse rounded bg-muted" />
@@ -261,7 +258,10 @@ const CheckoutPageClient = () => {
               <div className="space-y-3">
                 {/* Cart items skeleton */}
                 {[1, 2].map((i) => (
-                  <div key={i} className="flex items-center gap-3 border-b pb-3">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 border-b pb-3"
+                  >
                     <div className="size-14 shrink-0 animate-pulse rounded bg-muted" />
                     <div className="flex-1 space-y-2">
                       <div className="h-4 w-24 animate-pulse rounded bg-muted" />
@@ -276,7 +276,7 @@ const CheckoutPageClient = () => {
                 <div className="h-6 w-24 animate-pulse rounded bg-muted" />
               </div>
             </div>
-            
+
             {/* Buttons skeleton */}
             <div className="space-y-3">
               <div className="h-11 w-full animate-pulse rounded-md bg-muted" />
@@ -402,8 +402,6 @@ const CheckoutPageClient = () => {
               )}
             </div>
           </div>
-
-
         </div>
         <div className="space-y-6">
           <CartSummary editable={true} />
@@ -419,7 +417,7 @@ const CheckoutPageClient = () => {
             >
               {isSubmitting ? "Processing..." : "Continue to Payment"}
             </Button>
-            
+
             <Button
               type="button"
               variant="outline"
@@ -428,10 +426,12 @@ const CheckoutPageClient = () => {
               disabled={isSubmitting || items.length === 0}
               onClick={() => handleSubmit("CASH_ON_DELIVERY")}
             >
-              {isSubmitting ? "Processing..." : "Place Order (Cash on Delivery)"}
+              {isSubmitting
+                ? "Processing..."
+                : "Place Order (Cash on Delivery)"}
             </Button>
           </div>
-          
+
           <div className="text-center text-sm text-muted-foreground">
             <Link href="/cart" className="underline">
               Back to cart
