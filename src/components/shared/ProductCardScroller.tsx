@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { Category } from "@prisma/client";
-import type { ProductExt } from "@/types/product";
+import Autoplay from "embla-carousel-autoplay";
 import {
   Award,
   Clock,
@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import type { ProductExt } from "@/types/product";
 import {
   Carousel,
   CarouselContent,
@@ -24,7 +25,6 @@ import {
 } from "@/components/ui/carousel";
 
 import { ProductCard } from "./ProductCard";
-import Autoplay from "embla-carousel-autoplay";
 
 interface ProductCardScrollerProps {
   products: (ProductExt & { category: Category })[];
@@ -56,7 +56,7 @@ const ProductCardScroller = ({
   loading,
   iconName,
   enableAutoPlay = true,
-  autoPlayDelay = 3000,
+  autoPlayDelay = 6000,
 }: ProductCardScrollerProps) => {
   const plugins = React.useMemo(() => {
     if (!enableAutoPlay) return [];
@@ -80,9 +80,7 @@ const ProductCardScroller = ({
       {title && (
         <div className="mb-12 text-center">
           <div className="mb-2 flex items-center justify-center gap-2">
-            {IconComponent && (
-              <IconComponent className="size-8 text-primary" />
-            )}
+            {IconComponent && <IconComponent className="size-8 text-primary" />}
             <h2 className="text-3xl font-bold">{title}</h2>
           </div>
         </div>
@@ -103,9 +101,7 @@ const ProductCardScroller = ({
                 key={product.id}
                 className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3 xl:basis-1/4"
               >
-                <ProductCard
-                  product={product}
-                />
+                <ProductCard product={product} />
               </CarouselItem>
             ))}
           </CarouselContent>

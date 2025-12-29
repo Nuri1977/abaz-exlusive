@@ -8,6 +8,7 @@ import {
   Download,
   FileText,
   Package,
+  Printer,
   RotateCcw,
   User,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import {
   fetchPaymentById,
   processRefund,
 } from "@/lib/query/admin-payments";
+import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,7 +187,7 @@ export function AdminPaymentDetailView({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Amount</p>
               <p className="text-lg font-semibold">
-                {Number(payment.amount).toFixed(2)} {payment.currency}
+                {formatPrice(Number(payment.amount), payment.currency)}
               </p>
             </div>
             <div className="space-y-1">
@@ -237,11 +239,15 @@ export function AdminPaymentDetailView({
                 Process Refund
               </Button>
             )}
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="mr-2 size-4" />
+              Print Receipt
+            </Button>
+            <Button variant="outline" size="sm" className="no-print">
               <FileText className="mr-2 size-4" />
               Add Note
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="no-print">
               <Download className="mr-2 size-4" />
               Export Data
             </Button>
@@ -320,8 +326,10 @@ export function AdminPaymentDetailView({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Order Total</p>
               <p className="font-semibold">
-                {Number(payment.order?.total || 0).toFixed(2)}{" "}
-                {payment.order?.currency || payment.currency}
+                {formatPrice(
+                  Number(payment.order?.total || 0),
+                  payment.order?.currency || payment.currency
+                )}
               </p>
             </div>
             <div className="space-y-1">
@@ -407,7 +415,7 @@ export function AdminPaymentDetailView({
                 max={Number(payment.amount)}
                 value={refundAmount}
                 onChange={(e) => setRefundAmount(e.target.value)}
-                placeholder={`Max: ${Number(payment.amount).toFixed(2)} ${payment.currency}`}
+                placeholder={`Max: ${formatPrice(Number(payment.amount), payment.currency)}`}
               />
             </div>
             <div className="space-y-2">

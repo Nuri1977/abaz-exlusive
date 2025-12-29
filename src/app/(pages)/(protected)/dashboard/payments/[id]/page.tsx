@@ -27,7 +27,7 @@ export default async function UserPaymentDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="no-print flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/payments">
             <ArrowLeft className="mr-2 size-4" />

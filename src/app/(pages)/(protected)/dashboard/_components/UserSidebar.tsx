@@ -47,7 +47,7 @@ const UserSidebar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden min-h-screen w-64 border-r bg-background md:block">
+      <div className="no-print hidden min-h-screen w-64 border-r bg-background md:block">
         <div className="py-4">
           <div className="px-3 py-2">
             <h2 className="mb-2 px-4 text-xl font-semibold tracking-tight">

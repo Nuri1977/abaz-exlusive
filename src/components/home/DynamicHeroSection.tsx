@@ -76,7 +76,10 @@ interface DynamicHeroSectionProps {
   } | null;
 }
 
-const DynamicHeroSection = ({ heroItems, settings }: DynamicHeroSectionProps) => {
+const DynamicHeroSection = ({
+  heroItems,
+  settings,
+}: DynamicHeroSectionProps) => {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
 
   // Use provided hero items or fallback to default slides
@@ -169,20 +172,31 @@ const DynamicHeroSection = ({ heroItems, settings }: DynamicHeroSectionProps) =>
 
                 {/* Text content positioned at bottom */}
                 <div className="relative z-10 mb-20 w-full px-4 text-center">
-                  <div className="mx-auto max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-                    <h2 className="mb-6 text-3xl font-medium tracking-wide md:text-3xl lg:text-4xl drop-shadow-lg">
+                  <div
+                    className={cn(
+                      "mx-auto max-w-3xl transition-all duration-1000 ease-out",
+                      selectedIndex === index
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-8 opacity-0"
+                    )}
+                    style={{
+                      transitionDelay:
+                        selectedIndex === index ? "300ms" : "0ms",
+                    }}
+                  >
+                    <h2 className="mb-6 text-3xl font-medium tracking-wide drop-shadow-lg md:text-3xl lg:text-4xl">
                       {slide.title}
                     </h2>
                     {slide.description && (
-                      <p className="mb-8 text-base opacity-90 md:text-md lg:text-lg drop-shadow-md max-w-2xl mx-auto">
+                      <p className="mx-auto mb-8 max-w-2xl text-base opacity-90 drop-shadow-md md:text-base lg:text-lg">
                         {slide.description}
                       </p>
                     )}
                     <Button
                       asChild
                       size="lg"
-                      variant='outline'
-                      className="bg-transparent text-white border-white hover:bg-white hover:text-black hover:border-black"
+                      variant="outline"
+                      className="border-white bg-transparent text-white hover:border-black hover:bg-white hover:text-black"
                     >
                       <Link href={slide.linkUrl}>SHOP NOW</Link>
                     </Button>
@@ -203,7 +217,7 @@ const DynamicHeroSection = ({ heroItems, settings }: DynamicHeroSectionProps) =>
                 className={cn(
                   "h-1 w-8 rounded-full transition-all duration-300",
                   selectedIndex === index
-                    ? "bg-white w-12"
+                    ? "w-12 bg-white"
                     : "bg-white/40 hover:bg-white/60"
                 )}
                 aria-label={`Go to slide ${index + 1}`}

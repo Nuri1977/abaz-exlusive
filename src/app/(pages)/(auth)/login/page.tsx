@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 
 import LoginForm from "./_components/LoginForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Login | Abaz Exclusive",
   description: "Sign in to your Abaz Exclusive account",

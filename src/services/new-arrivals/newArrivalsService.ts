@@ -6,7 +6,7 @@ import type { Prisma } from "@prisma/client";
 import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
 import { prisma } from "@/lib/prisma";
 
-type NewArrivalWithProduct = Prisma.NewArrivalsGetPayload<{
+export type NewArrivalWithProduct = Prisma.NewArrivalsGetPayload<{
   include: {
     product: {
       include: {

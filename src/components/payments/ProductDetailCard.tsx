@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Package } from "lucide-react";
 
+import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -74,8 +75,8 @@ export function ProductDetailCard({
           <div>
             <p className="font-medium">Product Unavailable</p>
             <p className="text-sm text-muted-foreground">
-              Quantity: {item.quantity} × {Number(item.price).toFixed(2)}{" "}
-              {currency}
+              Quantity: {item.quantity} ×{" "}
+              {formatPrice(Number(item.price), currency)}
             </p>
           </div>
         </CardContent>
@@ -176,10 +177,10 @@ export function ProductDetailCard({
             {/* Pricing */}
             <div className="flex items-center justify-between pt-2">
               <div className="text-sm text-muted-foreground">
-                Quantity: {item.quantity} × {unitPrice.toFixed(2)} {currency}
+                Quantity: {item.quantity} × {formatPrice(unitPrice, currency)}
               </div>
               <div className="text-lg font-semibold">
-                {totalPrice.toFixed(2)} {currency}
+                {formatPrice(totalPrice, currency)}
               </div>
             </div>
           </div>

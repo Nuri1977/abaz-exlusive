@@ -11,11 +11,13 @@ import {
   DollarSign,
   MapPin,
   Package,
+  Printer,
   Trash2,
   User,
 } from "lucide-react";
 
 import type { Order } from "@/types/Order";
+import { formatPrice } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -160,22 +162,24 @@ export default function AdminOrderDetailPage() {
     };
   };
 
-  type OrderItem = {
+  type LocalOrderItem = {
     variant?: {
       options?: VariantOption[];
       sku?: string;
+      images?: unknown[];
     };
     Product?: {
       name?: string | null;
       brand?: string | null;
       style?: string | null;
+      images?: unknown[];
     };
     price: number;
     quantity: number;
     id: string;
   };
 
-  const getVariantDisplay = (item: OrderItem) => {
+  const getVariantDisplay = (item: LocalOrderItem) => {
     if (!item?.variant?.options || item?.variant?.options.length === 0) {
       return "-";
     }
@@ -198,7 +202,7 @@ export default function AdminOrderDetailPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="no-print flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -214,6 +218,14 @@ export default function AdminOrderDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => window.print()}
+            className="flex items-center gap-2"
+          >
+            <Printer className="size-4" />
+            Print Order
+          </Button>
           <span
             className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusColor(
               order.status
@@ -278,9 +290,8 @@ export default function AdminOrderDetailPage() {
             <div className="flex items-baseline gap-2">
               <DollarSign className="size-5 text-muted-foreground" />
               <span className="text-2xl font-bold">
-                {Number(order.total).toFixed(2)}
+                {formatPrice(Number(order.total), "MKD")}
               </span>
-              <span className="text-sm text-muted-foreground">MKD</span>
             </div>
           </CardContent>
         </Card>
@@ -497,6 +508,9 @@ export default function AdminOrderDetailPage() {
               <thead>
                 <tr className="border-b-2">
                   <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Image
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
                     Product
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
@@ -520,6 +534,46 @@ export default function AdminOrderDetailPage() {
                 {order.items?.map((item) => (
                   <tr key={item.id} className="hover:bg-muted/30">
                     <td className="p-4">
+                      <div className="relative size-16 overflow-hidden rounded-md border bg-muted">
+                        {(() => {
+                          const localItem = item as unknown as LocalOrderItem;
+                          const variantImages = localItem.variant?.images;
+                          const productImages = localItem.Product?.images;
+
+                          const getImageUrl = (img: unknown) => {
+                            if (typeof img === "string") return img;
+                            if (
+                              img &&
+                              typeof img === "object" &&
+                              "url" in img
+                            ) {
+                              return (img as { url: string }).url;
+                            }
+                            return null;
+                          };
+
+                          const imageUrl =
+                            getImageUrl(variantImages?.[0]) ||
+                            getImageUrl(productImages?.[0]);
+
+                          if (imageUrl) {
+                            return (
+                              <img
+                                src={imageUrl}
+                                alt={localItem.Product?.name || "Product"}
+                                className="size-full object-cover"
+                              />
+                            );
+                          }
+                          return (
+                            <div className="flex size-full items-center justify-center">
+                              <Package className="size-8 text-muted-foreground/50" />
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </td>
+                    <td className="p-4">
                       <div className="font-medium">
                         {item.Product?.name || "Unknown Product"}
                       </div>
@@ -539,9 +593,11 @@ export default function AdminOrderDetailPage() {
                         {item.variant?.sku || "-"}
                       </code>
                     </td>
-                    <td className="p-4 text-sm">{getVariantDisplay(item)}</td>
+                    <td className="p-4 text-sm">
+                      {getVariantDisplay(item as unknown as LocalOrderItem)}
+                    </td>
                     <td className="p-4 text-right tabular-nums">
-                      {Number(item.price).toFixed(2)} MKD
+                      {formatPrice(Number(item.price), "MKD")}
                     </td>
                     <td className="p-4 text-center">
                       <span className="inline-flex items-center justify-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-semibold">
@@ -549,7 +605,7 @@ export default function AdminOrderDetailPage() {
                       </span>
                     </td>
                     <td className="p-4 text-right font-semibold tabular-nums">
-                      {(Number(item.price) * item.quantity).toFixed(2)} MKD
+                      {formatPrice(Number(item.price) * item.quantity, "MKD")}
                     </td>
                   </tr>
                 ))}
@@ -557,13 +613,13 @@ export default function AdminOrderDetailPage() {
               <tfoot className="border-t-2">
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="p-4 text-right text-base font-semibold"
                   >
                     Total Amount:
                   </td>
                   <td className="p-4 text-right text-xl font-bold tabular-nums">
-                    {Number(order.total).toFixed(2)} MKD
+                    {formatPrice(Number(order.total), "MKD")}
                   </td>
                 </tr>
               </tfoot>

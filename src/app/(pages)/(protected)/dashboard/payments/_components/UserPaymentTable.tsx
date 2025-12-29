@@ -26,42 +26,6 @@ import {
 import { fetchUserPayments } from "@/lib/query/user-payments";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-// Helper function to extract product name from payment metadata
-function getProductNameFromMetadata(metadata: unknown): string | null {
-  try {
-    if (!metadata || typeof metadata !== 'object') return null;
-
-    const metadataObj = metadata as Record<string, unknown>;
-
-    // Check if cartItems exists in metadata
-    if (metadataObj.cartItems) {
-      let cartItems: unknown;
-
-      // Handle both string and object formats
-      if (typeof metadataObj.cartItems === 'string') {
-        cartItems = JSON.parse(metadataObj.cartItems) as unknown;
-      } else {
-        cartItems = metadataObj.cartItems;
-      }
-
-      // Get the first item's title
-      if (Array.isArray(cartItems) && cartItems.length > 0) {
-        const firstItem = cartItems[0] as unknown;
-        if (firstItem && typeof firstItem === 'object') {
-          const itemObj = firstItem as Record<string, unknown>;
-          return (typeof itemObj.title === 'string' ? itemObj.title : null) ||
-            (typeof itemObj.productName === 'string' ? itemObj.productName : null);
-        }
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Failed to parse product name from metadata:', error);
-    return null;
-  }
-}
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -71,6 +35,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -89,6 +62,46 @@ import {
 } from "@/components/ui/table";
 import { PaymentMethodIcon } from "@/components/payments/PaymentMethodIcon";
 import { PaymentStatusBadge } from "@/components/payments/PaymentStatusBadge";
+
+// Helper function to extract product name from payment metadata
+function getProductNameFromMetadata(metadata: unknown): string | null {
+  try {
+    if (!metadata || typeof metadata !== "object") return null;
+
+    const metadataObj = metadata as Record<string, unknown>;
+
+    // Check if cartItems exists in metadata
+    if (metadataObj.cartItems) {
+      let cartItems: unknown;
+
+      // Handle both string and object formats
+      if (typeof metadataObj.cartItems === "string") {
+        cartItems = JSON.parse(metadataObj.cartItems) as unknown;
+      } else {
+        cartItems = metadataObj.cartItems;
+      }
+
+      // Get the first item's title
+      if (Array.isArray(cartItems) && cartItems.length > 0) {
+        const firstItem = cartItems[0] as unknown;
+        if (firstItem && typeof firstItem === "object") {
+          const itemObj = firstItem as Record<string, unknown>;
+          return (
+            (typeof itemObj.title === "string" ? itemObj.title : null) ||
+            (typeof itemObj.productName === "string"
+              ? itemObj.productName
+              : null)
+          );
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Failed to parse product name from metadata:", error);
+    return null;
+  }
+}
 
 const columns: ColumnDef<UserPaymentTableData>[] = [
   {
@@ -138,7 +151,7 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
                 className="relative size-8 overflow-hidden rounded border-2 border-background"
               >
                 {item.Product?.images?.[0] &&
-                  typeof item.Product.images[0] === "string" ? (
+                typeof item.Product.images[0] === "string" ? (
                   <Image
                     src={item.Product.images[0]}
                     alt={item.Product?.name || "Product"}
@@ -257,14 +270,14 @@ const columns: ColumnDef<UserPaymentTableData>[] = [
             </DropdownMenuItem>
             {(payment.status === "PAID" ||
               payment.status === "CASH_RECEIVED") && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Download className="mr-2 size-4" />
-                    Download Receipt
-                  </DropdownMenuItem>
-                </>
-              )}
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Download className="mr-2 size-4" />
+                  Download Receipt
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -312,14 +325,11 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
   } = useQuery({
     queryKey: ["user-payments", queryParams],
     queryFn: () => {
-
       return fetchUserPayments(queryParams);
     },
     retry: 1,
     staleTime: 30000, // 30 seconds
   });
-
-
 
   const table = useReactTable({
     data: paymentsData?.payments ?? [],
@@ -435,9 +445,9 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                         </TableHead>
                       );
                     })}
@@ -511,7 +521,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                               className="relative size-10 overflow-hidden rounded border-2 border-background"
                             >
                               {item.Product?.images?.[0] &&
-                                typeof item.Product.images[0] === "string" ? (
+                              typeof item.Product.images[0] === "string" ? (
                                 <Image
                                   src={item.Product.images[0]}
                                   alt={item.Product?.name || "Product"}
@@ -583,10 +593,10 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
                         </Button>
                         {(payment.status === "PAID" ||
                           payment.status === "CASH_RECEIVED") && (
-                            <Button variant="outline" size="sm">
-                              <Download className="size-4" />
-                            </Button>
-                          )}
+                          <Button variant="outline" size="sm">
+                            <Download className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -607,7 +617,7 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted-foreground">
             {paymentsData?.pagination?.totalCount ? (
               <>
@@ -623,23 +633,102 @@ export function UserPaymentTable({ className }: UserPaymentTableProps) {
               "No payments found"
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Rows per page</span>
+              <Select
+                value={`${pagination.pageSize}`}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.previousPage();
+                    }}
+                    aria-disabled={!table.getCanPreviousPage()}
+                    className={
+                      !table.getCanPreviousPage()
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: table.getPageCount() }, (_, i) => {
+                  const page = i;
+                  const currentPage = table.getState().pagination.pageIndex;
+
+                  // Show first page, last page, current page, and pages around current
+                  if (
+                    page === 0 ||
+                    page === table.getPageCount() - 1 ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            table.setPageIndex(page);
+                          }}
+                          isActive={page === currentPage}
+                        >
+                          {page + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  // Ellipsis logic
+                  if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.nextPage();
+                    }}
+                    aria-disabled={!table.getCanNextPage()}
+                    className={
+                      !table.getCanNextPage()
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </div>

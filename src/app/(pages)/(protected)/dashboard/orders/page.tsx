@@ -1,14 +1,30 @@
-import React from "react";
+import { type Metadata } from "next";
+import { redirect } from "next/navigation";
 
-export default function UserOrdersPage() {
+import { getSessionServer } from "@/helpers/getSessionServer";
 
+import { UserOrdersTable } from "./_components/UserOrdersTable";
 
-    return (
-        <div className="flex min-h-[400px] items-center justify-center">
-            <div className="text-center">
-                <h2 className="text-lg font-semibold">Orders Page</h2>
-                <p className="text-muted-foreground">Coming soon</p>
-            </div>
-        </div>
-    );
+export const metadata: Metadata = {
+  title: "My Orders | Dashboard",
+  description: "View your order history and track shipments.",
+};
+
+export default async function UserOrdersPage() {
+  const session = await getSessionServer();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold md:text-3xl">My Orders</h1>
+        <p className="text-sm text-muted-foreground md:text-base">
+          View your order history and track shipments.
+        </p>
+      </div>
+      <UserOrdersTable />
+    </div>
+  );
 }

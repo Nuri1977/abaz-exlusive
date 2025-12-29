@@ -3,6 +3,9 @@ import axios from "axios";
 
 import { type Currency, type ExchangeRates } from "@/types/currency";
 import { prisma } from "@/lib/prisma";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { SSGCacheKeys } from "@/constants/ssg-cache-keys";
+import "server-only";
 
 export type { Currency, ExchangeRates };
 
@@ -27,6 +30,23 @@ export class ExchangeRateService {
    * Priority: Database (if fresh) → API → Hardcoded fallback
    */
   static async getExchangeRates(
+    base: Currency = "MKD"
+  ): Promise<ExchangeRates> {
+    return unstable_cache(
+      async () => this.getExchangeRatesInternal(base),
+      [SSGCacheKeys.exchangeRates, base],
+      {
+        revalidate: 86400, // 24 hours
+        tags: [SSGCacheKeys.exchangeRates],
+      }
+    )();
+  }
+
+  /**
+   * Internal method to get exchange rates for a base currency
+   * Priority: Database (if fresh) → API → Hardcoded fallback
+   */
+  private static async getExchangeRatesInternal(
     base: Currency = "MKD"
   ): Promise<ExchangeRates> {
     try {
@@ -226,6 +246,9 @@ export class ExchangeRateService {
 
     const apiRates = await this.fetchFromAPI(base);
     await this.saveToDatabase(base, apiRates);
+
+    // Invalidate cache
+    revalidateTag(SSGCacheKeys.exchangeRates);
 
     return apiRates;
   }

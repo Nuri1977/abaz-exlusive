@@ -363,6 +363,56 @@ const deleteProductMutation = useMutation({
 });
 ```
 
+## Backend Caching (Next.js Data Cache)
+
+### Centralized Cache Keys
+
+We use a centralized constant `SSGCacheKeys` to manage all cache tags and keys, ensuring consistency across services and API routes:
+
+```typescript
+// src/constants/ssg-cache-keys.ts
+export const SSGCacheKeys = {
+  newArrivals: "new-arrivals",
+  categories: "categories",
+  settings: "settings",
+  collections: "collections",
+  bestSellers: "best-sellers",
+  products: "products",
+  heroItems: "hero-items",
+  exchangeRates: "exchange-rates",
+} as const;
+```
+
+### Implementation with `unstable_cache`
+
+For expensive server-side operations or data that doesn't change frequently, we use Next.js `unstable_cache`:
+
+```typescript
+// Example: Exchange rate caching
+export const getExchangeRates = unstable_cache(
+  async (base: Currency) => {
+    // Fetch logic here...
+  },
+  [SSGCacheKeys.exchangeRates, base],
+  {
+    revalidate: 86400, // 24 hours
+    tags: [SSGCacheKeys.exchangeRates],
+  }
+);
+```
+
+### Manual Cache Invalidation
+
+We use `revalidateTag` to clear the backend cache when data is updated via admin actions:
+
+```typescript
+// In an API route or service
+export async function forceRefreshRates() {
+  // Update logic...
+  revalidateTag(SSGCacheKeys.exchangeRates);
+}
+```
+
 ### Background Refetching
 
 Automatic data freshness with background updates:

@@ -1,10 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, CreditCard, Download, Package } from "lucide-react";
+import {
+  Calendar,
+  CreditCard,
+  Download,
+  Mail,
+  Package,
+  Phone,
+  User,
+} from "lucide-react";
 
-import { fetchUserPaymentById } from "@/lib/query/user-payments";
+import type {
+  PaymentDetailData,
+  PaymentTimelineEvent,
+} from "@/types/payment-details";
 import type { UserPaymentTableData } from "@/types/user-payments";
+import { fetchUserPaymentById } from "@/lib/query/user-payments";
+import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,14 +33,14 @@ import { ProductDetailCard } from "@/components/payments/ProductDetailCard";
 function getCartItemsFromMetadata(metadata: unknown) {
   try {
     // Type guard to check if metadata is an object
-    if (!metadata || typeof metadata !== 'object') return [];
+    if (!metadata || typeof metadata !== "object") return [];
 
     const metadataObj = metadata as Record<string, unknown>;
 
     if (!metadataObj.cartItems) return [];
 
     let cartItems: unknown;
-    if (typeof metadataObj.cartItems === 'string') {
+    if (typeof metadataObj.cartItems === "string") {
       cartItems = JSON.parse(metadataObj.cartItems) as unknown;
     } else {
       cartItems = metadataObj.cartItems;
@@ -37,38 +51,67 @@ function getCartItemsFromMetadata(metadata: unknown) {
     // Convert cart items to order item format for ProductDetailCard
     return cartItems.map((item: unknown, index: number) => {
       // Type guard for item
-      const itemObj = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+      const itemObj =
+        item && typeof item === "object"
+          ? (item as Record<string, unknown>)
+          : {};
 
       return {
         id: `metadata-item-${index}`,
-        quantity: typeof itemObj.quantity === 'number' ? itemObj.quantity : 1,
-        price: typeof itemObj.price === 'number' ? itemObj.price :
-          typeof itemObj.unitPrice === 'number' ? itemObj.unitPrice : 0,
+        quantity: typeof itemObj.quantity === "number" ? itemObj.quantity : 1,
+        price:
+          typeof itemObj.price === "number"
+            ? itemObj.price
+            : typeof itemObj.unitPrice === "number"
+              ? itemObj.unitPrice
+              : 0,
         Product: {
-          id: typeof itemObj.productId === 'string' ? itemObj.productId : `unknown-${index}`,
-          name: typeof itemObj.title === 'string' ? itemObj.title :
-            typeof itemObj.productName === 'string' ? itemObj.productName : 'Unknown Product',
-          slug: typeof itemObj.productSlug === 'string' ? itemObj.productSlug : '',
-          images: typeof itemObj.imageUrl === 'string' ? [{ url: itemObj.imageUrl }] : [],
-          brand: typeof itemObj.brand === 'string' ? itemObj.brand : undefined,
+          id:
+            typeof itemObj.productId === "string"
+              ? itemObj.productId
+              : `unknown-${index}`,
+          name:
+            typeof itemObj.title === "string"
+              ? itemObj.title
+              : typeof itemObj.productName === "string"
+                ? itemObj.productName
+                : "Unknown Product",
+          slug:
+            typeof itemObj.productSlug === "string" ? itemObj.productSlug : "",
+          images:
+            typeof itemObj.imageUrl === "string"
+              ? [{ url: itemObj.imageUrl }]
+              : [],
+          brand: typeof itemObj.brand === "string" ? itemObj.brand : undefined,
           category: undefined,
           collection: undefined,
         },
-        variant: typeof itemObj.variantId === 'string' ? {
-          id: itemObj.variantId,
-          sku: typeof itemObj.variantSku === 'string' ? itemObj.variantSku : '',
-          options: typeof itemObj.variantOptions === 'string' ? [{
-            optionValue: {
-              id: 'metadata-option',
-              value: itemObj.variantOptions,
-              option: { name: 'Options' }
-            }
-          }] : []
-        } : undefined,
+        variant:
+          typeof itemObj.variantId === "string"
+            ? {
+                id: itemObj.variantId,
+                sku:
+                  typeof itemObj.variantSku === "string"
+                    ? itemObj.variantSku
+                    : "",
+                options:
+                  typeof itemObj.variantOptions === "string"
+                    ? [
+                        {
+                          optionValue: {
+                            id: "metadata-option",
+                            value: itemObj.variantOptions,
+                            option: { name: "Options" },
+                          },
+                        },
+                      ]
+                    : [],
+              }
+            : undefined,
       };
     });
   } catch (error) {
-    console.error('Failed to parse cart items from metadata:', error);
+    console.error("Failed to parse cart items from metadata:", error);
     return [];
   }
 }
@@ -88,8 +131,6 @@ export function UserPaymentDetailView({
     queryKey: ["user-payment", paymentId],
     queryFn: () => fetchUserPaymentById(paymentId),
   });
-
-
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -133,7 +174,7 @@ export function UserPaymentDetailView({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Amount</p>
               <p className="text-lg font-semibold">
-                {Number(payment.amount).toFixed(2)} {payment.currency}
+                {formatPrice(Number(payment.amount), payment.currency)}
               </p>
             </div>
             <div className="space-y-1">
@@ -191,8 +232,8 @@ export function UserPaymentDetailView({
                 Refund Processed
               </p>
               <p className="text-sm text-muted-foreground">
-                Amount: {Number(payment.refundedAmount).toFixed(2)}{" "}
-                {payment.currency}
+                Amount:{" "}
+                {formatPrice(Number(payment.refundedAmount), payment.currency)}
               </p>
               {payment.refundedAt && (
                 <p className="text-sm text-muted-foreground">
@@ -209,9 +250,59 @@ export function UserPaymentDetailView({
         </CardContent>
       </Card>
 
+      {/* Customer Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="size-5" />
+            Customer Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="font-medium">
+                {payment.order?.customerName ||
+                  payment.order?.user?.name ||
+                  "Guest"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Email</p>
+              <div className="flex items-center gap-2">
+                <Mail className="size-4 text-muted-foreground" />
+                <p className="text-sm">
+                  {payment.order?.customerEmail ||
+                    payment.order?.user?.email ||
+                    "-"}
+                </p>
+              </div>
+            </div>
+            {payment.order?.phone && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="size-4 text-muted-foreground" />
+                  <p className="text-sm">{payment.order.phone}</p>
+                </div>
+              </div>
+            )}
+            <div className="space-y-1 sm:col-span-2">
+              <p className="text-sm text-muted-foreground">Shipping Address</p>
+              <p className="text-sm leading-relaxed">
+                {payment.order?.shippingAddress ||
+                  payment.deliveryAddress ||
+                  "-"}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Delivery Information for Cash Payments */}
       {payment.method === "CASH_ON_DELIVERY" && (
-        <DeliveryTracking payment={payment} />
+        <DeliveryTracking payment={payment as unknown as PaymentDetailData} />
       )}
 
       {/* Order Information */}
@@ -233,8 +324,10 @@ export function UserPaymentDetailView({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Order Total</p>
               <p className="font-semibold">
-                {Number(payment.order?.total || 0).toFixed(2)}{" "}
-                {payment.order?.currency}
+                {formatPrice(
+                  Number(payment.order?.total || 0),
+                  payment.order?.currency || payment.currency
+                )}
               </p>
             </div>
           </div>
@@ -257,12 +350,17 @@ export function UserPaymentDetailView({
           {(() => {
             // Try to get items from order first, then fallback to metadata
             const orderItems = payment.order?.items || [];
-            const hasValidOrderItems = orderItems.some(item => item.Product && item.Product.name);
-            const metadataItems = !hasValidOrderItems ? getCartItemsFromMetadata(payment.metadata) : [];
-            const itemsToDisplay = hasValidOrderItems ? orderItems : metadataItems;
+            const hasValidOrderItems = orderItems.some(
+              (item) => item.Product && item.Product.name
+            );
+            const metadataItems = !hasValidOrderItems
+              ? getCartItemsFromMetadata(payment.metadata)
+              : [];
+            const itemsToDisplay = hasValidOrderItems
+              ? orderItems
+              : metadataItems;
 
             // Debug logging
-
 
             if (itemsToDisplay.length === 0) {
               return (
@@ -285,17 +383,17 @@ export function UserPaymentDetailView({
       </Card>
 
       {/* Pricing Breakdown */}
-      <PricingBreakdown payment={payment as unknown} />
+      <PricingBreakdown payment={payment as unknown as PaymentDetailData} />
 
       {/* Payment Timeline */}
       {payment.timeline && payment.timeline.length > 0 && (
         <PaymentTimeline
-          events={payment.timeline}
+          events={payment.timeline as unknown as PaymentTimelineEvent[]}
         />
       )}
 
       {/* Actions */}
-      <Card>
+      <Card className="no-print">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="size-5" />
@@ -303,17 +401,16 @@ export function UserPaymentDetailView({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button className="w-full" variant="outline">
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => window.print()}
+          >
             <Download className="mr-2 size-4" />
             Download Receipt
           </Button>
-          {payment.status === "PAID" && (
-            <Button className="w-full" variant="outline">
-              Request Refund
-            </Button>
-          )}
-          <Button className="w-full" variant="outline">
-            Contact Support
+          <Button className="w-full" variant="outline" asChild>
+            <Link href="/contact">Contact Support</Link>
           </Button>
         </CardContent>
       </Card>

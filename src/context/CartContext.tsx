@@ -2,11 +2,11 @@
 
 import {
   createContext,
-  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -20,10 +20,10 @@ import {
   removeFromCart,
 } from "@/lib/query/cart";
 import {
-  type Currency,
-  type ExchangeRates,
   fetchExchangeRates,
   getCurrencySymbol,
+  type Currency,
+  type ExchangeRates,
 } from "@/lib/query/currency";
 
 export type CartItem = {
@@ -116,9 +116,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (cur: Currency) => {
       setCurrencyState(cur);
       if (session?.user) {
-      axios
-        .patch("/api/cart", { currency: cur })
-        .catch((err) => console.error("Failed to update cart currency:", err));
+        axios
+          .patch("/api/cart", { currency: cur })
+          .catch((err) =>
+            console.error("Failed to update cart currency:", err)
+          );
       } else {
         localStorage.setItem("cartCurrency", cur);
       }
@@ -204,6 +206,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
   const clearMutation = useMutation({
     mutationFn: clearCartApi,
+    onMutate: async () => {
+      // Optimistically clear the cart immediately
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
+      queryClient.setQueryData(cartKeys.all, []);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
@@ -284,6 +291,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const clearCart = useCallback(() => {
+    // Always clear guest cart from localStorage
+    localStorage.removeItem("guestCart");
+
     if (session?.user) {
       clearMutation.mutate();
     } else {
@@ -297,7 +307,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return {
           quantity: Number(item.quantity) || 1,
           price: Number(item.price) || 0,
-          compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : (item.Product?.compareAtPrice ? Number(item.Product.compareAtPrice) : undefined),
+          compareAtPrice: item.compareAtPrice
+            ? Number(item.compareAtPrice)
+            : item.Product?.compareAtPrice
+              ? Number(item.Product.compareAtPrice)
+              : undefined,
           productId: item.productId ?? item.Product?.id ?? "",
           image:
             item.image ??
