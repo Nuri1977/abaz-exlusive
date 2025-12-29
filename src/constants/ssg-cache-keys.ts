@@ -6,4 +6,5 @@ export const SSGCacheKeys = {
   bestSellers: "best-sellers",
   products: "products",
   heroItems: "hero-items",
+  exchangeRates: "exchange-rates",
 } as const;

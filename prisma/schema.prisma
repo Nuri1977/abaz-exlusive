@@ -106,15 +106,15 @@ model Product {
   updatedAt      DateTime         @updatedAt
   images         Json[]
   collectionId   String?
-  bestSellers  BestSellers[]
-  cartItems    CartItem[]
-  likes        Like[]
-  newArrivals  NewArrivals[]
-  orderItems   OrderItem[]
-  category     Category         @relation(fields: [categoryId], references: [id])
-  collection   Collection?      @relation(fields: [collectionId], references: [id])
-  options      ProductOption[]
-  variants     ProductVariant[]
+  bestSellers    BestSellers[]
+  cartItems      CartItem[]
+  likes          Like[]
+  newArrivals    NewArrivals[]
+  orderItems     OrderItem[]
+  category       Category         @relation(fields: [categoryId], references: [id])
+  collection     Collection?      @relation(fields: [collectionId], references: [id])
+  options        ProductOption[]
+  variants       ProductVariant[]
 
   @@index([collectionId])
   @@map("product")
@@ -154,11 +154,11 @@ model ProductVariant {
   images         Json[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
-  cartItems  CartItem[]
-  inventory  InventoryItem?
-  orderItems OrderItem[]
-  product    Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
-  options    ProductVariantOption[]
+  cartItems      CartItem[]
+  inventory      InventoryItem?
+  orderItems     OrderItem[]
+  product        Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options        ProductVariantOption[]
 
   @@map("product_variant")
 }
@@ -439,7 +439,7 @@ model ExchangeRate {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([baseCurrency, targetCurrency, isActive])
+  @@unique([baseCurrency, targetCurrency, fetchedAt])
   @@index([baseCurrency, targetCurrency])
   @@index([expiresAt])
   @@index([isActive])
