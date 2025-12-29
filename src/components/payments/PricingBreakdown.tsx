@@ -3,6 +3,7 @@
 import { Receipt } from "lucide-react";
 
 import type { PaymentDetailData } from "@/types/payment-details";
+import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -52,11 +53,11 @@ export function PricingBreakdown({
                     {item.Product?.name || "Product"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {item.quantity} × {unitPrice.toFixed(2)} {payment.currency}
+                    {item.quantity} × {formatPrice(unitPrice, payment.currency)}
                   </p>
                 </div>
                 <p className="font-medium">
-                  {itemTotal.toFixed(2)} {payment.currency}
+                  {formatPrice(itemTotal, payment.currency)}
                 </p>
               </div>
             );
@@ -69,7 +70,7 @@ export function PricingBreakdown({
         <div className="flex items-center justify-between text-sm">
           <p className="text-muted-foreground">Subtotal</p>
           <p className="font-medium">
-            {subtotal.toFixed(2)} {payment.currency}
+            {formatPrice(subtotal, payment.currency)}
           </p>
         </div>
 
@@ -78,7 +79,7 @@ export function PricingBreakdown({
           <div className="flex items-center justify-between text-sm">
             <p className="text-muted-foreground">Shipping</p>
             <p className="font-medium">
-              {shipping.toFixed(2)} {payment.currency}
+              {formatPrice(shipping, payment.currency)}
             </p>
           </div>
         )}
@@ -87,9 +88,7 @@ export function PricingBreakdown({
         {tax > 0 && (
           <div className="flex items-center justify-between text-sm">
             <p className="text-muted-foreground">Tax</p>
-            <p className="font-medium">
-              {tax.toFixed(2)} {payment.currency}
-            </p>
+            <p className="font-medium">{formatPrice(tax, payment.currency)}</p>
           </div>
         )}
 
@@ -98,7 +97,7 @@ export function PricingBreakdown({
           <div className="flex items-center justify-between text-sm">
             <p className="text-muted-foreground">Discount</p>
             <p className="font-medium text-green-600">
-              -{discount.toFixed(2)} {payment.currency}
+              -{formatPrice(discount, payment.currency)}
             </p>
           </div>
         )}
@@ -109,7 +108,7 @@ export function PricingBreakdown({
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold">Total</p>
           <p className="text-lg font-bold">
-            {total.toFixed(2)} {payment.currency}
+            {formatPrice(total, payment.currency)}
           </p>
         </div>
 
@@ -120,14 +119,16 @@ export function PricingBreakdown({
             <div className="flex items-center justify-between text-sm">
               <p className="text-muted-foreground">Refunded Amount</p>
               <p className="font-medium text-blue-600">
-                -{Number(payment.refundedAmount).toFixed(2)} {payment.currency}
+                -{formatPrice(Number(payment.refundedAmount), payment.currency)}
               </p>
             </div>
             <div className="flex items-center justify-between">
               <p className="font-semibold">Net Amount</p>
               <p className="font-bold">
-                {(total - Number(payment.refundedAmount)).toFixed(2)}{" "}
-                {payment.currency}
+                {formatPrice(
+                  total - Number(payment.refundedAmount),
+                  payment.currency
+                )}
               </p>
             </div>
           </>

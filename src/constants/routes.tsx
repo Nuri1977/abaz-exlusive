@@ -134,6 +134,7 @@ export const userLinks = [
     href: "/dashboard/change-password",
     icon: KeyRound,
   },
+  { name: "Orders", href: "/dashboard/orders", icon: Package },
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
   { name: "Likes", href: "/dashboard/likes", icon: Heart },
   { name: "Cart", href: "/cart", icon: ShoppingCart },

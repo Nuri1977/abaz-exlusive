@@ -22,6 +22,7 @@ import {
   Download,
   Eye,
   MoreHorizontal,
+  Printer,
   RefreshCw,
   Search,
 } from "lucide-react";
@@ -49,6 +50,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -470,20 +480,20 @@ export function AdminPaymentTable() {
               )}
               {(payment.status === PaymentStatus.PAID ||
                 payment.status === PaymentStatus.CASH_RECEIVED) && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      refundMutation.mutate({
-                        id: payment.id,
-                        amount: parseFloat(payment.amount.toString()),
-                        reason: "Admin refund",
-                      })
-                    }
-                    disabled={refundMutation.isPending}
-                  >
-                    <Download className="mr-2 size-4" />
-                    Process Refund
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={() =>
+                    refundMutation.mutate({
+                      id: payment.id,
+                      amount: parseFloat(payment.amount.toString()),
+                      reason: "Admin refund",
+                    })
+                  }
+                  disabled={refundMutation.isPending}
+                >
+                  <Download className="mr-2 size-4" />
+                  Process Refund
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -542,7 +552,7 @@ export function AdminPaymentTable() {
   return (
     <div className="w-full space-y-4">
       {/* Filters */}
-      <div className="space-y-4">
+      <div className="no-print space-y-4">
         {/* Search Bar - Full width on mobile */}
         <div className="relative">
           <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
@@ -608,9 +618,16 @@ export function AdminPaymentTable() {
           <div className="flex items-center gap-2">
             {/* Analytics Button */}
             <Button variant="outline" asChild>
-              <Link href="/admin-dashboard/payments/analytics">
-                Analytics
-              </Link>
+              <Link href="/admin-dashboard/payments/analytics">Analytics</Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => window.print()}
+              className="no-print"
+            >
+              <Printer className="mr-2 size-4" />
+              Print List
             </Button>
 
             {/* Column visibility - Hidden on mobile since table is hidden */}
@@ -656,9 +673,9 @@ export function AdminPaymentTable() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -874,23 +891,23 @@ export function AdminPaymentTable() {
 
                   {(payment.status === PaymentStatus.PAID ||
                     payment.status === PaymentStatus.CASH_RECEIVED) && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          refundMutation.mutate({
-                            id: payment.id,
-                            amount: parseFloat(payment.amount.toString()),
-                            reason: "Admin refund",
-                          })
-                        }
-                        disabled={refundMutation.isPending}
-                        className="flex-1"
-                      >
-                        <Download className="mr-2 size-4" />
-                        Refund
-                      </Button>
-                    )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() =>
+                        refundMutation.mutate({
+                          id: payment.id,
+                          amount: parseFloat(payment.amount.toString()),
+                          reason: "Admin refund",
+                        })
+                      }
+                      disabled={refundMutation.isPending}
+                      className="flex-1"
+                    >
+                      <Download className="mr-2 size-4" />
+                      Refund
+                    </Button>
+                  )}
                 </div>
 
                 {/* Force Confirm Button - Full Width Row */}
@@ -925,36 +942,111 @@ export function AdminPaymentTable() {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-center text-sm text-muted-foreground sm:text-left">
-          {paymentsData && (
-            <>
-              Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-              {Math.min(
-                (pagination.pageIndex + 1) * pagination.pageSize,
-                paymentsData.pagination.totalCount
-              )}{" "}
-              of {paymentsData.pagination.totalCount} payments
-            </>
-          )}
+      <div className="no-print flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
+          {Math.min(
+            (pagination.pageIndex + 1) * pagination.pageSize,
+            paymentsData?.pagination.totalCount || 0
+          )}{" "}
+          of {paymentsData?.pagination.totalCount || 0} payments
         </div>
-        <div className="flex justify-center space-x-2 sm:justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Rows per page</span>
+            <Select
+              value={`${pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.previousPage();
+                  }}
+                  aria-disabled={!table.getCanPreviousPage()}
+                  className={
+                    !table.getCanPreviousPage()
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from({ length: table.getPageCount() }, (_, i) => {
+                const page = i;
+                const currentPage = table.getState().pagination.pageIndex;
+
+                // Show first page, last page, current page, and pages around current
+                if (
+                  page === 0 ||
+                  page === table.getPageCount() - 1 ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          table.setPageIndex(page);
+                        }}
+                        isActive={page === currentPage}
+                      >
+                        {page + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                // Ellipsis logic
+                if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+
+                return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.nextPage();
+                  }}
+                  aria-disabled={!table.getCanNextPage()}
+                  className={
+                    !table.getCanNextPage()
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>
