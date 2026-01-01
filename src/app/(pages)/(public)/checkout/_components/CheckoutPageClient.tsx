@@ -408,8 +408,6 @@ const CheckoutPageClient = () => {
 
           {/* Payment Action Buttons */}
           <div className="space-y-3">
-            {/* TODO: Re-enable card payments when Stripe integration is complete */}
-            {/* Card payment temporarily disabled - Polar doesn't support physical goods
             <Button
               type="button"
               className="w-full"
@@ -419,10 +417,10 @@ const CheckoutPageClient = () => {
             >
               {isSubmitting ? "Processing..." : "Continue to Payment"}
             </Button>
-            */}
 
             <Button
               type="button"
+              variant="outline"
               className="w-full"
               size="lg"
               disabled={isSubmitting || items.length === 0}
